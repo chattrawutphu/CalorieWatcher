@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Animation classes for floating background elements */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@layer base {
+  :root {
+    /* Light theme (default) */
+    --background: 250 100% 99%;
+    --foreground: 224 71.4% 4.1%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    
+    --primary: 271 91% 65%;
+    --primary-foreground: 210 20% 98%;
+    
+    --secondary: 270 50% 96%;
+    --secondary-foreground: 271 91% 65%;
+    
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    
+    --accent: 270 50% 96%;
+    --accent-foreground: 271 91% 65%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 271 91% 65%;
+    
+    --radius: 0.75rem;
+  }
+ 
+  .dark {
+    /* Dark theme */
+    --background: 240 10% 4%;
+    --foreground: 210 20% 98%;
+    
+    --card: 240 10% 8%;
+    --card-foreground: 210 20% 98%;
+    
+    --popover: 240 10% 8%;
+    --popover-foreground: 210 20% 98%;
+    
+    --primary: 271 91% 65%;
+    --primary-foreground: 210 20% 98%;
+    
+    --secondary: 271 40% 20%;
+    --secondary-foreground: 210 20% 98%;
+    
+    --muted: 240 10% 16%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    
+    --accent: 271 40% 20%;
+    --accent-foreground: 210 20% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    
+    --border: 240 10% 16%;
+    --input: 240 10% 16%;
+    --ring: 271 91% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animation for floating blobs in the background */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
