@@ -315,18 +315,25 @@ export default function AddFoodPage() {
           </motion.div>
           
           <motion.div variants={item}>
-            <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-md rounded-2xl overflow-hidden">
+            <Card className="bg-[hsl(var(--background))/0.8] backdrop-blur-sm border-[hsl(var(--border))] shadow-md rounded-2xl overflow-hidden">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{t.search}</CardTitle>
+                <div className="flex items-center">
+                  <Search className="h-4 w-4 mr-2 text-[hsl(var(--primary))]" />
+                  <CardTitle className="text-lg text-[hsl(var(--foreground))]">{t.search}</CardTitle>
+                </div>
+                <CardDescription className="text-[hsl(var(--muted-foreground))]">
+                  {t.searchDescription}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
                   <Input
+                    type="text"
                     placeholder={t.searchPlaceholder}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 rounded-xl border-purple-100 focus:ring-purple-200 focus:border-purple-300"
+                    className="pl-9 bg-[hsl(var(--background))] border-[hsl(var(--border))]"
                   />
                 </div>
                 
@@ -336,23 +343,23 @@ export default function AddFoodPage() {
                       filteredFoodItems.map((food) => (
                         <motion.div
                           key={food.id}
-                          className="p-3 rounded-xl bg-purple-50 hover:bg-purple-100 cursor-pointer flex items-center justify-between transition-colors"
+                          className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1] hover:bg-[hsl(var(--accent))/0.2] cursor-pointer flex items-center justify-between transition-colors"
                           onClick={() => handleSelectFood(food)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
                           <div>
-                            <div className="font-medium">{food.name}</div>
-                            <div className="text-xs text-gray-500">{food.servingSize}</div>
+                            <div className="font-medium text-[hsl(var(--foreground))]">{food.name}</div>
+                            <div className="text-xs text-[hsl(var(--muted-foreground))]">{food.servingSize}</div>
                           </div>
                           <div className="flex items-center">
-                            <div className="text-purple-600 font-semibold">{food.calories}</div>
-                            <ChevronRight className="h-4 w-4 ml-1 text-gray-400" />
+                            <div className="text-[hsl(var(--primary))] font-semibold">{food.calories}</div>
+                            <ChevronRight className="h-4 w-4 ml-1 text-[hsl(var(--muted-foreground))]" />
                           </div>
                         </motion.div>
                       ))
                     ) : (
-                      <div className="text-center py-3 text-gray-500">No results found</div>
+                      <div className="text-center py-3 text-[hsl(var(--muted-foreground))]">{t.noResults}</div>
                     )}
                   </div>
                 )}
@@ -362,11 +369,11 @@ export default function AddFoodPage() {
           
           {uniqueRecentFoods.length > 0 && (
             <motion.div variants={item}>
-              <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-md rounded-2xl overflow-hidden">
+              <Card className="bg-[hsl(var(--background))/0.8] backdrop-blur-sm border-[hsl(var(--border))] shadow-md rounded-2xl overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center">
-                    <History className="h-4 w-4 mr-2 text-purple-500" />
-                    <CardTitle className="text-lg">{t.recentlyAdded}</CardTitle>
+                    <History className="h-4 w-4 mr-2 text-[hsl(var(--primary))]" />
+                    <CardTitle className="text-lg text-[hsl(var(--foreground))]">{t.recentlyAdded}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -374,18 +381,18 @@ export default function AddFoodPage() {
                     {uniqueRecentFoods.map((food) => (
                       <motion.div
                         key={food.id}
-                        className="p-3 rounded-xl bg-purple-50 hover:bg-purple-100 cursor-pointer flex items-center justify-between transition-colors"
+                        className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1] hover:bg-[hsl(var(--accent))/0.2] cursor-pointer flex items-center justify-between transition-colors"
                         onClick={() => handleSelectFood(food)}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="text-xs text-gray-500">{food.servingSize}</div>
+                          <div className="font-medium text-[hsl(var(--foreground))]">{food.name}</div>
+                          <div className="text-xs text-[hsl(var(--muted-foreground))]">{food.servingSize}</div>
                         </div>
                         <div className="flex items-center">
-                          <div className="text-purple-600 font-semibold">{food.calories}</div>
-                          <ChevronRight className="h-4 w-4 ml-1 text-gray-400" />
+                          <div className="text-[hsl(var(--primary))] font-semibold">{food.calories}</div>
+                          <ChevronRight className="h-4 w-4 ml-1 text-[hsl(var(--muted-foreground))]" />
                         </div>
                       </motion.div>
                     ))}
@@ -408,41 +415,41 @@ export default function AddFoodPage() {
               variant="ghost" 
               size="sm" 
               onClick={() => setView("search")}
-              className="hover:bg-purple-50 p-2 h-8 w-8"
+              className="hover:bg-[hsl(var(--accent))/0.1] p-2 h-8 w-8"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-800">{selectedFood.name}</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{selectedFood.name}</h1>
           </motion.div>
           
           <motion.div variants={item}>
-            <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-md rounded-2xl overflow-hidden">
+            <Card className="bg-[hsl(var(--background))/0.8] backdrop-blur-sm border-[hsl(var(--border))] shadow-md rounded-2xl overflow-hidden">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{t.addFood}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg text-[hsl(var(--foreground))]">{t.addFood}</CardTitle>
+                <CardDescription className="text-[hsl(var(--muted-foreground))]">
                   {selectedFood.servingSize} • {selectedFood.calories} kcal
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-4 pb-2">
-                  <div className="p-3 rounded-xl bg-purple-100">
-                    <div className="text-xs text-purple-700">{t.protein}</div>
-                    <div className="text-lg font-semibold text-purple-800">{selectedFood.protein}g</div>
+                  <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
+                    <div className="text-xs text-[hsl(var(--primary))]">{t.protein}</div>
+                    <div className="text-lg font-semibold text-[hsl(var(--foreground))]">{selectedFood.protein}g</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-100">
-                    <div className="text-xs text-blue-700">{t.carbs}</div>
-                    <div className="text-lg font-semibold text-blue-800">{selectedFood.carbs}g</div>
+                  <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
+                    <div className="text-xs text-[hsl(var(--primary))]">{t.carbs}</div>
+                    <div className="text-lg font-semibold text-[hsl(var(--foreground))]">{selectedFood.carbs}g</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-pink-100">
-                    <div className="text-xs text-pink-700">{t.fat}</div>
-                    <div className="text-lg font-semibold text-pink-800">{selectedFood.fat}g</div>
+                  <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
+                    <div className="text-xs text-[hsl(var(--primary))]">{t.fat}</div>
+                    <div className="text-lg font-semibold text-[hsl(var(--foreground))]">{selectedFood.fat}g</div>
                   </div>
                 </div>
                 
                 <div className="space-y-3">
                   <Label htmlFor="meal-type">{t.mealType}</Label>
                   <Select value={mealType} onValueChange={setMealType}>
-                    <SelectTrigger id="meal-type" className="w-full rounded-xl border-purple-100">
+                    <SelectTrigger id="meal-type" className="w-full rounded-xl border-[hsl(var(--border))]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -462,7 +469,7 @@ export default function AddFoodPage() {
                       size="sm"
                       onClick={() => setQuantity(Math.max(0.5, quantity - 0.5))}
                       disabled={quantity <= 0.5}
-                      className="h-10 w-10 rounded-xl border-purple-100"
+                      className="h-10 w-10 rounded-xl border-[hsl(var(--border))]"
                     >
                       -
                     </Button>
@@ -473,18 +480,18 @@ export default function AddFoodPage() {
                       step="0.5"
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="text-center rounded-xl border-purple-100"
+                      className="text-center rounded-xl border-[hsl(var(--border))]"
                     />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setQuantity(quantity + 0.5)}
-                      className="h-10 w-10 rounded-xl border-purple-100"
+                      className="h-10 w-10 rounded-xl border-[hsl(var(--border))]"
                     >
                       +
                     </Button>
                   </div>
-                  <div className="text-center text-sm text-gray-500">
+                  <div className="text-center text-sm text-[hsl(var(--muted-foreground))]">
                     {Math.round(selectedFood.calories * quantity)} kcal
                   </div>
                 </div>
@@ -493,7 +500,7 @@ export default function AddFoodPage() {
                 <Button
                   variant="outline"
                   onClick={() => setView("search")}
-                  className="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50 rounded-xl"
+                  className="flex-1 border-[hsl(var(--border))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))/0.1] rounded-xl"
                 >
                   {t.goBack}
                 </Button>
@@ -502,7 +509,7 @@ export default function AddFoodPage() {
                     handleAddMeal();
                     setView("search");
                   }}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-[hsl(var(--accent))] to-[hsl(var(--accent))] hover:from-[hsl(var(--accent))/0.9] hover:to-[hsl(var(--accent))/0.9] rounded-xl"
                 >
                   {t.add}
                 </Button>
@@ -523,20 +530,20 @@ export default function AddFoodPage() {
               variant="ghost" 
               size="sm" 
               onClick={() => setView("search")}
-              className="hover:bg-purple-50 p-2 h-8 w-8"
+              className="hover:bg-[hsl(var(--accent))/0.1] p-2 h-8 w-8"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
               {t.custom}
             </h1>
           </motion.div>
           
           <motion.div variants={item}>
-            <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-md rounded-2xl overflow-hidden">
+            <Card className="bg-[hsl(var(--background))/0.8] backdrop-blur-sm border-[hsl(var(--border))] shadow-md rounded-2xl overflow-hidden">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{t.custom}</CardTitle>
-                <CardDescription>{t.customDescription}</CardDescription>
+                <CardTitle className="text-lg text-[hsl(var(--foreground))]">{t.custom}</CardTitle>
+                <CardDescription className="text-[hsl(var(--muted-foreground))]">{t.customDescription}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -545,7 +552,7 @@ export default function AddFoodPage() {
                     id="food-name"
                     value={customFood.name}
                     onChange={(e) => setCustomFood({ ...customFood, name: e.target.value })}
-                    className="rounded-xl border-purple-100"
+                    className="rounded-xl border-[hsl(var(--border))]"
                   />
                 </div>
                 
@@ -556,7 +563,7 @@ export default function AddFoodPage() {
                     type="number"
                     value={customFood.calories}
                     onChange={(e) => setCustomFood({ ...customFood, calories: e.target.value })}
-                    className="rounded-xl border-purple-100"
+                    className="rounded-xl border-[hsl(var(--border))]"
                   />
                 </div>
                 
@@ -568,7 +575,7 @@ export default function AddFoodPage() {
                       type="number"
                       value={customFood.protein}
                       onChange={(e) => setCustomFood({ ...customFood, protein: e.target.value })}
-                      className="rounded-xl border-purple-100"
+                      className="rounded-xl border-[hsl(var(--border))]"
                     />
                   </div>
                   <div className="space-y-3">
@@ -578,7 +585,7 @@ export default function AddFoodPage() {
                       type="number"
                       value={customFood.carbs}
                       onChange={(e) => setCustomFood({ ...customFood, carbs: e.target.value })}
-                      className="rounded-xl border-purple-100"
+                      className="rounded-xl border-[hsl(var(--border))]"
                     />
                   </div>
                   <div className="space-y-3">
@@ -588,7 +595,7 @@ export default function AddFoodPage() {
                       type="number"
                       value={customFood.fat}
                       onChange={(e) => setCustomFood({ ...customFood, fat: e.target.value })}
-                      className="rounded-xl border-purple-100"
+                      className="rounded-xl border-[hsl(var(--border))]"
                     />
                   </div>
                 </div>
@@ -609,7 +616,7 @@ export default function AddFoodPage() {
                 <div className="space-y-3">
                   <Label htmlFor="meal-type">{t.mealType}</Label>
                   <Select value={mealType} onValueChange={setMealType}>
-                    <SelectTrigger id="meal-type" className="w-full rounded-xl border-purple-100">
+                    <SelectTrigger id="meal-type" className="w-full rounded-xl border-[hsl(var(--border))]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -625,13 +632,13 @@ export default function AddFoodPage() {
                 <Button
                   variant="outline"
                   onClick={() => setView("search")}
-                  className="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50 rounded-xl"
+                  className="flex-1 border-[hsl(var(--border))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))/0.1] rounded-xl"
                 >
                   {t.goBack}
                 </Button>
                 <Button
                   onClick={handleAddCustomFood}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-[hsl(var(--accent))] to-[hsl(var(--accent))] hover:from-[hsl(var(--accent))/0.9] hover:to-[hsl(var(--accent))/0.9] rounded-xl"
                 >
                   {t.create}
                 </Button>

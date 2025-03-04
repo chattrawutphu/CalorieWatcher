@@ -133,47 +133,47 @@ export default function DashboardPage() {
         className="space-y-5"
       >
         <motion.div variants={item} className="mb-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
             {t.dashboard}
           </h1>
-          <p className="text-gray-500">
+          <p className="text-[hsl(var(--muted-foreground))]">
             {t.welcome}
           </p>
         </motion.div>
 
         {/* Today's Stats */}
         <motion.div variants={item}>
-          <Card className="p-5 shadow-md border-purple-100 rounded-2xl bg-white">
-            <h2 className="text-lg font-semibold text-purple-900 mb-4">{t.stats}</h2>
+          <Card className="p-5 shadow-md rounded-2xl">
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t.stats}</h2>
             
             <div className="space-y-5">
               {/* Calories */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{t.calories}</span>
-                  <span className="font-medium text-purple-700">
+                  <span className="text-[hsl(var(--muted-foreground))]">{t.calories}</span>
+                  <span className="font-medium text-[hsl(var(--primary))]">
                     {Math.round(calories)} / {goals.dailyCalorieGoal} {t.kcal}
                   </span>
                 </div>
-                <Progress value={caloriesPercentage} className="h-2 bg-purple-100" indicatorClassName="bg-gradient-to-r from-purple-500 to-pink-500" />
-                <div className="text-right text-xs text-purple-600">
+                <Progress value={caloriesPercentage} className="h-2" />
+                <div className="text-right text-xs text-[hsl(var(--primary))]">
                   {Math.round(caloriesRemaining)} {t.kcal} {t.remaining}
                 </div>
               </div>
               
               {/* Macros */}
               <div className="grid grid-cols-3 gap-3 text-center pt-2">
-                <div className="bg-purple-50 p-2 rounded-lg">
-                  <div className="text-xs text-gray-500">{t.protein}</div>
-                  <div className="font-medium text-purple-700">{Math.round(protein)}{t.g}</div>
+                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.protein}</div>
+                  <div className="font-medium text-[hsl(var(--primary))]">{Math.round(protein)}{t.g}</div>
                 </div>
-                <div className="bg-pink-50 p-2 rounded-lg">
-                  <div className="text-xs text-gray-500">{t.fat}</div>
-                  <div className="font-medium text-pink-600">{Math.round(fat)}{t.g}</div>
+                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.fat}</div>
+                  <div className="font-medium text-[hsl(var(--primary))]">{Math.round(fat)}{t.g}</div>
                 </div>
-                <div className="bg-amber-50 p-2 rounded-lg">
-                  <div className="text-xs text-gray-500">{t.carbs}</div>
-                  <div className="font-medium text-amber-600">{Math.round(carbs)}{t.g}</div>
+                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.carbs}</div>
+                  <div className="font-medium text-[hsl(var(--primary))]">{Math.round(carbs)}{t.g}</div>
                 </div>
               </div>
             </div>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => router.push('/add')}
-              className="flex items-center justify-center h-16 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl shadow-md"
+              className="flex items-center justify-center h-16 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl shadow-md"
             >
               <Plus size={18} className="mr-2" />
               {t.addMeal}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <Button
               onClick={() => router.push('/meals')}
               variant="outline"
-              className="flex items-center justify-center h-16 bg-white border-purple-200 text-purple-700 hover:bg-purple-50 rounded-xl"
+              className="flex items-center justify-center h-16 bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))/0.1] rounded-xl"
             >
               <Utensils size={18} className="mr-2" />
               {t.viewMeals}
@@ -203,8 +203,8 @@ export default function DashboardPage() {
 
         {/* Macros Distribution Chart */}
         <motion.div variants={item}>
-          <Card className="p-5 shadow-md border-purple-100 rounded-2xl bg-white">
-            <h2 className="text-lg font-semibold text-purple-900 mb-4">{t.macros}</h2>
+          <Card className="p-5 shadow-md rounded-2xl">
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t.macros}</h2>
             
             <div className="relative h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                     dataKey="value"
                   >
                     {data.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={`hsl(${COLORS[index % COLORS.length]})`} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -228,15 +228,16 @@ export default function DashboardPage() {
                       borderRadius: '8px', 
                       border: 'none', 
                       boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.1)',
-                      backgroundColor: 'white'
+                      backgroundColor: 'hsl(var(--background))',
+                      color: 'hsl(var(--foreground))'
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
               
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                <div className="text-2xl font-bold text-purple-900">{Math.round(calories)}</div>
-                <div className="text-xs text-gray-500">{t.kcal}</div>
+                <div className="text-2xl font-bold text-[hsl(var(--foreground))]">{Math.round(calories)}</div>
+                <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.kcal}</div>
               </div>
             </div>
           </Card>
@@ -244,14 +245,14 @@ export default function DashboardPage() {
 
         {/* Recent Meals */}
         <motion.div variants={item}>
-          <Card className="p-5 shadow-md border-purple-100 rounded-2xl bg-white">
+          <Card className="p-5 shadow-md rounded-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-purple-900">{t.recentMeals}</h2>
+              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.recentMeals}</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => router.push('/meals')}
-                className="text-xs text-purple-600 p-0 h-auto"
+                className="text-xs text-[hsl(var(--primary))] p-0 h-auto"
               >
                 <ArrowRight size={16} />
               </Button>
@@ -259,7 +260,7 @@ export default function DashboardPage() {
             
             <div className="space-y-3">
               {recentMeals.length === 0 ? (
-                <div className="text-center py-6 text-gray-500 text-sm">
+                <div className="text-center py-6 text-[hsl(var(--muted-foreground))] text-sm">
                   {t.noRecent}
                 </div>
               ) : (
@@ -269,14 +270,14 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer"
+                    className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-[hsl(var(--accent))/0.1] transition-colors cursor-pointer"
                   >
                     <div>
-                      <div className="font-medium text-purple-900">{meal.name}</div>
-                      <div className="text-xs text-gray-500">{meal.portion || ''}</div>
+                      <div className="font-medium text-[hsl(var(--foreground))]">{meal.name}</div>
+                      <div className="text-xs text-[hsl(var(--muted-foreground))]">{meal.portion || ''}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-purple-600">{Math.round(meal.calories)} {t.kcal}</div>
+                      <div className="font-medium text-[hsl(var(--primary))]">{Math.round(meal.calories)} {t.kcal}</div>
                     </div>
                   </motion.div>
                 ))

@@ -53,7 +53,7 @@ export function MobileNav() {
   return (
     <nav className="fixed bottom-0 left-0 z-50 w-full">
       <div className="mx-auto px-6">
-        <div className="flex h-16 items-center justify-around bg-white/80 backdrop-blur-md rounded-t-xl border border-purple-100 shadow-lg max-w-md mx-auto">
+        <div className="flex h-16 items-center justify-around bg-[hsl(var(--background))/0.8] backdrop-blur-md rounded-t-xl border border-[hsl(var(--border))] shadow-lg max-w-md mx-auto">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -64,7 +64,7 @@ export function MobileNav() {
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center -mt-6 h-14 w-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-300"
+                  className="flex items-center justify-center -mt-6 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
                 >
                   {item.icon}
                 </motion.div>
@@ -75,8 +75,8 @@ export function MobileNav() {
                   className={cn(
                     "flex items-center justify-center h-10 w-10 rounded-full",
                     pathname === item.href
-                      ? "bg-purple-100 text-purple-600"
-                      : "text-gray-500 hover:text-purple-600"
+                      ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                      : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                   )}
                 >
                   {item.icon}
@@ -85,8 +85,8 @@ export function MobileNav() {
               <span className={cn(
                 "mt-1 text-xs",
                 pathname === item.href
-                  ? "text-purple-600 font-medium"
-                  : "text-gray-500"
+                  ? "text-[hsl(var(--foreground))] font-medium"
+                  : "text-[hsl(var(--muted-foreground))]"
               )}>
                 {item.label}
               </span>

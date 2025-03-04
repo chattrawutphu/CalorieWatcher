@@ -52,9 +52,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark"]}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark", "chocolate"]}>
           <Providers>
             {children}
             <Toaster />

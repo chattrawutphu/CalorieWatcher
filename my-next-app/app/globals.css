@@ -12,67 +12,102 @@
 
 @layer base {
   :root {
-    /* Light theme (default) */
-    --background: 250 100% 99%;
-    --foreground: 224 71.4% 4.1%;
+    /* Light theme (default) with pastel colors */
+    --background: 330, 100%, 98%;
+    --foreground: 224, 71.4%, 4.1%;
     
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card: 0, 0%, 100%;
+    --card-foreground: 224, 71.4%, 4.1%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
+    --popover: 0, 0%, 100%;
+    --popover-foreground: 224, 71.4%, 4.1%;
     
-    --primary: 271 91% 65%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 320, 95%, 75%;
+    --primary-foreground: 210, 20%, 98%;
     
-    --secondary: 270 50% 96%;
-    --secondary-foreground: 271 91% 65%;
+    --secondary: 320, 70%, 95%;
+    --secondary-foreground: 320, 95%, 65%;
     
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
+    --muted: 320, 50%, 95%;
+    --muted-foreground: 320, 50%, 45%;
     
-    --accent: 270 50% 96%;
-    --accent-foreground: 271 91% 65%;
+    --accent: 320, 70%, 95%;
+    --accent-foreground: 320, 95%, 65%;
     
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0, 84.2%, 60.2%;
+    --destructive-foreground: 210, 20%, 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 271 91% 65%;
+    --border: 320, 70%, 90%;
+    --input: 320, 70%, 90%;
+    --ring: 320, 95%, 65%;
     
     --radius: 0.75rem;
   }
  
   .dark {
     /* Dark theme */
-    --background: 240 10% 4%;
-    --foreground: 210 20% 98%;
+    --background: 240, 10%, 4%;
+    --foreground: 210, 20%, 98%;
     
-    --card: 240 10% 8%;
-    --card-foreground: 210 20% 98%;
+    --card: 240, 10%, 8%;
+    --card-foreground: 210, 20%, 98%;
     
-    --popover: 240 10% 8%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 240, 10%, 8%;
+    --popover-foreground: 210, 20%, 98%;
     
-    --primary: 271 91% 65%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 271, 91%, 65%;
+    --primary-foreground: 210, 20%, 98%;
     
-    --secondary: 271 40% 20%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 271, 40%, 20%;
+    --secondary-foreground: 210, 20%, 98%;
     
-    --muted: 240 10% 16%;
-    --muted-foreground: 217.9 10.6% 64.9%;
+    --muted: 240, 10%, 16%;
+    --muted-foreground: 217.9, 10.6%, 64.9%;
     
-    --accent: 271 40% 20%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 271, 40%, 20%;
+    --accent-foreground: 210, 20%, 98%;
     
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0, 62.8%, 30.6%;
+    --destructive-foreground: 210, 20%, 98%;
     
-    --border: 240 10% 16%;
-    --input: 240 10% 16%;
-    --ring: 271 91% 55%;
+    --border: 240, 10%, 16%;
+    --input: 240, 10%, 16%;
+    --ring: 271, 91%, 55%;
+
+    --radius: 0.75rem;
+  }
+
+  .chocolate {
+    /* Dark Chocolate theme */
+    --background: 25, 30%, 10%;
+    --foreground: 28, 30%, 90%;
+    
+    --card: 25, 25%, 15%;
+    --card-foreground: 28, 30%, 90%;
+    
+    --popover: 25, 25%, 15%;
+    --popover-foreground: 28, 30%, 90%;
+    
+    --primary: 25, 60%, 30%;
+    --primary-foreground: 28, 30%, 90%;
+    
+    --secondary: 25, 30%, 20%;
+    --secondary-foreground: 28, 30%, 90%;
+    
+    --muted: 25, 20%, 20%;
+    --muted-foreground: 28, 20%, 70%;
+    
+    --accent: 25, 40%, 25%;
+    --accent-foreground: 28, 30%, 90%;
+    
+    --destructive: 0, 62.8%, 30.6%;
+    --destructive-foreground: 28, 30%, 90%;
+    
+    --border: 25, 30%, 20%;
+    --input: 25, 30%, 20%;
+    --ring: 25, 60%, 30%;
+    
+    --radius: 0.75rem;
   }
 }
 
@@ -101,6 +136,201 @@
   }
 }
 
+/* Custom animation for floating chocolate emojis */
+@keyframes float-chocolate {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -30px) rotate(10deg);
+  }
+  66% {
+    transform: translate(-20px, 20px) rotate(-10deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
 .animate-blob {
   animation: blob 7s infinite;
+}
+
+.animate-chocolate {
+  animation: float-chocolate 15s infinite;
+}
+
+.animation-delay-6000 {
+  animation-delay: 6s;
+}
+
+/* Theme-specific background gradients */
+.dark .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, hsl(240, 10%, 4%), hsl(240, 10%, 8%));
+}
+
+.chocolate .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, hsl(25, 30%, 10%), hsl(25, 25%, 15%));
+}
+
+/* Theme-specific blob colors */
+.dark .animate-blob {
+  background-color: hsla(271, 91%, 65%, 0.4);
+}
+
+.chocolate .animate-blob {
+  background-color: hsla(25, 60%, 30%, 0.4);
+}
+
+/* Chocolate theme background emojis */
+.chocolate::before {
+  content: "🍫";
+  position: fixed;
+  top: 15%;
+  left: 10%;
+  font-size: 8rem;
+  opacity: 0.1;
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 15s infinite;
+}
+
+.chocolate::after {
+  content: "🍪";
+  position: fixed;
+  bottom: 20%;
+  right: 15%;
+  font-size: 6rem;
+  opacity: 0.1;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 15s infinite;
+  animation-delay: 2s;
+}
+
+.chocolate .chocolate-emoji-1 {
+  content: "🍫";
+  position: fixed;
+  top: 40%;
+  right: 30%;
+  font-size: 4rem;
+  opacity: 0.08;
+  filter: blur(4px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 15s infinite;
+  animation-delay: 4s;
+}
+
+.chocolate .chocolate-emoji-2 {
+  content: "🍪";
+  position: fixed;
+  bottom: 35%;
+  left: 25%;
+  font-size: 3rem;
+  opacity: 0.06;
+  filter: blur(3px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 15s infinite;
+  animation-delay: 6s;
+}
+
+/* Small non-blurred chocolate emojis */
+.chocolate .chocolate-small-1 {
+  position: fixed;
+  top: 25%;
+  right: 20%;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 1s;
+}
+
+.chocolate .chocolate-small-2 {
+  position: fixed;
+  bottom: 45%;
+  left: 15%;
+  font-size: 2rem;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 3s;
+}
+
+.chocolate .chocolate-small-3 {
+  position: fixed;
+  top: 60%;
+  right: 40%;
+  font-size: 1.8rem;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 5s;
+}
+
+.chocolate .chocolate-small-4 {
+  position: fixed;
+  bottom: 15%;
+  left: 35%;
+  font-size: 1.5rem;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 7s;
+}
+
+.chocolate .chocolate-small-5 {
+  position: fixed;
+  top: 35%;
+  left: 25%;
+  font-size: 3rem;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 2s;
+}
+
+.chocolate .chocolate-small-6 {
+  position: fixed;
+  bottom: 30%;
+  right: 30%;
+  font-size: 2.2rem;
+  opacity: 0.11;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 4s;
+}
+
+.chocolate .chocolate-small-7 {
+  position: fixed;
+  top: 70%;
+  left: 45%;
+  font-size: 2.8rem;
+  opacity: 0.13;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 6s;
+}
+
+.chocolate .chocolate-small-8 {
+  position: fixed;
+  bottom: 60%;
+  right: 15%;
+  font-size: 1.7rem;
+  opacity: 0.09;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-chocolate 12s infinite;
+  animation-delay: 8s;
 }

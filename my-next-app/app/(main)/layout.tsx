@@ -24,15 +24,27 @@ export default function MainLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-purple-50 via-white to-purple-50 overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-[hsl(var(--background))] overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-purple-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob" />
-        <div className="absolute top-40 right-10 w-32 h-32 bg-pink-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-4 left-20 w-32 h-32 bg-blue-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000" />
+        <div className="absolute top-10 left-10 w-32 h-32 bg-[hsl(var(--primary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob" />
+        <div className="absolute top-40 right-10 w-32 h-32 bg-[hsl(var(--secondary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-4 left-20 w-32 h-32 bg-[hsl(var(--accent))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000" />
+        {/* Additional Chocolate Theme Emojis */}
+        <div className="chocolate-emoji-1" aria-hidden="true">🍫</div>
+        <div className="chocolate-emoji-2" aria-hidden="true">🍪</div>
+        {/* Small non-blurred chocolate emojis */}
+        <div className="chocolate-small-1" aria-hidden="true">🍫</div>
+        <div className="chocolate-small-2" aria-hidden="true">🍪</div>
+        <div className="chocolate-small-3" aria-hidden="true">🍫</div>
+        <div className="chocolate-small-4" aria-hidden="true">🍪</div>
+        <div className="chocolate-small-5" aria-hidden="true">🍫</div>
+        <div className="chocolate-small-6" aria-hidden="true">🍪</div>
+        <div className="chocolate-small-7" aria-hidden="true">🍫</div>
+        <div className="chocolate-small-8" aria-hidden="true">🍪</div>
       </div>
 
-      <header className="sticky top-0 z-40 w-full border-b border-purple-100 bg-white/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 w-full border-b border-[hsl(var(--border))] bg-[hsl(var(--background))/0.8] backdrop-blur-sm">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2">
             <motion.div 
@@ -48,7 +60,7 @@ export default function MainLayout({
                 priority
               />
             </motion.div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">CalorieWatcher</span>
+            <span className="text-xl font-bold text-[hsl(var(--foreground))]">CalorieWatcher</span>
           </Link>
           <div className="flex items-center space-x-3">
             <LanguageSelector />
@@ -60,10 +72,10 @@ export default function MainLayout({
                     <img
                       src={session.user.image}
                       alt={session.user.name || "User profile"}
-                      className="h-8 w-8 rounded-full ring-2 ring-purple-200"
+                      className="h-8 w-8 rounded-full ring-2 ring-[hsl(var(--ring))]"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white">
+                    <div className="h-8 w-8 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
                       <User className="h-5 w-5" />
                     </div>
                   )}
