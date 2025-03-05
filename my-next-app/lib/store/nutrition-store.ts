@@ -12,6 +12,7 @@ export interface FoodItem {
   servingSize: string;
   favorite: boolean;
   createdAt: Date;
+  category: 'protein' | 'vegetable' | 'fruit' | 'grain' | 'dairy' | 'snack' | 'beverage' | 'other';
 }
 
 export interface MealEntry {
@@ -38,6 +39,8 @@ export interface DailyLog {
   totalProtein: number;
   totalFat: number;
   totalCarbs: number;
+  moodRating?: number; // 1-5 rating (1:worst, 5:best)
+  notes?: string;
 }
 
 interface NutritionState {
@@ -58,6 +61,7 @@ interface NutritionState {
   updateMealEntry: (entryId: string, updates: Partial<MealEntry>) => void;
   setCurrentDate: (date: string) => void;
   updateGoals: (goals: Partial<NutritionGoals>) => void;
+  updateDailyMood: (date: string, moodRating: number, notes?: string) => void;
 }
 
 export const useNutritionStore = create<NutritionState>()(
@@ -245,6 +249,34 @@ export const useNutritionStore = create<NutritionState>()(
           goals: {
             ...get().goals,
             ...newGoals,
+          },
+        });
+      },
+      
+      updateDailyMood: (date, moodRating, notes) => {
+        const { dailyLogs } = get();
+        
+        // Get the current day's log or create a new one
+        const dayLog = dailyLogs[date] || {
+          date,
+          meals: [],
+          totalCalories: 0,
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFat: 0,
+        };
+        
+        // Update mood data
+        const updatedDayLog = {
+          ...dayLog,
+          moodRating,
+          notes: notes || dayLog.notes,
+        };
+        
+        set({
+          dailyLogs: {
+            ...dailyLogs,
+            [date]: updatedDayLog,
           },
         });
       },

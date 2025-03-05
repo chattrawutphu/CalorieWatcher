@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark", "chocolate"]}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark", "chocolate", "sweet"]}>
           <Providers>
             {children}
             <Toaster />

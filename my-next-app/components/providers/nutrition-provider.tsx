@@ -32,6 +32,8 @@ interface NutritionContextType {
     portion?: string;
   }>;
   meals: Array<any>;
+  updateDailyMood: (date: string, moodRating: number, notes?: string) => void;
+  getDailyMood: (date: string) => { moodRating?: number; notes?: string };
 }
 
 const NutritionContext = createContext<NutritionContextType | null>(null);
@@ -41,7 +43,8 @@ export function NutritionProvider({ children }: { children: React.ReactNode }) {
     dailyLogs, 
     goals, 
     currentDate, 
-    favoriteFoods 
+    favoriteFoods,
+    updateDailyMood 
   } = useNutritionStore();
 
   const getTodayStats = (): NutritionStats => {
@@ -112,6 +115,15 @@ export function NutritionProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  // Get mood data for a specific date
+  const getDailyMood = (date: string) => {
+    const log = dailyLogs[date];
+    return {
+      moodRating: log?.moodRating,
+      notes: log?.notes
+    };
+  };
+
   return (
     <NutritionContext.Provider 
       value={{
@@ -119,6 +131,8 @@ export function NutritionProvider({ children }: { children: React.ReactNode }) {
         goals,
         recentMeals: getRecentMeals(),
         meals: getMeals(),
+        updateDailyMood,
+        getDailyMood
       }}
     >
       {children}

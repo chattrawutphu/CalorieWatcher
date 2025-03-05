@@ -27,6 +27,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useLanguage } from "@/components/providers/language-provider";
 import { Search, ArrowLeft, ChevronRight, Plus, Utensils, History } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 // Translations
 const translations = {
@@ -34,8 +35,10 @@ const translations = {
     addFood: "Add Food",
     search: "Search",
     searchPlaceholder: "Search for a food...",
+    searchDescription: "Find foods to add to your log",
     recentlyAdded: "Recently Added",
     noRecent: "No recent foods added",
+    noResults: "No foods found",
     mealType: "Meal Type",
     breakfast: "Breakfast",
     lunch: "Lunch",
@@ -64,8 +67,10 @@ const translations = {
     addFood: "เพิ่มอาหาร",
     search: "ค้นหา",
     searchPlaceholder: "ค้นหาอาหาร...",
+    searchDescription: "ค้นหาอาหารเพื่อเพิ่มลงในบันทึกของคุณ",
     recentlyAdded: "เพิ่มล่าสุด",
     noRecent: "ไม่มีอาหารที่เพิ่มล่าสุด",
+    noResults: "ไม่พบอาหาร",
     mealType: "ประเภทมื้ออาหาร",
     breakfast: "อาหารเช้า",
     lunch: "อาหารกลางวัน",
@@ -95,8 +100,10 @@ const translations = {
     addFood: "食品を追加",
     search: "検索",
     searchPlaceholder: "食品を検索...",
+    searchDescription: "ログに追加する食品を検索",
     recentlyAdded: "最近追加した項目",
     noRecent: "最近追加した食品はありません",
+    noResults: "食品が見つかりません",
     mealType: "食事タイプ",
     breakfast: "朝食",
     lunch: "昼食",
@@ -126,8 +133,10 @@ const translations = {
     addFood: "添加食物",
     search: "搜索",
     searchPlaceholder: "搜索食物...",
+    searchDescription: "查找要添加到日志的食物",
     recentlyAdded: "最近添加",
     noRecent: "没有最近添加的食物",
+    noResults: "未找到食物",
     mealType: "餐类型",
     breakfast: "早餐",
     lunch: "午餐",
@@ -172,7 +181,9 @@ const item = {
 };
 
 export default function AddFoodPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const dateParam = searchParams.get('date');
   const mealTypeParam = searchParams.get("type");
   const { locale } = useLanguage();
   const t = translations[locale as keyof typeof translations] || translations.en;
@@ -193,6 +204,7 @@ export default function AddFoodPage() {
     carbs: "",
     fat: "",
     servingSize: "1 serving",
+    category: "other" as const
   });
   
   // Filter food items based on search term
@@ -229,10 +241,11 @@ export default function AddFoodPage() {
       foodItem: {
         ...selectedFood,
         favorite: false,
-        createdAt: new Date()
+        createdAt: new Date(),
+        category: selectedFood.category
       },
       quantity: quantity,
-      date: currentDate
+      date: dateParam || new Date().toISOString().split('T')[0],
     };
     
     addMeal(meal);
@@ -244,6 +257,7 @@ export default function AddFoodPage() {
     
     setSelectedFood(null);
     setQuantity(1);
+    router.push('/dashboard');
   };
   
   const handleAddCustomFood = () => {
@@ -258,7 +272,8 @@ export default function AddFoodPage() {
       fat: Number(customFood.fat) || 0,
       servingSize: customFood.servingSize || "1 serving",
       favorite: false,
-      createdAt: new Date()
+      createdAt: new Date(),
+      category: customFood.category
     };
     
     const meal: MealEntry = {
@@ -266,7 +281,7 @@ export default function AddFoodPage() {
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
       foodItem: newFood,
       quantity: quantity,
-      date: currentDate
+      date: dateParam || new Date().toISOString().split('T')[0],
     };
     
     addMeal(meal);
@@ -283,8 +298,10 @@ export default function AddFoodPage() {
       protein: "",
       carbs: "",
       fat: "",
-      servingSize: ""
+      servingSize: "",
+      category: "other"
     });
+    router.push('/dashboard');
   };
   
   return (

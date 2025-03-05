@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart } from "lucide-react";
+import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart, Sun, Moon, Cookie, Candy, Lock, Coins } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/components/providers/language-provider";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 
 // Text translations
 const translations = {
@@ -37,6 +38,31 @@ const translations = {
     recentMeals: "Recent Meals",
     viewAll: "View All",
     noMeals: "No recent meals. Add your first meal!",
+    themeStore: "Theme Store",
+    themeStoreDesc: "Customize your experience with beautiful themes",
+    coins: "coins",
+    free: "Free",
+    owned: "Owned",
+    buy: "Buy",
+    locked: "Locked",
+    light: {
+      name: "Light Theme",
+      desc: "Clean and bright interface"
+    },
+    dark: {
+      name: "Dark Theme",
+      desc: "Easy on the eyes"
+    },
+    chocolate: {
+      name: "Chocolate Theme",
+      desc: "Rich and delicious design",
+      price: 500
+    },
+    sweet: {
+      name: "Sweet Theme",
+      desc: "Cute and colorful experience",
+      price: 800
+    }
   },
   th: {
     greeting: "สวัสดี",
@@ -61,6 +87,31 @@ const translations = {
     recentMeals: "อาหารล่าสุด",
     viewAll: "ดูทั้งหมด",
     noMeals: "ไม่มีมื้ออาหารล่าสุด เพิ่มมื้อแรกของคุณ!",
+    themeStore: "ร้านค้าธีม",
+    themeStoreDesc: "ปรับแต่งประสบการณ์ด้วยธีมสวยๆ",
+    coins: "เหรียญ",
+    free: "ฟรี",
+    owned: "เป็นเจ้าของ",
+    buy: "ซื้อ",
+    locked: "ล็อค",
+    light: {
+      name: "ธีมสว่าง",
+      desc: "อินเตอร์เฟซที่สะอาดและสว่าง"
+    },
+    dark: {
+      name: "ธีมมืด",
+      desc: "ถนอมสายตา"
+    },
+    chocolate: {
+      name: "ธีมช็อกโกแลต",
+      desc: "การออกแบบที่หอมหวาน",
+      price: 500
+    },
+    sweet: {
+      name: "ธีมหวาน",
+      desc: "ประสบการณ์ที่น่ารักและสีสันสดใส",
+      price: 800
+    }
   },
   ja: {
     greeting: "こんにちは",
@@ -85,6 +136,31 @@ const translations = {
     recentMeals: "最近の食事",
     viewAll: "すべて表示",
     noMeals: "最近の食事はありません。最初の食事を追加しましょう！",
+    themeStore: "テーマストア",
+    themeStoreDesc: "美しいテーマでカスタマイズ",
+    coins: "コイン",
+    free: "無料",
+    owned: "所有",
+    buy: "購入",
+    locked: "ロック",
+    light: {
+      name: "ライトテーマ",
+      desc: "クリーンで明るいインターフェース"
+    },
+    dark: {
+      name: "ダークテーマ",
+      desc: "目に優しい"
+    },
+    chocolate: {
+      name: "チョコレートテーマ",
+      desc: "リッチで美味しいデザイン",
+      price: 500
+    },
+    sweet: {
+      name: "スイートテーマ",
+      desc: "かわいいカラフルな体験",
+      price: 800
+    }
   },
   zh: {
     greeting: "你好",
@@ -109,6 +185,31 @@ const translations = {
     recentMeals: "最近的膳食",
     viewAll: "查看全部",
     noMeals: "没有最近的膳食。添加您的第一餐！",
+    themeStore: "主题商店",
+    themeStoreDesc: "使用精美主题自定义体验",
+    coins: "金币",
+    free: "免费",
+    owned: "已拥有",
+    buy: "购买",
+    locked: "锁定",
+    light: {
+      name: "明亮主题",
+      desc: "清新明亮的界面"
+    },
+    dark: {
+      name: "暗黑主题",
+      desc: "护眼模式"
+    },
+    chocolate: {
+      name: "巧克力主题",
+      desc: "丰富美味的设计",
+      price: 500
+    },
+    sweet: {
+      name: "甜蜜主题",
+      desc: "可爱多彩的体验",
+      price: 800
+    }
   },
 };
 
@@ -118,7 +219,8 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.1,
+      delayChildren: 0.2
     }
   }
 };
@@ -127,6 +229,61 @@ const item = {
   hidden: { y: 20, opacity: 0 },
   show: { y: 0, opacity: 1 }
 };
+
+const ThemeCard = ({ 
+  icon, 
+  name, 
+  description, 
+  price, 
+  isOwned,
+  onClick,
+  disabled
+}: {
+  icon: React.ReactNode;
+  name: string;
+  description: string;
+  price?: number;
+  isOwned: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) => (
+  <motion.div variants={item}>
+    <Card className="overflow-hidden">
+      <div className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--accent))/0.1] flex items-center justify-center text-[hsl(var(--foreground))]">
+              {icon}
+            </div>
+            <div>
+              <h3 className="font-semibold">{name}</h3>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{description}</p>
+            </div>
+          </div>
+        </div>
+        <Button
+          onClick={onClick}
+          disabled={disabled}
+          variant={isOwned ? "outline" : "default"}
+          className="w-full"
+        >
+          {price ? (
+            isOwned ? (
+              <span>Owned</span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4" />
+                <span>{price}</span>
+              </div>
+            )
+          ) : (
+            <span>Free</span>
+          )}
+        </Button>
+      </div>
+    </Card>
+  </motion.div>
+);
 
 export default function HomePage() {
   const { data: session } = useSession();
@@ -168,21 +325,74 @@ export default function HomePage() {
   
   // Get recent meals
   const recentMeals = todayLog.meals.slice(0, 3);
+
+  const { theme, setTheme } = useTheme();
   
+  // In a real app, these would come from a user's data
+  const userCoins = 1000;
+  const ownedThemes = ["light", "dark", "chocolate"];
+
   return (
-    <motion.div 
-      className="space-y-6"
+    <motion.div
       variants={container}
       initial="hidden"
       animate="show"
+      className="max-w-md mx-auto p-4 space-y-8"
     >
-      {/* Welcome Section */}
-      <motion.div className="flex flex-col space-y-2" variants={item}>
+      <motion.div variants={item} className="space-y-2">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 dark-chocolate:from-[#d4a66a] dark-chocolate:to-[#a3663d] sweet:from-[#FF85C0] sweet:via-[#6FB2FF] sweet:to-[#9DE7B5] bg-clip-text text-transparent">
           {t.greeting}, {session?.user?.name?.split(' ')[0] || ''}!
         </h1>
         <p className="text-gray-500 dark-chocolate:text-gray-400 sweet:text-pink-400">{t.subtitle}</p>
       </motion.div>
+
+      <div className="space-y-4">
+        <motion.div variants={item}>
+          <h2 className="text-xl font-semibold mb-1">{t.themeStore}</h2>
+          <p className="text-[hsl(var(--muted-foreground))]">{t.themeStoreDesc}</p>
+        </motion.div>
+
+        <div className="grid gap-4">
+          <ThemeCard
+            icon={<Sun className="h-6 w-6" />}
+            name={t.light.name}
+            description={t.light.desc}
+            isOwned={true}
+            onClick={() => setTheme("light")}
+          />
+
+          <ThemeCard
+            icon={<Moon className="h-6 w-6" />}
+            name={t.dark.name}
+            description={t.dark.desc}
+            isOwned={true}
+            onClick={() => setTheme("dark")}
+          />
+
+          <ThemeCard
+            icon={<Cookie className="h-6 w-6" />}
+            name={t.chocolate.name}
+            description={t.chocolate.desc}
+            price={t.chocolate.price}
+            isOwned={ownedThemes.includes("chocolate")}
+            onClick={() => setTheme("chocolate")}
+          />
+
+          <ThemeCard
+            icon={<Candy className="h-6 w-6" />}
+            name={t.sweet.name}
+            description={t.sweet.desc}
+            price={t.sweet.price}
+            isOwned={ownedThemes.includes("sweet")}
+            onClick={() => {
+              if (ownedThemes.includes("sweet")) {
+                setTheme("sweet");
+              }
+              // Add purchase logic here
+            }}
+          />
+        </div>
+      </div>
 
       {/* Quick Action Buttons */}
       <motion.div 

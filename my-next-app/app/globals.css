@@ -109,6 +109,39 @@
     
     --radius: 0.75rem;
   }
+
+  .sweet {
+    /* Sweet theme with pastel colors */
+    --background: 325, 100%, 98%;
+    --foreground: 320, 50%, 30%;
+    
+    --card: 0, 0%, 100%;
+    --card-foreground: 320, 50%, 30%;
+    
+    --popover: 0, 0%, 100%;
+    --popover-foreground: 320, 50%, 30%;
+    
+    --primary: 325, 95%, 85%;
+    --primary-foreground: 320, 50%, 30%;
+    
+    --secondary: 199, 95%, 90%;
+    --secondary-foreground: 199, 50%, 40%;
+    
+    --muted: 325, 70%, 90%;
+    --muted-foreground: 325, 50%, 40%;
+    
+    --accent: 199, 70%, 90%;
+    --accent-foreground: 199, 50%, 40%;
+    
+    --destructive: 0, 84.2%, 60.2%;
+    --destructive-foreground: 210, 20%, 98%;
+
+    --border: 325, 70%, 90%;
+    --input: 325, 70%, 90%;
+    --ring: 325, 95%, 85%;
+    
+    --radius: 0.75rem;
+  }
 }
 
 @layer base {
@@ -333,4 +366,194 @@
   z-index: 0;
   animation: float-chocolate 12s infinite;
   animation-delay: 8s;
+}
+
+/* Sweet theme background emojis */
+.sweet::before {
+  content: "🍰";
+  position: fixed;
+  top: 15%;
+  left: 10%;
+  font-size: 8rem;
+  opacity: 0.1;
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 15s infinite;
+}
+
+.sweet::after {
+  content: "🧁";
+  position: fixed;
+  bottom: 20%;
+  right: 15%;
+  font-size: 6rem;
+  opacity: 0.1;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 15s infinite;
+  animation-delay: 2s;
+}
+
+.sweet .sweet-emoji-1 {
+  content: "🍦";
+  position: fixed;
+  top: 40%;
+  right: 30%;
+  font-size: 4rem;
+  opacity: 0.08;
+  filter: blur(4px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 15s infinite;
+  animation-delay: 4s;
+}
+
+.sweet .sweet-emoji-2 {
+  content: "🍭";
+  position: fixed;
+  bottom: 35%;
+  left: 25%;
+  font-size: 3rem;
+  opacity: 0.06;
+  filter: blur(3px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 15s infinite;
+  animation-delay: 6s;
+}
+
+/* Small non-blurred sweet emojis */
+.sweet .sweet-small-1 {
+  position: fixed;
+  top: 25%;
+  right: 20%;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 1s;
+}
+
+.sweet .sweet-small-2 {
+  position: fixed;
+  bottom: 45%;
+  left: 15%;
+  font-size: 2rem;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 3s;
+}
+
+.sweet .sweet-small-3 {
+  position: fixed;
+  top: 60%;
+  right: 40%;
+  font-size: 1.8rem;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 5s;
+}
+
+.sweet .sweet-small-4 {
+  position: fixed;
+  bottom: 15%;
+  left: 35%;
+  font-size: 1.5rem;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 7s;
+}
+
+.sweet .sweet-small-5 {
+  position: fixed;
+  top: 35%;
+  left: 25%;
+  font-size: 3rem;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 2s;
+}
+
+.sweet .sweet-small-6 {
+  position: fixed;
+  bottom: 30%;
+  right: 30%;
+  font-size: 2.2rem;
+  opacity: 0.11;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 4s;
+}
+
+.sweet .sweet-small-7 {
+  position: fixed;
+  top: 70%;
+  left: 45%;
+  font-size: 2.8rem;
+  opacity: 0.13;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 6s;
+}
+
+.sweet .sweet-small-8 {
+  position: fixed;
+  bottom: 60%;
+  right: 15%;
+  font-size: 1.7rem;
+  opacity: 0.09;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-sweet 12s infinite;
+  animation-delay: 8s;
+}
+
+/* Custom animation for floating sweet emojis */
+@keyframes float-sweet {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(20px, -20px) rotate(5deg) scale(1.05);
+  }
+  66% {
+    transform: translate(-15px, 15px) rotate(-5deg) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+}
+
+/* Theme-specific blob colors */
+.sweet .animate-blob {
+  background-color: hsla(325, 95%, 85%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+.sweet .animate-blob:nth-child(2) {
+  background-color: hsla(199, 95%, 85%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+.sweet .animate-blob:nth-child(3) {
+  background-color: hsla(325, 95%, 85%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+/* Theme-specific background gradients */
+.sweet .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, hsl(325, 100%, 98%), hsl(325, 100%, 96%));
 }
