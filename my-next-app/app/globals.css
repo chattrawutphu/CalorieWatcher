@@ -10,6 +10,38 @@
   animation-delay: 4s;
 }
 
+/* Add custom animations for the AI Food Assistant */
+@keyframes progressBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progressBar {
+  animation: progressBar 2s ease-in-out infinite;
+}
+
+@keyframes fadeAndSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeAndSlide {
+  animation: fadeAndSlide 0.5s ease-out forwards;
+}
+
 @layer base {
   :root {
     /* Light theme (default) with pastel colors */
@@ -139,6 +171,39 @@
     --border: 325, 70%, 90%;
     --input: 325, 70%, 90%;
     --ring: 325, 95%, 85%;
+    
+    --radius: 0.75rem;
+  }
+
+  .broccoli {
+    /* Broccoli theme with dark green colors */
+    --background: 120, 40%, 98%;
+    --foreground: 125, 40%, 15%;
+    
+    --card: 0, 0%, 100%;
+    --card-foreground: 125, 40%, 15%;
+    
+    --popover: 0, 0%, 100%;
+    --popover-foreground: 125, 40%, 15%;
+    
+    --primary: 120, 60%, 25%;
+    --primary-foreground: 120, 40%, 98%;
+    
+    --secondary: 120, 40%, 92%;
+    --secondary-foreground: 120, 60%, 25%;
+    
+    --muted: 120, 30%, 92%;
+    --muted-foreground: 120, 30%, 35%;
+    
+    --accent: 120, 40%, 92%;
+    --accent-foreground: 120, 60%, 25%;
+    
+    --destructive: 0, 84.2%, 60.2%;
+    --destructive-foreground: 120, 40%, 98%;
+
+    --border: 120, 30%, 85%;
+    --input: 120, 30%, 85%;
+    --ring: 120, 60%, 25%;
     
     --radius: 0.75rem;
   }
@@ -556,4 +621,172 @@
 /* Theme-specific background gradients */
 .sweet .bg-gradient-to-br {
   background-image: linear-gradient(to bottom right, hsl(325, 100%, 98%), hsl(325, 100%, 96%));
+}
+
+/* Custom animation for floating broccoli emojis */
+@keyframes float-broccoli {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(20px, -20px) rotate(5deg) scale(1.05);
+  }
+  66% {
+    transform: translate(-15px, 15px) rotate(-5deg) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+}
+
+/* Broccoli theme background emojis */
+.broccoli::before {
+  content: "🥦";
+  position: fixed;
+  top: 15%;
+  left: 10%;
+  font-size: 8rem;
+  opacity: 0.1;
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 15s infinite;
+}
+
+.broccoli::after {
+  content: "🥬";
+  position: fixed;
+  bottom: 20%;
+  right: 15%;
+  font-size: 6rem;
+  opacity: 0.1;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 15s infinite;
+  animation-delay: 2s;
+}
+
+.broccoli .broccoli-emoji-1 {
+  content: "🥦";
+  position: fixed;
+  top: 40%;
+  right: 30%;
+  font-size: 4rem;
+  opacity: 0.08;
+  filter: blur(4px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 15s infinite;
+  animation-delay: 4s;
+}
+
+.broccoli .broccoli-emoji-2 {
+  content: "🥬";
+  position: fixed;
+  bottom: 35%;
+  left: 25%;
+  font-size: 3rem;
+  opacity: 0.06;
+  filter: blur(3px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 15s infinite;
+  animation-delay: 6s;
+}
+
+/* Small non-blurred broccoli emojis */
+.broccoli .broccoli-small-1 {
+  position: fixed;
+  top: 25%;
+  right: 20%;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 1s;
+}
+
+.broccoli .broccoli-small-2 {
+  position: fixed;
+  bottom: 45%;
+  left: 15%;
+  font-size: 2rem;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 3s;
+}
+
+.broccoli .broccoli-small-3 {
+  position: fixed;
+  top: 60%;
+  right: 40%;
+  font-size: 1.8rem;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 5s;
+}
+
+.broccoli .broccoli-small-4 {
+  position: fixed;
+  bottom: 15%;
+  left: 35%;
+  font-size: 1.5rem;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 7s;
+}
+
+/* Theme-specific background gradients */
+.broccoli .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, hsl(120, 40%, 98%), hsl(120, 40%, 92%));
+}
+
+/* Theme-specific blob colors */
+.broccoli .animate-blob {
+  background-color: hsla(120, 60%, 25%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+.broccoli .animate-blob:nth-child(2) {
+  background-color: hsla(120, 40%, 35%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+.broccoli .animate-blob:nth-child(3) {
+  background-color: hsla(120, 50%, 30%, 0.4);
+  mix-blend-mode: multiply;
+}
+
+/* Add shimmer effect for loading states */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsla(var(--muted), 0) 0%,
+    hsla(var(--muted), 0.2) 50%,
+    hsla(var(--muted), 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Slow transition for hover effects */
+.transition-all-slow {
+  transition: all 0.5s ease-in-out;
 }

@@ -10,7 +10,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       attribute="class"
       defaultTheme="light"
       enableSystem={true}
-      themes={["light", "dark", "chocolate", "sweet"]}
+      themes={["light", "dark", "chocolate", "sweet", "broccoli"]}
       {...props}
     >
       {children}

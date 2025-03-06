@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart, Sun, Moon, Cookie, Candy, Lock, Coins } from "lucide-react";
+import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart, Sun, Moon, Cookie, Candy, Lock, Coins, Crown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/components/providers/language-provider";
 import { motion } from "framer-motion";
@@ -16,201 +16,77 @@ import { useTheme } from "next-themes";
 // Text translations
 const translations = {
   en: {
-    greeting: "Hello",
-    todaySummary: "Today's Summary",
-    caloriesRemaining: "Calories Remaining",
-    of: "of",
-    calories: "calories",
-    protein: "Protein",
-    fat: "Fat",
-    carbs: "Carbs",
-    g: "g",
-    addMeal: "Add Meal",
-    breakfast: "Breakfast",
-    lunch: "Lunch",
-    dinner: "Dinner",
-    snack: "Snack",
-    welcome: "Welcome back",
-    subtitle: "Start tracking your nutrition",
-    quickAdd: "Quick Add",
-    viewDashboard: "View Dashboard",
-    stats: "Your Stats",
-    recentMeals: "Recent Meals",
-    viewAll: "View All",
-    noMeals: "No recent meals. Add your first meal!",
-    themeStore: "Theme Store",
-    themeStoreDesc: "Customize your experience with beautiful themes",
-    coins: "coins",
+    title: "Theme Shop",
+    subtitle: "Customize your experience",
+    currentTheme: "Current Theme",
+    applyTheme: "Apply Theme",
     free: "Free",
-    owned: "Owned",
-    buy: "Buy",
-    locked: "Locked",
-    light: {
-      name: "Light Theme",
-      desc: "Clean and bright interface"
-    },
-    dark: {
-      name: "Dark Theme",
-      desc: "Easy on the eyes"
-    },
-    chocolate: {
-      name: "Chocolate Theme",
-      desc: "Rich and delicious design",
-      price: 500
-    },
-    sweet: {
-      name: "Sweet Theme",
-      desc: "Cute and colorful experience",
-      price: 800
+    coins: "coins",
+    premiumTitle: "Premium Features",
+    premiumDesc: "Get access to exclusive themes and features",
+    upgradeNow: "Upgrade Now",
+    themes: {
+      light: "Light Theme",
+      dark: "Dark Theme",
+      chocolate: "Chocolate Theme",
+      sweet: "Sweet Theme",
+      broccoli: "Broccoli Theme"
     }
   },
   th: {
-    greeting: "สวัสดี",
-    todaySummary: "สรุปประจำวัน",
-    caloriesRemaining: "แคลอรี่ที่เหลือ",
-    of: "จาก",
-    calories: "แคลอรี่",
-    protein: "โปรตีน",
-    fat: "ไขมัน",
-    carbs: "คาร์โบไฮเดรต",
-    g: "ก.",
-    addMeal: "เพิ่มมื้อ",
-    breakfast: "อาหารเช้า",
-    lunch: "อาหารกลางวัน",
-    dinner: "อาหารเย็น",
-    snack: "ของว่าง",
-    welcome: "ยินดีต้อนรับกลับ",
-    subtitle: "เริ่มติดตามโภชนาการของคุณ",
-    quickAdd: "เพิ่มอย่างรวดเร็ว",
-    viewDashboard: "ดูแดชบอร์ด",
-    stats: "สถิติของคุณ",
-    recentMeals: "อาหารล่าสุด",
-    viewAll: "ดูทั้งหมด",
-    noMeals: "ไม่มีมื้ออาหารล่าสุด เพิ่มมื้อแรกของคุณ!",
-    themeStore: "ร้านค้าธีม",
-    themeStoreDesc: "ปรับแต่งประสบการณ์ด้วยธีมสวยๆ",
-    coins: "เหรียญ",
+    title: "ร้านค้าธีม",
+    subtitle: "ปรับแต่งประสบการณ์ของคุณ",
+    currentTheme: "ธีมปัจจุบัน",
+    applyTheme: "ใช้ธีม",
     free: "ฟรี",
-    owned: "เป็นเจ้าของ",
-    buy: "ซื้อ",
-    locked: "ล็อค",
-    light: {
-      name: "ธีมสว่าง",
-      desc: "อินเตอร์เฟซที่สะอาดและสว่าง"
-    },
-    dark: {
-      name: "ธีมมืด",
-      desc: "ถนอมสายตา"
-    },
-    chocolate: {
-      name: "ธีมช็อกโกแลต",
-      desc: "การออกแบบที่หอมหวาน",
-      price: 500
-    },
-    sweet: {
-      name: "ธีมหวาน",
-      desc: "ประสบการณ์ที่น่ารักและสีสันสดใส",
-      price: 800
+    coins: "เหรียญ",
+    premiumTitle: "ฟีเจอร์พรีเมียม",
+    premiumDesc: "เข้าถึงธีมและฟีเจอร์พิเศษ",
+    upgradeNow: "อัพเกรดเลย",
+    themes: {
+      light: "ธีมสว่าง",
+      dark: "ธีมมืด",
+      chocolate: "ธีมช็อกโกแลต",
+      sweet: "ธีมหวาน",
+      broccoli: "ธีมบร็อคโคลี่"
     }
   },
   ja: {
-    greeting: "こんにちは",
-    todaySummary: "今日のまとめ",
-    caloriesRemaining: "残りのカロリー",
-    of: "から",
-    calories: "カロリー",
-    protein: "タンパク質",
-    fat: "脂肪",
-    carbs: "炭水化物",
-    g: "g",
-    addMeal: "食事を追加",
-    breakfast: "朝食",
-    lunch: "昼食",
-    dinner: "夕食",
-    snack: "おやつ",
-    welcome: "おかえりなさい",
-    subtitle: "栄養トラッキングを始めましょう",
-    quickAdd: "クイック追加",
-    viewDashboard: "ダッシュボードを表示",
-    stats: "あなたの統計",
-    recentMeals: "最近の食事",
-    viewAll: "すべて表示",
-    noMeals: "最近の食事はありません。最初の食事を追加しましょう！",
-    themeStore: "テーマストア",
-    themeStoreDesc: "美しいテーマでカスタマイズ",
-    coins: "コイン",
+    title: "テーマショップ",
+    subtitle: "体験をカスタマイズ",
+    currentTheme: "現在のテーマ",
+    applyTheme: "テーマを適用",
     free: "無料",
-    owned: "所有",
-    buy: "購入",
-    locked: "ロック",
-    light: {
-      name: "ライトテーマ",
-      desc: "クリーンで明るいインターフェース"
-    },
-    dark: {
-      name: "ダークテーマ",
-      desc: "目に優しい"
-    },
-    chocolate: {
-      name: "チョコレートテーマ",
-      desc: "リッチで美味しいデザイン",
-      price: 500
-    },
-    sweet: {
-      name: "スイートテーマ",
-      desc: "かわいいカラフルな体験",
-      price: 800
+    coins: "コイン",
+    premiumTitle: "プレミアム機能",
+    premiumDesc: "限定テーマと機能にアクセス",
+    upgradeNow: "今すぐアップグレード",
+    themes: {
+      light: "ライトテーマ",
+      dark: "ダークテーマ",
+      chocolate: "チョコレートテーマ",
+      sweet: "スイートテーマ",
+      broccoli: "ブロッコリーテーマ"
     }
   },
   zh: {
-    greeting: "你好",
-    todaySummary: "今日总结",
-    caloriesRemaining: "剩余卡路里",
-    of: "共",
-    calories: "卡路里",
-    protein: "蛋白质",
-    fat: "脂肪",
-    carbs: "碳水化合物",
-    g: "克",
-    addMeal: "添加餐食",
-    breakfast: "早餐",
-    lunch: "午餐",
-    dinner: "晚餐",
-    snack: "点心",
-    welcome: "欢迎回来",
-    subtitle: "开始追踪您的营养",
-    quickAdd: "快速添加",
-    viewDashboard: "查看仪表板",
-    stats: "您的统计数据",
-    recentMeals: "最近的膳食",
-    viewAll: "查看全部",
-    noMeals: "没有最近的膳食。添加您的第一餐！",
-    themeStore: "主题商店",
-    themeStoreDesc: "使用精美主题自定义体验",
-    coins: "金币",
+    title: "主题商店",
+    subtitle: "自定义您的体验",
+    currentTheme: "当前主题",
+    applyTheme: "应用主题",
     free: "免费",
-    owned: "已拥有",
-    buy: "购买",
-    locked: "锁定",
-    light: {
-      name: "明亮主题",
-      desc: "清新明亮的界面"
-    },
-    dark: {
-      name: "暗黑主题",
-      desc: "护眼模式"
-    },
-    chocolate: {
-      name: "巧克力主题",
-      desc: "丰富美味的设计",
-      price: 500
-    },
-    sweet: {
-      name: "甜蜜主题",
-      desc: "可爱多彩的体验",
-      price: 800
+    coins: "金币",
+    premiumTitle: "高级功能",
+    premiumDesc: "获取独家主题和功能",
+    upgradeNow: "立即升级",
+    themes: {
+      light: "明亮主题",
+      dark: "暗黑主题",
+      chocolate: "巧克力主题",
+      sweet: "甜蜜主题",
+      broccoli: "西兰花主题"
     }
-  },
+  }
 };
 
 // Spring animation variants
@@ -285,230 +161,231 @@ const ThemeCard = ({
   </motion.div>
 );
 
-export default function HomePage() {
-  const { data: session } = useSession();
+export default function ShopPage() {
   const { locale } = useLanguage();
-  const t = translations[locale as keyof typeof translations] || translations.en;
-  
-  const { goals, dailyLogs, currentDate } = useNutritionStore();
-  
-  // Get today's log or create an empty one
-  const todayLog = dailyLogs[currentDate] || {
-    date: currentDate,
-    meals: [],
-    totalCalories: 0,
-    totalProtein: 0,
-    totalFat: 0,
-    totalCarbs: 0,
-  };
-  
-  // Calculate remaining calories
-  const caloriesRemaining = goals.dailyCalorieGoal - todayLog.totalCalories;
-  const caloriesPercentage = Math.min(100, (todayLog.totalCalories / goals.dailyCalorieGoal) * 100);
-  
-  // Calculate macro progress
-  const targetProtein = (goals.dailyCalorieGoal * (goals.macroRatios.protein / 100)) / 4; // 4 calories per gram of protein
-  const targetFat = (goals.dailyCalorieGoal * (goals.macroRatios.fat / 100)) / 9; // 9 calories per gram of fat
-  const targetCarbs = (goals.dailyCalorieGoal * (goals.macroRatios.carbs / 100)) / 4; // 4 calories per gram of carbs
-  
-  const proteinPercentage = Math.min(100, (todayLog.totalProtein / targetProtein) * 100);
-  const fatPercentage = Math.min(100, (todayLog.totalFat / targetFat) * 100);
-  const carbsPercentage = Math.min(100, (todayLog.totalCarbs / targetCarbs) * 100);
-  
-  // Group meals by meal type
-  const mealsByType = {
-    breakfast: todayLog.meals.filter(meal => meal.mealType === 'breakfast'),
-    lunch: todayLog.meals.filter(meal => meal.mealType === 'lunch'),
-    dinner: todayLog.meals.filter(meal => meal.mealType === 'dinner'),
-    snack: todayLog.meals.filter(meal => meal.mealType === 'snack'),
-  };
-  
-  // Get recent meals
-  const recentMeals = todayLog.meals.slice(0, 3);
-
+  const t = translations[locale as keyof typeof translations];
   const { theme, setTheme } = useTheme();
-  
-  // In a real app, these would come from a user's data
-  const userCoins = 1000;
-  const ownedThemes = ["light", "dark", "chocolate"];
+
+  const themes = [
+    {
+      name: "light",
+      displayName: t.themes.light,
+      icon: <Sun className="h-5 w-5" />,
+      price: 0,
+      colors: {
+        bg: "#FFFFFF",
+        text: "#020617",
+        primary: "#3B82F6",
+        muted: "#64748b"
+      }
+    },
+    {
+      name: "dark",
+      displayName: t.themes.dark,
+      icon: <Moon className="h-5 w-5" />,
+      price: 0,
+      colors: {
+        bg: "#020617",
+        text: "#FFFFFF",
+        primary: "#3B82F6",
+        muted: "#94a3b8"
+      }
+    },
+    {
+      name: "chocolate",
+      displayName: t.themes.chocolate,
+      icon: <Cookie className="h-5 w-5" />,
+      price: 200,
+      colors: {
+        bg: "#211513",
+        text: "#e8d9cf",
+        primary: "#854d30",
+        muted: "#8c7b6e"
+      }
+    },
+    {
+      name: "sweet",
+      displayName: t.themes.sweet,
+      icon: <Candy className="h-5 w-5" />,
+      price: 200,
+      colors: {
+        bg: "#fdf2f8",
+        text: "#831843",
+        primary: "#ec4899",
+        muted: "#9d174d"
+      }
+    },
+    {
+      name: "broccoli",
+      displayName: t.themes.broccoli,
+      icon: <AppleIcon className="h-5 w-5" />,
+      price: 300,
+      colors: {
+        bg: "#f0fdf4",
+        text: "#14532d",
+        primary: "#16a34a",
+        muted: "#15803d"
+      }
+    },
+  ];
 
   return (
     <motion.div
       variants={container}
       initial="hidden"
       animate="show"
-      className="max-w-md mx-auto p-4 space-y-8"
+      className="space-y-6 pb-20"
     >
-      <motion.div variants={item} className="space-y-2">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 dark-chocolate:from-[#d4a66a] dark-chocolate:to-[#a3663d] sweet:from-[#FF85C0] sweet:via-[#6FB2FF] sweet:to-[#9DE7B5] bg-clip-text text-transparent">
-          {t.greeting}, {session?.user?.name?.split(' ')[0] || ''}!
-        </h1>
-        <p className="text-gray-500 dark-chocolate:text-gray-400 sweet:text-pink-400">{t.subtitle}</p>
-      </motion.div>
-
-      <div className="space-y-4">
-        <motion.div variants={item}>
-          <h2 className="text-xl font-semibold mb-1">{t.themeStore}</h2>
-          <p className="text-[hsl(var(--muted-foreground))]">{t.themeStoreDesc}</p>
-        </motion.div>
-
-        <div className="grid gap-4">
-          <ThemeCard
-            icon={<Sun className="h-6 w-6" />}
-            name={t.light.name}
-            description={t.light.desc}
-            isOwned={true}
-            onClick={() => setTheme("light")}
-          />
-
-          <ThemeCard
-            icon={<Moon className="h-6 w-6" />}
-            name={t.dark.name}
-            description={t.dark.desc}
-            isOwned={true}
-            onClick={() => setTheme("dark")}
-          />
-
-          <ThemeCard
-            icon={<Cookie className="h-6 w-6" />}
-            name={t.chocolate.name}
-            description={t.chocolate.desc}
-            price={t.chocolate.price}
-            isOwned={ownedThemes.includes("chocolate")}
-            onClick={() => setTheme("chocolate")}
-          />
-
-          <ThemeCard
-            icon={<Candy className="h-6 w-6" />}
-            name={t.sweet.name}
-            description={t.sweet.desc}
-            price={t.sweet.price}
-            isOwned={ownedThemes.includes("sweet")}
-            onClick={() => {
-              if (ownedThemes.includes("sweet")) {
-                setTheme("sweet");
-              }
-              // Add purchase logic here
-            }}
-          />
+      {/* Header */}
+      <motion.div variants={item} className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">{t.title}</h1>
+          <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-      </div>
-
-      {/* Quick Action Buttons */}
-      <motion.div 
-        className="grid grid-cols-2 gap-4"
-        variants={item}
-      >
-        <Link href="/add">
-          <Button className="w-full h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 dark-chocolate:from-[#a3663d] dark-chocolate:to-[#8b4513] dark-chocolate:hover:from-[#8b4513] dark-chocolate:hover:to-[#6b3100] sweet:from-[#FF85C0] sweet:to-[#6FB2FF] sweet:hover:from-[#ff6eb3] sweet:hover:to-[#5a9ef0] rounded-xl shadow-md shadow-purple-200 dark-chocolate:shadow-[#2a1e16] sweet:shadow-pink-200">
-            <Plus className="mr-2 h-5 w-5" />
-            {t.quickAdd}
-          </Button>
-        </Link>
-        <Link href="/dashboard">
-          <Button variant="outline" className="w-full h-14 border-purple-200 dark-chocolate:border-[#3a2a20] sweet:border-pink-200 text-purple-600 dark-chocolate:text-[#d4a66a] sweet:text-pink-500 hover:bg-purple-50 dark-chocolate:hover:bg-[#372518] sweet:hover:bg-pink-50 rounded-xl">
-            <PieChart className="mr-2 h-5 w-5" />
-            {t.viewDashboard}
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 bg-[hsl(var(--accent))] px-3 py-1.5 rounded-full text-[hsl(var(--accent-foreground))]">
+          <Coins className="w-4 h-4" />
+          <span className="font-semibold">1000</span>
+        </div>
       </motion.div>
 
-      {/* Stats Card */}
-      <motion.div variants={item}>
-        <Card className="bg-white/80 dark-chocolate:bg-[#2a1e16]/80 backdrop-blur-sm border-purple-100 dark-chocolate:border-[#3a2a20] shadow-md rounded-2xl overflow-hidden">
+      {/* Current Theme Card */}
+      <motion.div variants={item} className="mb-8">
+        <Card className="overflow-hidden border-2 border-[hsl(var(--primary))]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-gray-800 dark-chocolate:text-[#e6c8a1]">{t.stats}</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span>{t.currentTheme}</span>
+              <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium">
+                {themes.find(t => t.name === theme)?.displayName || t.themes.light}
+              </div>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              <div className="col-span-4 mb-2">
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 dark-chocolate:from-[#a3663d] dark-chocolate:to-[#8b4513] text-white rounded-xl p-4 shadow-md shadow-purple-200 dark-chocolate:shadow-[#2a1e16]">
-                  <p className="text-xs mb-1">{t.calories}</p>
-                  <p className="text-3xl font-bold">{todayLog.totalCalories}</p>
+            <div 
+              className="rounded-lg p-4 flex flex-col items-center justify-center gap-2 mb-4" 
+              style={{ 
+                backgroundColor: themes.find(t => t.name === theme)?.colors.bg || themes[0].colors.bg,
+                color: themes.find(t => t.name === theme)?.colors.text || themes[0].colors.text,
+                boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
+              }}
+            >
+              <div className="flex w-full justify-between items-center px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <span className="font-medium">CalorieWatcher</span>
+                <div className="p-1.5 rounded-full" style={{ backgroundColor: themes.find(t => t.name === theme)?.colors.primary || themes[0].colors.primary, color: '#fff' }}>
+                  {themes.find(t => t.name === theme)?.icon || themes[0].icon}
                 </div>
               </div>
-              <div className="space-y-1">
-                <div className="h-16 rounded-xl bg-purple-100 dark-chocolate:bg-[#3a2a20] p-2 flex flex-col items-center justify-center">
-                  <p className="text-xs text-purple-700 dark-chocolate:text-[#d4a66a]">{t.protein}</p>
-                  <p className="text-lg font-bold text-purple-800 dark-chocolate:text-[#e6c8a1]">
-                    {todayLog.totalProtein}<span className="text-xs ml-1">{t.g}</span>
-                  </p>
-                </div>
+              
+              <div className="w-full h-6 mt-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <div className="h-full rounded-full" style={{ backgroundColor: themes.find(t => t.name === theme)?.colors.primary || themes[0].colors.primary, width: '70%' }}></div>
               </div>
-              <div className="space-y-1">
-                <div className="h-16 rounded-xl bg-blue-100 dark-chocolate:bg-[#3a2a20] p-2 flex flex-col items-center justify-center">
-                  <p className="text-xs text-blue-700 dark-chocolate:text-[#d4a66a]">{t.carbs}</p>
-                  <p className="text-lg font-bold text-blue-800 dark-chocolate:text-[#e6c8a1]">
-                    {todayLog.totalCarbs}<span className="text-xs ml-1">{t.g}</span>
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="h-16 rounded-xl bg-pink-100 dark-chocolate:bg-[#3a2a20] p-2 flex flex-col items-center justify-center">
-                  <p className="text-xs text-pink-700 dark-chocolate:text-[#d4a66a]">{t.fat}</p>
-                  <p className="text-lg font-bold text-pink-800 dark-chocolate:text-[#e6c8a1]">
-                    {todayLog.totalFat}<span className="text-xs ml-1">{t.g}</span>
-                  </p>
-                </div>
+              
+              <div className="w-full flex justify-between mt-2">
+                <span className="text-sm">1200 kcal</span>
+                <span className="text-sm" style={{ color: themes.find(t => t.name === theme)?.colors.muted || themes[0].colors.muted }}>1800 kcal</span>
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Recent Meals */}
-      <motion.div variants={item}>
-        <Card className="bg-white/80 dark-chocolate:bg-[#2a1e16]/80 backdrop-blur-sm border-purple-100 dark-chocolate:border-[#3a2a20] shadow-md rounded-2xl overflow-hidden">
-          <CardHeader className="pb-2 flex justify-between items-center">
-            <CardTitle className="text-lg text-gray-800 dark-chocolate:text-[#e6c8a1]">{t.recentMeals}</CardTitle>
-            <Link href="/history">
-              <Button variant="link" className="h-8 p-0 text-purple-500 dark-chocolate:text-[#d4a66a]">
-                {t.viewAll} <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {recentMeals.length > 0 ? (
-              <div className="space-y-3">
-                {recentMeals.map((meal, index) => (
-                  <motion.div 
-                    key={meal.id}
-                    className="flex items-center justify-between p-3 bg-purple-50 dark-chocolate:bg-[#3a2a20] rounded-xl"
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 * index }}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 dark-chocolate:from-[#a3663d] dark-chocolate:to-[#8b4513] flex items-center justify-center text-white mr-3">
-                        {meal.mealType === 'breakfast' && '🍳'}
-                        {meal.mealType === 'lunch' && '🍜'}
-                        {meal.mealType === 'dinner' && '🍽️'}
-                        {meal.mealType === 'snack' && '🍎'}
+      {/* Themes Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+        {themes.map((themeItem) => (
+          <motion.div key={themeItem.name} variants={item} className="h-full">
+            <Card className={`overflow-hidden transition-all h-full flex flex-col ${theme === themeItem.name ? 'border-[hsl(var(--primary))]' : ''}`}>
+              <CardContent className="p-0 flex-1 flex flex-col">
+                {/* Theme Preview */}
+                <div 
+                  className="p-4 md:p-5 flex-1"
+                  style={{ 
+                    backgroundColor: themeItem.colors.bg,
+                    color: themeItem.colors.text,
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                        style={{ backgroundColor: themeItem.colors.primary, color: '#fff' }}>
+                        {themeItem.icon}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800 dark-chocolate:text-[#e6c8a1]">{meal.foodItem.name}</p>
-                        <p className="text-xs text-gray-500 dark-chocolate:text-gray-400">
-                          {meal.quantity} × {meal.foodItem.servingSize}
-                        </p>
+                        <h3 className="font-medium text-sm md:text-base">{themeItem.displayName}</h3>
                       </div>
                     </div>
-                    <p className="font-bold text-purple-600 dark-chocolate:text-[#d4a66a]">
-                      {Math.round(meal.foodItem.calories * meal.quantity)}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-6 text-center">
-                <p className="text-gray-500 dark-chocolate:text-gray-400 text-sm">{t.noMeals}</p>
-                <Link href="/add" className="mt-2 inline-block">
-                  <Button variant="outline" size="sm" className="mt-2 border-purple-200 dark-chocolate:border-[#3a2a20] text-purple-600 dark-chocolate:text-[#d4a66a] hover:bg-purple-50 dark-chocolate:hover:bg-[#372518] rounded-lg">
-                    <Plus className="mr-1 h-4 w-4" />
-                    {t.quickAdd}
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs" 
+                      style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                      {themeItem.price > 0 ? (
+                        <>
+                          <Coins className="w-3 h-3" />
+                          <span>{themeItem.price}</span>
+                        </>
+                      ) : (
+                        <span>{t.free}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Mock UI Elements */}
+                  <div className="space-y-2 mb-2">
+                    <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: `${themeItem.colors.muted}40` }}></div>
+                    <div className="h-2 rounded-full" style={{ backgroundColor: `${themeItem.colors.muted}40` }}></div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <div className="h-4 w-4 rounded-md" style={{ backgroundColor: themeItem.colors.primary }}></div>
+                      <div className="h-4 w-12 rounded-md" style={{ backgroundColor: `${themeItem.colors.muted}40` }}></div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar Example */}
+                  <div className="w-full h-3 rounded-full overflow-hidden mt-2" style={{ backgroundColor: `${themeItem.colors.muted}30` }}>
+                    <div className="h-full rounded-full" style={{ backgroundColor: themeItem.colors.primary, width: '65%' }}></div>
+                  </div>
+                </div>
+                
+                {/* Action Section */}
+                <div className="px-3 py-2 md:px-4 md:py-3 border-t border-[hsl(var(--border))] flex flex-col">
+                  {theme === themeItem.name && (
+                    <div className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 self-start mb-2">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary-foreground))]"></span>
+                      {t.currentTheme}
+                    </div>
+                  )}
+                  
+                  <Button
+                    className="text-xs h-8 px-3 w-full"
+                    variant="default"
+                    style={
+                      theme !== themeItem.name ? {
+                        backgroundColor: themeItem.colors.primary,
+                        color: '#fff',
+                        borderColor: 'transparent'
+                      } : {}
+                    }
+                    onClick={() => setTheme(themeItem.name)}
+                    disabled={theme === themeItem.name}
+                  >
+                    {theme === themeItem.name ? t.currentTheme : t.applyTheme}
                   </Button>
-                </Link>
-              </div>
-            )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+      
+      {/* Premium Card */}
+      <motion.div variants={item} className="mt-8">
+        <Card className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))/0.8] text-[hsl(var(--primary-foreground))]">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Crown className="h-6 w-6" />
+              <h3 className="text-lg font-bold">{t.premiumTitle}</h3>
+            </div>
+            <p className="mb-4 opacity-90">
+              {t.premiumDesc}
+            </p>
+            <Button className="mt-2 bg-white text-[hsl(var(--primary))] hover:bg-white/80">
+              {t.upgradeNow}
+            </Button>
           </CardContent>
         </Card>
       </motion.div>

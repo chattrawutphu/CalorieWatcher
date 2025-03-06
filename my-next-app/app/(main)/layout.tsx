@@ -54,6 +54,16 @@ export default function MainLayout({
           <div className="sweet-small-7" />
           <div className="sweet-small-8" />
         </div>
+
+        {/* Broccoli theme elements - only visible when broccoli theme is active */}
+        <div className="hidden broccoli:block">
+          <div className="broccoli-emoji-1" />
+          <div className="broccoli-emoji-2" />
+          <div className="broccoli-small-1" />
+          <div className="broccoli-small-2" />
+          <div className="broccoli-small-3" />
+          <div className="broccoli-small-4" />
+        </div>
       </div>
 
       <main className="flex-1 container px-4 pb-20 pt-4 relative z-10">
