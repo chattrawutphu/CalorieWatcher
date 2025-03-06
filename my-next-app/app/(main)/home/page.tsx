@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart, Sun, Moon, Cookie, Candy, Lock, Coins, Crown } from "lucide-react";
+import { PlusCircle, UtensilsCrossed, AppleIcon, Coffee, ArrowRight, Plus, PieChart, Sun, Moon, Cookie, Candy, Lock, Coins, Crown, Check, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/components/providers/language-provider";
 import { motion } from "framer-motion";
@@ -248,63 +248,26 @@ export default function ShopPage() {
         </div>
       </motion.div>
 
-      {/* Current Theme Card */}
-      <motion.div variants={item} className="mb-8">
-        <Card className="overflow-hidden border-2 border-[hsl(var(--primary))]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span>{t.currentTheme}</span>
-              <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium">
-                {themes.find(t => t.name === theme)?.displayName || t.themes.light}
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div 
-              className="rounded-lg p-4 flex flex-col items-center justify-center gap-2 mb-4" 
-              style={{ 
-                backgroundColor: themes.find(t => t.name === theme)?.colors.bg || themes[0].colors.bg,
-                color: themes.find(t => t.name === theme)?.colors.text || themes[0].colors.text,
-                boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
-              }}
-            >
-              <div className="flex w-full justify-between items-center px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                <span className="font-medium">CalorieWatcher</span>
-                <div className="p-1.5 rounded-full" style={{ backgroundColor: themes.find(t => t.name === theme)?.colors.primary || themes[0].colors.primary, color: '#fff' }}>
-                  {themes.find(t => t.name === theme)?.icon || themes[0].icon}
-                </div>
-              </div>
-              
-              <div className="w-full h-6 mt-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                <div className="h-full rounded-full" style={{ backgroundColor: themes.find(t => t.name === theme)?.colors.primary || themes[0].colors.primary, width: '70%' }}></div>
-              </div>
-              
-              <div className="w-full flex justify-between mt-2">
-                <span className="text-sm">1200 kcal</span>
-                <span className="text-sm" style={{ color: themes.find(t => t.name === theme)?.colors.muted || themes[0].colors.muted }}>1800 kcal</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
       {/* Themes Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {themes.map((themeItem) => (
           <motion.div key={themeItem.name} variants={item} className="h-full">
-            <Card className={`overflow-hidden transition-all h-full flex flex-col ${theme === themeItem.name ? 'border-[hsl(var(--primary))]' : ''}`}>
+            <Card 
+              className={`overflow-hidden transition-all h-full flex flex-col ${theme === themeItem.name ? 'ring-2 ring-[hsl(var(--primary))]' : 'hover:translate-y-[-5px]'}`}
+              style={{ 
+                backgroundColor: themeItem.colors.bg,
+                color: themeItem.colors.text,
+                borderColor: `${themeItem.colors.primary}40`
+              }}
+            >
               <CardContent className="p-0 flex-1 flex flex-col">
                 {/* Theme Preview */}
                 <div 
                   className="p-4 md:p-5 flex-1"
-                  style={{ 
-                    backgroundColor: themeItem.colors.bg,
-                    color: themeItem.colors.text,
-                  }}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-md" 
                         style={{ backgroundColor: themeItem.colors.primary, color: '#fff' }}>
                         {themeItem.icon}
                       </div>
@@ -312,8 +275,8 @@ export default function ShopPage() {
                         <h3 className="font-medium text-sm md:text-base">{themeItem.displayName}</h3>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs" 
-                      style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs shadow-sm" 
+                      style={{ backgroundColor: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(4px)' }}>
                       {themeItem.price > 0 ? (
                         <>
                           <Coins className="w-3 h-3" />
@@ -326,7 +289,10 @@ export default function ShopPage() {
                   </div>
                   
                   {/* Mock UI Elements */}
-                  <div className="space-y-2 mb-2">
+                  <div 
+                    className="space-y-2 mb-2 p-3 rounded-xl"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  >
                     <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: `${themeItem.colors.muted}40` }}></div>
                     <div className="h-2 rounded-full" style={{ backgroundColor: `${themeItem.colors.muted}40` }}></div>
                     <div className="flex items-center gap-2 mt-3">
@@ -336,35 +302,57 @@ export default function ShopPage() {
                   </div>
                   
                   {/* Progress Bar Example */}
-                  <div className="w-full h-3 rounded-full overflow-hidden mt-2" style={{ backgroundColor: `${themeItem.colors.muted}30` }}>
+                  <div className="w-full h-3 rounded-full overflow-hidden mt-3" style={{ backgroundColor: `${themeItem.colors.muted}30` }}>
                     <div className="h-full rounded-full" style={{ backgroundColor: themeItem.colors.primary, width: '65%' }}></div>
                   </div>
                 </div>
                 
                 {/* Action Section */}
-                <div className="px-3 py-2 md:px-4 md:py-3 border-t border-[hsl(var(--border))] flex flex-col">
+                <div 
+                  className="px-3 py-3 md:px-4 md:py-3 border-t flex flex-col"
+                  style={{ 
+                    borderColor: `${themeItem.colors.primary}30`,
+                    backgroundColor: `${themeItem.colors.bg}80`,
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
                   {theme === themeItem.name && (
-                    <div className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 self-start mb-2">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary-foreground))]"></span>
+                    <div 
+                      className="px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 self-start mb-2 shadow-sm"
+                      style={{
+                        backgroundColor: themeItem.colors.primary,
+                        color: '#fff'
+                      }}
+                    >
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
                       {t.currentTheme}
                     </div>
                   )}
                   
-                  <Button
-                    className="text-xs h-8 px-3 w-full"
-                    variant="default"
-                    style={
-                      theme !== themeItem.name ? {
-                        backgroundColor: themeItem.colors.primary,
-                        color: '#fff',
-                        borderColor: 'transparent'
-                      } : {}
-                    }
-                    onClick={() => setTheme(themeItem.name)}
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`text-xs rounded-lg font-medium flex items-center justify-center gap-1.5 h-9 w-full shadow-md transition-all duration-300 ${theme === themeItem.name ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'}`}
+                    style={{
+                      backgroundColor: themeItem.colors.primary,
+                      color: '#fff',
+                      border: 'none',
+                    }}
+                    onClick={() => theme !== themeItem.name && setTheme(themeItem.name)}
                     disabled={theme === themeItem.name}
                   >
-                    {theme === themeItem.name ? t.currentTheme : t.applyTheme}
-                  </Button>
+                    {theme === themeItem.name ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        {t.currentTheme}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {t.applyTheme}
+                      </>
+                    )}
+                  </motion.button>
                 </div>
               </CardContent>
             </Card>
