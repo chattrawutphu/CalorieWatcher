@@ -72,7 +72,9 @@ export default function MainLayout({
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-500"></div>
           </div>
         ) : (
-          children
+          <div className="max-w-md mx-auto">
+            {children}
+          </div>
         )}
       </main>
       <MobileNav />

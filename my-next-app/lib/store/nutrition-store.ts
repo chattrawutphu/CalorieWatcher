@@ -30,6 +30,7 @@ export interface NutritionGoals {
     fat: number; // percentage
     carbs: number; // percentage
   };
+  waterGoal: number; // มิลลิลิตร (ml)
 }
 
 export interface DailyLog {
@@ -41,6 +42,12 @@ export interface DailyLog {
   totalCarbs: number;
   moodRating?: number; // 1-5 rating (1:worst, 5:best)
   notes?: string;
+  waterIntake: number; // มิลลิลิตร (ml)
+}
+
+export interface WaterEntry {
+  amount: number; // มิลลิลิตร (ml)
+  timestamp: string;
 }
 
 interface NutritionState {
@@ -62,6 +69,13 @@ interface NutritionState {
   setCurrentDate: (date: string) => void;
   updateGoals: (goals: Partial<NutritionGoals>) => void;
   updateDailyMood: (date: string, moodRating: number, notes?: string) => void;
+  getMood: (date: string) => { moodRating?: number, notes?: string } | null;
+  getDailyMood: () => { moodRating?: number, notes?: string } | null;
+  addWaterIntake: (date: string, amount: number) => void;
+  resetWaterIntake: (date: string) => void;
+  setWaterGoal: (goal: number) => void;
+  getWaterIntake: (date: string) => number;
+  getWaterGoal: () => number;
 }
 
 export const useNutritionStore = create<NutritionState>()(
@@ -74,6 +88,7 @@ export const useNutritionStore = create<NutritionState>()(
           fat: 30,
           carbs: 40,
         },
+        waterGoal: 2000, // กำหนดค่าเริ่มต้นเป็น 2000ml (2 ลิตร)
       },
       favoriteFoods: [],
       dailyLogs: {},
@@ -100,6 +115,7 @@ export const useNutritionStore = create<NutritionState>()(
           totalProtein: 0,
           totalCarbs: 0,
           totalFat: 0,
+          waterIntake: 0,
         };
         
         // Add the new meal
@@ -134,6 +150,7 @@ export const useNutritionStore = create<NutritionState>()(
           totalProtein,
           totalCarbs,
           totalFat,
+          waterIntake: dayLog.waterIntake,
         };
         
         set({
@@ -184,6 +201,7 @@ export const useNutritionStore = create<NutritionState>()(
           totalProtein,
           totalCarbs,
           totalFat,
+          waterIntake: dayLog.waterIntake,
         };
         
         set({
@@ -228,6 +246,7 @@ export const useNutritionStore = create<NutritionState>()(
               ...log,
               meals: updatedMeals,
               ...totals,
+              waterIntake: log.waterIntake,
             };
             
             set({
@@ -264,6 +283,7 @@ export const useNutritionStore = create<NutritionState>()(
           totalProtein: 0,
           totalCarbs: 0,
           totalFat: 0,
+          waterIntake: 0,
         };
         
         // Update mood data
@@ -271,6 +291,7 @@ export const useNutritionStore = create<NutritionState>()(
           ...dayLog,
           moodRating,
           notes: notes || dayLog.notes,
+          waterIntake: dayLog.waterIntake,
         };
         
         set({
@@ -279,6 +300,89 @@ export const useNutritionStore = create<NutritionState>()(
             [date]: updatedDayLog,
           },
         });
+      },
+      
+      getMood: (date) => {
+        const currentLog = get().dailyLogs[date];
+        if (!currentLog) return null;
+        return { 
+          moodRating: currentLog.moodRating,
+          notes: currentLog.notes 
+        };
+      },
+      
+      getDailyMood: () => {
+        const currentLog = get().dailyLogs[get().currentDate];
+        if (!currentLog) return null;
+        return { 
+          moodRating: currentLog.moodRating,
+          notes: currentLog.notes 
+        };
+      },
+      
+      addWaterIntake: (date, amount) => {
+        set((state) => {
+          // ตรวจสอบว่ามี log ของวันนี้หรือไม่ ถ้าไม่มีให้สร้างใหม่
+          const dayLog = state.dailyLogs[date] || {
+            date,
+            meals: [],
+            totalCalories: 0,
+            totalProtein: 0,
+            totalCarbs: 0,
+            totalFat: 0,
+            waterIntake: 0,
+          };
+
+          // เพิ่มปริมาณน้ำที่ดื่ม
+          const newWaterIntake = (dayLog.waterIntake || 0) + amount;
+
+          return {
+            dailyLogs: {
+              ...state.dailyLogs,
+              [date]: {
+                ...dayLog,
+                waterIntake: newWaterIntake
+              }
+            }
+          };
+        });
+      },
+      
+      resetWaterIntake: (date) => {
+        set((state) => {
+          const dayLog = state.dailyLogs[date];
+          if (!dayLog) return state;
+
+          return {
+            dailyLogs: {
+              ...state.dailyLogs,
+              [date]: {
+                ...dayLog,
+                waterIntake: 0
+              }
+            }
+          };
+        });
+      },
+      
+      setWaterGoal: (goal) => {
+        set((state) => ({
+          goals: {
+            ...state.goals,
+            waterGoal: goal
+          }
+        }));
+      },
+      
+      getWaterIntake: (date) => {
+        const dayLog = get().dailyLogs[date];
+        return dayLog?.waterIntake || 0;
+      },
+      
+      getWaterGoal: () => {
+        const goal = get().goals.waterGoal;
+        // ตรวจสอบค่า waterGoal ถ้าไม่มีค่าหรือเป็น 0 ให้คืนค่าเริ่มต้น 2000ml
+        return goal && goal > 0 ? goal : 2000;
       },
     }),
     {

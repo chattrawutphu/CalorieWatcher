@@ -11,7 +11,7 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Save, LogOut, User, Check } from "lucide-react";
+import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle } from "lucide-react";
 
 // Translations
 const translations = {
@@ -33,6 +33,12 @@ const translations = {
     saved: "Changes Saved!",
     of: "of",
     calories: "calories",
+    waterSettings: "Water Intake",
+    dailyWaterGoal: "Daily Water Goal",
+    ml: "ml",
+    liters: "liters",
+    recommendedWater: "Recommended: 2000-3000 ml per day",
+    glass: "glass",
   },
   th: {
     settings: "ตั้งค่า",
@@ -49,9 +55,15 @@ const translations = {
     fat: "ไขมัน",
     carbs: "คาร์โบไฮเดรต",
     save: "บันทึกการเปลี่ยนแปลง",
-    saved: "บันทึกแล้ว!",
+    saved: "บันทึกการเปลี่ยนแปลงแล้ว!",
     of: "จาก",
     calories: "แคลอรี่",
+    waterSettings: "การดื่มน้ำ",
+    dailyWaterGoal: "เป้าหมายการดื่มน้ำต่อวัน",
+    ml: "มล.",
+    liters: "ลิตร",
+    recommendedWater: "แนะนำ: 2000-3000 มล. ต่อวัน",
+    glass: "แก้ว",
   },
   ja: {
     settings: "設定",
@@ -71,6 +83,12 @@ const translations = {
     saved: "保存しました！",
     of: "から",
     calories: "カロリー",
+    waterSettings: "水分摂取",
+    dailyWaterGoal: "1日の水分目標",
+    ml: "ml",
+    liters: "リットル",
+    recommendedWater: "おすすめ：1日2000-3000ml",
+    glass: "グラス",
   },
   zh: {
     settings: "设置",
@@ -90,6 +108,12 @@ const translations = {
     saved: "已保存！",
     of: "共",
     calories: "卡路里",
+    waterSettings: "饮水量",
+    dailyWaterGoal: "每日饮水目标",
+    ml: "ml",
+    liters: "升",
+    recommendedWater: "建议：每日2000-3000ml",
+    glass: "杯",
   },
 };
 
@@ -101,16 +125,17 @@ export default function SettingsPage() {
   const { goals, setGoals } = useNutritionStore();
   
   // Local state for the form
-  const [calorieGoal, setCalorieGoal] = useState(goals.dailyCalorieGoal);
+  const [dailyCalories, setDailyCalories] = useState(goals.dailyCalorieGoal);
   const [proteinPercentage, setProteinPercentage] = useState(goals.macroRatios.protein);
   const [fatPercentage, setFatPercentage] = useState(goals.macroRatios.fat);
   const [carbsPercentage, setCarbsPercentage] = useState(goals.macroRatios.carbs);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [waterGoal, setWaterGoal] = useState(goals.waterGoal);
+  const [isSaved, setIsSaved] = useState(false);
   
   // Calculate grams based on percentages and calorie goal
-  const proteinGrams = Math.round((calorieGoal * (proteinPercentage / 100)) / 4); // 4 calories per gram of protein
-  const fatGrams = Math.round((calorieGoal * (fatPercentage / 100)) / 9); // 9 calories per gram of fat
-  const carbsGrams = Math.round((calorieGoal * (carbsPercentage / 100)) / 4); // 4 calories per gram of carbs
+  const proteinGrams = Math.round((dailyCalories * (proteinPercentage / 100)) / 4); // 4 calories per gram of protein
+  const fatGrams = Math.round((dailyCalories * (fatPercentage / 100)) / 9); // 9 calories per gram of fat
+  const carbsGrams = Math.round((dailyCalories * (carbsPercentage / 100)) / 4); // 4 calories per gram of carbs
   
   // Handle percentage changes while ensuring they sum to 100%
   const handleProteinChange = (value: number) => {
@@ -161,16 +186,19 @@ export default function SettingsPage() {
   // Save changes
   const handleSave = () => {
     setGoals({
-      dailyCalorieGoal: calorieGoal,
+      dailyCalorieGoal: dailyCalories,
       macroRatios: {
         protein: proteinPercentage,
         fat: fatPercentage,
         carbs: carbsPercentage,
       },
+      waterGoal: waterGoal,
     });
     
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setIsSaved(true);
+    setTimeout(() => {
+      setIsSaved(false);
+    }, 3000);
   };
   
   return (
@@ -232,15 +260,15 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="calories">{t.dailyCalories}</Label>
-            <div className="flex items-center space-x-2">
+            <Label htmlFor="dailyCalories">{t.dailyCalories}</Label>
+            <div className="flex items-center gap-4">
               <Input
-                id="calories"
+                id="dailyCalories"
                 type="number"
-                value={calorieGoal}
-                onChange={(e) => setCalorieGoal(parseInt(e.target.value) || 0)}
-                min="1000"
-                max="8000"
+                min={1000}
+                max={5000}
+                value={dailyCalories}
+                onChange={(e) => setDailyCalories(Number(e.target.value))}
                 className="w-24"
               />
               <span>{t.calories}</span>
@@ -306,8 +334,99 @@ export default function SettingsPage() {
             </div>
           </div>
           
-          <Button onClick={handleSave} className="w-full" disabled={saveSuccess}>
-            {saveSuccess ? (
+          {/* Water Goal */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Droplet className="h-5 w-5 text-blue-500" />
+              <Label className="text-base font-medium">{t.waterSettings}</Label>
+            </div>
+            
+            <div className="bg-[hsl(var(--accent))/0.1] p-4 rounded-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="waterGoal" className="font-medium">{t.dailyWaterGoal}</Label>
+                <div className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
+                  <CupSoda className="h-4 w-4" />
+                  <span className="text-sm">{Math.ceil(waterGoal / 250)} {t.glass.toLowerCase()}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Input
+                  id="waterGoal"
+                  type="number"
+                  min={500}
+                  max={5000}
+                  step={100}
+                  value={waterGoal}
+                  onChange={(e) => setWaterGoal(Number(e.target.value))}
+                  className="w-24"
+                />
+                <span>{t.ml}</span>
+                <span className="text-[hsl(var(--primary))] font-medium text-base">
+                  ({(waterGoal / 1000).toFixed(1)} {t.liters})
+                </span>
+              </div>
+              
+              {/* Quick preset buttons */}
+              <div className="flex flex-wrap gap-2">
+                {[1500, 2000, 2500, 3000].map((amount) => (
+                  <Button 
+                    key={amount} 
+                    type="button" 
+                    variant={waterGoal === amount ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setWaterGoal(amount)}
+                    className="flex items-center"
+                  >
+                    {amount === 2000 && <Check className="mr-1 h-3 w-3" />}
+                    {amount / 1000}{t.liters}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="space-y-1">
+                <Slider
+                  defaultValue={[waterGoal]}
+                  min={500}
+                  max={5000}
+                  step={100}
+                  onValueChange={(value) => setWaterGoal(value[0])}
+                  value={[waterGoal]}
+                  className="[&_[role=slider]]:bg-blue-500"
+                />
+                <div className="flex justify-between text-xs text-[hsl(var(--muted-foreground))]">
+                  <span>0.5 {t.liters}</span>
+                  <span className="text-center">2.5 {t.liters}</span>
+                  <span>5 {t.liters}</span>
+                </div>
+              </div>
+              
+              <div className="text-[hsl(var(--muted-foreground))] text-sm bg-[hsl(var(--background))] p-2 rounded border border-[hsl(var(--border))] flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <span>{t.recommendedWater}</span>
+              </div>
+              
+              {/* Visual representation */}
+              <div className="flex justify-center space-x-1 py-2">
+                {Array.from({ length: Math.min(8, Math.ceil(waterGoal / 250)) }).map((_, i) => (
+                  <div key={i} className="relative w-6 h-8 rounded-b-lg border border-t-0 border-blue-500">
+                    <div className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-blue-500/20" style={{ height: '100%' }}></div>
+                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] text-white z-10">
+                      💧
+                    </span>
+                  </div>
+                ))}
+                {waterGoal > 2000 && (
+                  <div className="flex items-center">
+                    <span className="text-xs text-[hsl(var(--muted-foreground))]">+{Math.ceil((waterGoal - 2000) / 250)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <Button onClick={handleSave} className="w-full" disabled={isSaved}>
+            {isSaved ? (
               <>
                 <Check className="mr-2 h-4 w-4" />
                 {t.saved}

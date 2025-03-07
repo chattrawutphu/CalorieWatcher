@@ -452,7 +452,7 @@ const AIAssistantPage = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="absolute top-0 left-0 w-full h-1 overflow-hidden">
-              <div className="h-full bg-[hsl(var(--primary))] animate-progressBar"></div>
+              <div className="h-full bg-[hsl(var(--primary))]"></div>
             </div>
             
             <div className="flex items-center gap-4 mb-4">

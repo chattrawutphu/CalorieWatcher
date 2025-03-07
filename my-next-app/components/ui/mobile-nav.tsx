@@ -812,94 +812,94 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             </button>
             
             {/* Content */}
-            <div className="px-6 py-4 h-full">
+            <div className="px-6 py-4 h-full max-w-md mx-auto">
               {currentSection === "main" && (
-                <motion.div
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                >
-                  <motion.div variants={item}>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              <motion.div variants={item}>
                     <h2 className="text-2xl font-bold mb-2">{t.addFood.title}</h2>
                     <p className="text-[hsl(var(--muted-foreground))] mb-6">{t.addFood.subtitle}</p>
-                  </motion.div>
-                  
-                  {/* Search Bar */}
-                  <motion.div variants={item} className="relative mb-6">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                    <Input
-                      type="text"
+              </motion.div>
+              
+              {/* Search Bar */}
+              <motion.div variants={item} className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+                <Input
+                  type="text"
                       placeholder={t.mobileNav.common.searchPlaceholder}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-11 pr-4 h-14 text-lg rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
-                    />
-                  </motion.div>
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-11 pr-4 h-14 text-lg rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
+                />
+              </motion.div>
 
-                  {/* AI Assistant Button */}
-                  <motion.div variants={item}>
-                    <Button
-                      onClick={() => {
+              {/* AI Assistant Button */}
+              <motion.div variants={item}>
+                <Button
+                  onClick={() => {
                         // Keep this as a page navigation for now
-                        router.push("/add/ai");
-                        onClose();
-                      }}
-                      className="w-full h-auto p-4 mb-6 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                          <Bot className="h-6 w-6" />
-                        </div>
-                        <div className="flex-grow text-left">
+                    router.push("/add/ai");
+                    onClose();
+                  }}
+                  className="w-full h-auto p-4 mb-6 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                      <Bot className="h-6 w-6" />
+                    </div>
+                    <div className="flex-grow text-left">
                           <div className="font-medium">{t.mobileNav.aiAssistant.title}</div>
                           <div className="text-sm opacity-90">{t.mobileNav.aiAssistant.description}</div>
-                        </div>
-                        <Sparkles className="h-5 w-5" />
-                      </div>
-                    </Button>
-                  </motion.div>
+                    </div>
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                </Button>
+              </motion.div>
 
-                  {/* Quick Actions */}
-                  <motion.div variants={item} className="space-y-3">
-                    <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
+              {/* Quick Actions */}
+              <motion.div variants={item} className="space-y-3">
+                <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
                       {t.mobileNav.common.quickActions}
-                    </h3>
-                    
-                    <QuickActionButton
-                      icon={<Apple className="h-6 w-6" />}
+                </h3>
+                
+                <QuickActionButton
+                  icon={<Apple className="h-6 w-6" />}
                       label={t.mobileNav.commonFoods.title}
                       description={t.mobileNav.common.commonFoodsDesc}
                       onClick={() => setCurrentSection("common")}
-                    />
+                />
 
-                    <QuickActionButton
-                      icon={<Pencil className="h-6 w-6" />}
+                <QuickActionButton
+                  icon={<Pencil className="h-6 w-6" />}
                       label={t.addFood.customFood}
                       description={t.mobileNav.common.customFoodDesc}
                       onClick={() => setCurrentSection("custom")}
-                    />
+                />
 
-                    <QuickActionButton
-                      icon={<Scan className="h-6 w-6" />}
+                <QuickActionButton
+                  icon={<Scan className="h-6 w-6" />}
                       label={t.mobileNav.barcodeScanner.title}
                       description={t.mobileNav.common.barcodeScannerDesc}
                       onClick={() => setCurrentSection("barcode")}
-                    />
+                />
 
-                    <QuickActionButton
-                      icon={<Clock className="h-6 w-6" />}
+                <QuickActionButton
+                  icon={<Clock className="h-6 w-6" />}
                       label={t.mobileNav.recentFoods.title}
                       description={t.mobileNav.common.recentFoodsDesc}
                       onClick={() => setCurrentSection("recent")}
-                    />
-                  </motion.div>
-                  
-                  {/* Search Results */}
+                />
+              </motion.div>
+
+              {/* Search Results */}
                   {searchQuery.length > 0 && (
                     <motion.div variants={item} className="mt-6 space-y-2">
-                      <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
-                        Search Results
-                      </h3>
+                  <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
+                    Search Results
+                  </h3>
                       
                       {filteredFoodItems.length > 0 ? (
                         <div className="divide-y divide-[hsl(var(--border))]">
@@ -1008,7 +1008,7 @@ export function MobileNav() {
       
       <nav className="fixed bottom-0 left-0 z-50 w-full">
         <div className="mx-auto px-6">
-          <div className="flex h-16 items-center justify-around bg-[hsl(var(--background))/0.8] backdrop-blur-md rounded-t-xl border border-[hsl(var(--border))] shadow-lg max-w-md mx-auto">
+          <div className="flex h-16 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md rounded-t-xl border border-[hsl(var(--border))] shadow-lg max-w-md mx-auto">
             {navItems.map((item) => (
               <div
                 key={item.href}

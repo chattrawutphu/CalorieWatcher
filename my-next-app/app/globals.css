@@ -4,10 +4,10 @@
 
 /* Animation classes for floating background elements */
 .animation-delay-2000 {
-  animation-delay: 2s;
+  animation-delay: 2000ms;
 }
 .animation-delay-4000 {
-  animation-delay: 4s;
+  animation-delay: 4000ms;
 }
 
 /* Add custom animations for the AI Food Assistant */
@@ -28,11 +28,11 @@
 }
 
 @keyframes fadeAndSlide {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
@@ -44,35 +44,34 @@
 
 @layer base {
   :root {
-    /* Light theme (default) with pastel colors */
-    --background: 330, 100%, 98%;
-    --foreground: 224, 71.4%, 4.1%;
-    
-    --card: 0, 0%, 100%;
-    --card-foreground: 224, 71.4%, 4.1%;
-    
-    --popover: 0, 0%, 100%;
-    --popover-foreground: 224, 71.4%, 4.1%;
-    
-    --primary: 320, 95%, 75%;
-    --primary-foreground: 210, 20%, 98%;
-    
-    --secondary: 320, 70%, 95%;
-    --secondary-foreground: 320, 95%, 65%;
-    
-    --muted: 320, 50%, 95%;
-    --muted-foreground: 320, 50%, 45%;
-    
-    --accent: 320, 70%, 95%;
-    --accent-foreground: 320, 95%, 65%;
-    
-    --destructive: 0, 84.2%, 60.2%;
-    --destructive-foreground: 210, 20%, 98%;
+    --background: 0, 0%, 100%;
+    --foreground: 240, 10%, 3.9%;
 
-    --border: 320, 70%, 90%;
-    --input: 320, 70%, 90%;
-    --ring: 320, 95%, 65%;
-    
+    --card: 0, 0%, 100%;
+    --card-foreground: 240, 10%, 3.9%;
+
+    --popover: 0, 0%, 100%;
+    --popover-foreground: 240, 10%, 3.9%;
+
+    --primary: 271, 91%, 65%;
+    --primary-foreground: 0, 0%, 98%;
+
+    --secondary: 240, 4.8%, 95.9%;
+    --secondary-foreground: 240, 5.9%, 10%;
+
+    --muted: 240, 4.8%, 95.9%;
+    --muted-foreground: 240, 3.8%, 46.1%;
+
+    --accent: 240, 4.8%, 95.9%;
+    --accent-foreground: 240, 5.9%, 10%;
+
+    --destructive: 0, 84.2%, 60.2%;
+    --destructive-foreground: 0, 0%, 98%;
+
+    --border: 240, 5.9%, 90%;
+    --input: 240, 5.9%, 90%;
+    --ring: 271, 91%, 65%;
+
     --radius: 0.75rem;
   }
  
@@ -141,6 +140,33 @@
     
     --radius: 0.75rem;
   }
+  
+  /* แก้ไขสีข้อความในธีม Chocolate */
+  .chocolate .text-\[hsl\(var\(--primary\)\)\] {
+    color: hsl(25, 90%, 55%) !important;
+  }
+  
+  /* แก้ไขสีข้อความใน icon ธีม Chocolate */
+  .chocolate .font-medium.text-\[hsl\(var\(--primary\)\)\],
+  .chocolate .font-semibold.text-\[hsl\(var\(--primary\)\)\],
+  .chocolate .font-bold.text-\[hsl\(var\(--primary\)\)\] {
+    color: hsl(25, 100%, 65%) !important;
+  }
+  
+  /* แก้ไขสีข้อความใน tooltip ของ recharts ในธีม Chocolate */
+  .chocolate .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background-color: hsl(25, 15%, 15%) !important;
+    border-color: hsl(25, 30%, 25%) !important;
+  }
+  
+  .chocolate .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+  .chocolate .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+    color: hsl(28, 30%, 90%) !important;
+  }
+  
+  .chocolate .recharts-tooltip-wrapper .font-medium {
+    color: hsl(25, 100%, 75%) !important;
+  }
 
   .sweet {
     /* Sweet theme with pastel colors */
@@ -174,6 +200,22 @@
     
     --radius: 0.75rem;
   }
+  
+  /* แก้ไขสีใน tooltip ของ recharts ในธีม Sweet */
+  .sweet .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background-color: hsl(325, 100%, 98%) !important;
+    border-color: hsl(325, 70%, 90%) !important;
+    box-shadow: 0px 4px 15px rgba(236, 72, 153, 0.15) !important;
+  }
+  
+  .sweet .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+  .sweet .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+    color: hsl(320, 50%, 30%) !important;
+  }
+  
+  .sweet .recharts-tooltip-wrapper .font-medium {
+    color: hsl(330, 90%, 55%) !important;
+  }
 
   .broccoli {
     /* Broccoli theme with dark green colors */
@@ -206,6 +248,38 @@
     --ring: 120, 60%, 25%;
     
     --radius: 0.75rem;
+  }
+  
+  /* แก้ไขสีใน tooltip ของ recharts ในธีม Broccoli */
+  .broccoli .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background-color: hsl(120, 40%, 98%) !important;
+    border-color: hsl(120, 30%, 85%) !important;
+    box-shadow: 0px 4px 15px rgba(34, 197, 94, 0.15) !important;
+  }
+  
+  .broccoli .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+  .broccoli .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+    color: hsl(125, 40%, 15%) !important;
+  }
+  
+  .broccoli .recharts-tooltip-wrapper .font-medium {
+    color: hsl(120, 60%, 25%) !important;
+  }
+
+  /* แก้ไขสีใน tooltip ของ recharts ในธีม Light (default) */
+  .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background-color: white !important;
+    border-color: hsl(240, 5.9%, 90%) !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+  .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+    color: hsl(240, 10%, 3.9%) !important;
+  }
+  
+  .recharts-tooltip-wrapper .font-medium {
+    color: hsl(271, 91%, 55%) !important;
   }
 }
 
@@ -789,4 +863,347 @@
 /* Slow transition for hover effects */
 .transition-all-slow {
   transition: all 0.5s ease-in-out;
+}
+
+/* แก้ไขสีใน tooltip ของ recharts ในธีม Dark */
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(240, 10%, 8%) !important;
+  border-color: hsl(240, 10%, 16%) !important;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+  color: hsl(210, 20%, 98%) !important;
+}
+
+.dark .recharts-tooltip-wrapper .font-medium {
+  color: hsl(271, 91%, 75%) !important;
+}
+
+.watermelon {
+  /* Watermelon theme with red and green tones slightly dark */
+  --background: 150, 10%, 12%;
+  --foreground: 0, 10%, 95%;
+  
+  --card: 150, 8%, 15%;
+  --card-foreground: 0, 10%, 95%;
+  
+  --popover: 150, 8%, 15%;
+  --popover-foreground: 0, 10%, 95%;
+  
+  --primary: 350, 80%, 45%;
+  --primary-foreground: 0, 10%, 95%;
+  
+  --secondary: 140, 60%, 20%;
+  --secondary-foreground: 0, 10%, 95%;
+  
+  --muted: 150, 10%, 20%;
+  --muted-foreground: 0, 10%, 75%;
+  
+  --accent: 140, 60%, 20%;
+  --accent-foreground: 0, 10%, 95%;
+  
+  --destructive: 0, 70%, 35%;
+  --destructive-foreground: 0, 10%, 95%;
+
+  --border: 150, 10%, 20%;
+  --input: 150, 10%, 20%;
+  --ring: 350, 80%, 45%;
+  
+  --radius: 0.75rem;
+}
+
+/* แก้ไขสีข้อความในธีม Watermelon */
+.watermelon .text-\[hsl\(var\(--primary\)\)\] {
+  color: hsl(350, 90%, 55%) !important;
+}
+
+/* แก้ไขสีข้อความใน icon ธีม Watermelon */
+.watermelon .font-medium.text-\[hsl\(var\(--primary\)\)\],
+.watermelon .font-semibold.text-\[hsl\(var\(--primary\)\)\],
+.watermelon .font-bold.text-\[hsl\(var\(--primary\)\)\] {
+  color: hsl(350, 100%, 60%) !important;
+}
+
+/* แก้ไขสีข้อความใน tooltip ของ recharts ในธีม Watermelon */
+.watermelon .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(150, 10%, 15%) !important;
+  border-color: hsl(350, 70%, 30%) !important;
+  box-shadow: 0px 4px 15px rgba(255, 70, 70, 0.2) !important;
+}
+
+.watermelon .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+.watermelon .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+  color: hsl(0, 10%, 95%) !important;
+}
+
+.watermelon .recharts-tooltip-wrapper .font-medium {
+  color: hsl(350, 100%, 65%) !important;
+}
+
+/* เพิ่มเอฟเฟกต์สำหรับธีม Watermelon */
+@keyframes float-watermelon {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.watermelon::before {
+  content: "🍉";
+  position: fixed;
+  top: 20vh;
+  left: 5vw;
+  font-size: 5rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-watermelon 8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.watermelon::after {
+  content: "🍉";
+  position: fixed;
+  bottom: 15vh;
+  right: 5vw;
+  font-size: 5rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-watermelon 8s ease-in-out 1s infinite;
+  transform-origin: center;
+}
+
+.watermelon .watermelon-emoji-1 {
+  content: "🍉";
+  position: fixed;
+  top: 40vh;
+  right: 15vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-watermelon 8s ease-in-out 2s infinite;
+}
+
+.watermelon .watermelon-emoji-2 {
+  content: "🍉";
+  position: fixed;
+  bottom: 30vh;
+  left: 15vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-watermelon 8s ease-in-out 3s infinite;
+}
+
+.watermelon .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, hsl(350, 80%, 25%), hsl(140, 60%, 20%)) !important;
+}
+
+.watermelon .animate-blob {
+  background: radial-gradient(circle, rgba(255, 70, 70, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
+  animation: blob 10s infinite ease;
+}
+
+.watermelon .animate-blob:nth-child(2) {
+  background: radial-gradient(circle, rgba(50, 170, 70, 0.8) 0%, rgba(0, 255, 0, 0) 70%);
+  animation-delay: 2s;
+}
+
+.watermelon .animate-blob:nth-child(3) {
+  background: radial-gradient(circle, rgba(255, 70, 70, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
+  animation-delay: 4s;
+}
+
+.honey {
+  /* Honey theme with pastel yellow and orange tones */
+  --background: 48, 100%, 95%;
+  --foreground: 35, 90%, 30%;
+  
+  --card: 48, 100%, 97%;
+  --card-foreground: 35, 90%, 30%;
+  
+  --popover: 48, 100%, 97%;
+  --popover-foreground: 35, 90%, 30%;
+  
+  --primary: 28, 90%, 55%;
+  --primary-foreground: 48, 100%, 97%;
+  
+  --secondary: 42, 90%, 85%;
+  --secondary-foreground: 35, 100%, 40%;
+  
+  --muted: 42, 70%, 90%;
+  --muted-foreground: 35, 60%, 45%;
+  
+  --accent: 42, 90%, 85%;
+  --accent-foreground: 35, 100%, 40%;
+  
+  --destructive: 0, 84.2%, 60.2%;
+  --destructive-foreground: 48, 100%, 97%;
+
+  --border: 42, 70%, 85%;
+  --input: 42, 70%, 85%;
+  --ring: 28, 90%, 55%;
+  
+  --radius: 0.75rem;
+}
+
+/* แก้ไขสีข้อความในธีม Honey */
+.honey .text-\[hsl\(var\(--primary\)\)\] {
+  color: hsl(28, 95%, 55%) !important;
+}
+
+/* แก้ไขสีข้อความใน icon ธีม Honey */
+.honey .font-medium.text-\[hsl\(var\(--primary\)\)\],
+.honey .font-semibold.text-\[hsl\(var\(--primary\)\)\],
+.honey .font-bold.text-\[hsl\(var\(--primary\)\)\] {
+  color: hsl(28, 100%, 60%) !important;
+}
+
+/* แก้ไขสีข้อความใน tooltip ของ recharts ในธีม Honey */
+.honey .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(48, 100%, 97%) !important;
+  border-color: hsl(42, 90%, 75%) !important;
+  box-shadow: 0px 4px 15px rgba(255, 180, 0, 0.2) !important;
+}
+
+.honey .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+.honey .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+  color: hsl(35, 90%, 30%) !important;
+}
+
+.honey .recharts-tooltip-wrapper .font-medium {
+  color: hsl(28, 100%, 45%) !important;
+}
+
+/* เพิ่มเอฟเฟกต์สำหรับธีม Honey */
+@keyframes float-honey {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(5px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes dripping-honey {
+  0% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(15px) scaleY(1.1);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.honey::before {
+  content: "🍯";
+  position: fixed;
+  top: 15vh;
+  left: 10vw;
+  font-size: 5rem;
+  opacity: 0.25;
+  z-index: -1;
+  animation: float-honey 10s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.honey::after {
+  content: "🐝";
+  position: fixed;
+  bottom: 20vh;
+  right: 10vw;
+  font-size: 4rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-honey 7s ease-in-out 1s infinite;
+  transform-origin: center;
+}
+
+.honey .honey-emoji-1 {
+  content: "🍯";
+  position: fixed;
+  top: 50vh;
+  right: 20vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: dripping-honey 8s ease-in-out 2s infinite;
+}
+
+.honey .honey-emoji-2 {
+  content: "🐝";
+  position: fixed;
+  bottom: 40vh;
+  left: 25vw;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-honey 6s ease-in-out 3s infinite;
+}
+
+.honey .honey-small-1 {
+  content: "";
+  position: fixed;
+  top: 25vh;
+  right: 30vw;
+  width: 15px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, rgba(255, 196, 12, 0.6), rgba(255, 153, 0, 0));
+  opacity: 0.3;
+  z-index: -1;
+  animation: dripping-honey 10s ease-in-out 1s infinite;
+}
+
+.honey .honey-small-2 {
+  content: "";
+  position: fixed;
+  top: 40vh;
+  left: 15vw;
+  width: 20px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, rgba(255, 196, 12, 0.6), rgba(255, 153, 0, 0));
+  opacity: 0.3;
+  z-index: -1;
+  animation: dripping-honey 12s ease-in-out 2s infinite;
+}
+
+.honey .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, hsl(48, 100%, 90%), hsl(30, 100%, 70%)) !important;
+}
+
+.honey .animate-blob {
+  background: radial-gradient(circle, rgba(255, 180, 0, 0.7) 0%, rgba(255, 196, 12, 0) 70%);
+  animation: blob 10s infinite ease;
+}
+
+.honey .animate-blob:nth-child(2) {
+  background: radial-gradient(circle, rgba(255, 153, 0, 0.7) 0%, rgba(255, 165, 0, 0) 70%);
+  animation-delay: 2s;
+}
+
+.honey .animate-blob:nth-child(3) {
+  background: radial-gradient(circle, rgba(255, 200, 50, 0.7) 0%, rgba(255, 220, 100, 0) 70%);
+  animation-delay: 4s;
 }
