@@ -749,29 +749,21 @@ export default function DashboardPage() {
                       </linearGradient>
                     ))}
                   </defs>
-                  <Pie
-                    data={data}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                    cornerRadius={4}
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    {data.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={`url(#gradientFill-${index})`}
-                        stroke={entry.color}
-                        strokeWidth={1.5}
-                      />
-                    ))}
-                    <Label
-                      content={({ viewBox }) => {
-                        return (
+                  {/* Show empty chart when no data */}
+                  {protein === 0 && fat === 0 && carbs === 0 ? (
+                    <Pie
+                      data={[{ value: 1 }]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      cornerRadius={4}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <Cell fill="hsl(var(--muted))" opacity={0.2} />
+                      <Label
+                        content={() => (
                           <g>
                             <text 
                               x={100} 
@@ -781,7 +773,7 @@ export default function DashboardPage() {
                               className="text-2xl font-bold"
                               fill="hsl(var(--foreground))"
                             >
-                              {Math.round(calories)}
+                              0
                             </text>
                             <text 
                               x={100} 
@@ -794,10 +786,60 @@ export default function DashboardPage() {
                               {t.kcal}
                             </text>
                           </g>
-                        );
-                      }}
-                    />
-                  </Pie>
+                        )}
+                      />
+                    </Pie>
+                  ) : (
+                    <Pie
+                      data={data}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={3}
+                      dataKey="value"
+                      cornerRadius={4}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {data.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={`url(#gradientFill-${index})`}
+                          stroke={entry.color}
+                          strokeWidth={1.5}
+                        />
+                      ))}
+                      <Label
+                        content={({ viewBox }) => {
+                          return (
+                            <g>
+                              <text 
+                                x={100} 
+                                y={100}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-2xl font-bold"
+                                fill="hsl(var(--foreground))"
+                              >
+                                {Math.round(calories)}
+                              </text>
+                              <text 
+                                x={100} 
+                                y={120}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-xs"
+                                fill="hsl(var(--muted-foreground))"
+                              >
+                                {t.kcal}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                    </Pie>
+                  )}
                   <Tooltip 
                     formatter={(value: number, name: string, props: any) => [
                       <span className="flex items-center gap-1">
