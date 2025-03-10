@@ -752,7 +752,9 @@ export default function DashboardPage() {
                   {/* Show empty chart when no data */}
                   {protein === 0 && fat === 0 && carbs === 0 ? (
                     <Pie
-                      data={[{ value: 1 }]}
+                      data={[{ name: "empty", value: 1 }]}
+                      dataKey="value"
+                      nameKey="name"
                       cx="50%"
                       cy="50%"
                       innerRadius={55}
@@ -760,6 +762,7 @@ export default function DashboardPage() {
                       cornerRadius={4}
                       startAngle={90}
                       endAngle={-270}
+                      paddingAngle={0}
                     >
                       <Cell fill="hsl(var(--muted))" opacity={0.2} />
                       <Label
