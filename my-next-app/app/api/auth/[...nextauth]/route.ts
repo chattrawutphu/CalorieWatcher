@@ -3,6 +3,18 @@ import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 
+// เพิ่ม type declaration เพื่อขยาย NextAuth session.user
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    }
+  }
+}
+
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   throw new Error('Missing Google OAuth credentials');
 }

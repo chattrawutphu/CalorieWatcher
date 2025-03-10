@@ -14,7 +14,17 @@ import { useLanguage } from "./providers/language-provider";
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
-  const { t } = useLanguage();
+  const { locale } = useLanguage();
+  
+  // กำหนดข้อความตามภาษา
+  const translations = {
+    en: { toggleTheme: "Toggle theme", light: "Light", dark: "Dark" },
+    th: { toggleTheme: "สลับธีม", light: "สว่าง", dark: "มืด" },
+    ja: { toggleTheme: "テーマを切り替える", light: "ライト", dark: "ダーク" },
+    zh: { toggleTheme: "切换主题", light: "明亮", dark: "暗黑" }
+  };
+  
+  const t = translations[locale];
 
   return (
     <DropdownMenu>

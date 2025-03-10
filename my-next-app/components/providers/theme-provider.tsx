@@ -2,7 +2,20 @@
 
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ThemeProviderProps } from "next-themes/dist/types";
+
+// กำหนด type เองแทนการ import
+type Attribute = 'class' | 'data-theme' | 'data-mode';
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  attribute?: Attribute | Attribute[];
+  defaultTheme?: string;
+  enableSystem?: boolean;
+  storageKey?: string;
+  forcedTheme?: string;
+  disableTransitionOnChange?: boolean;
+  themes?: string[];
+}
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -10,7 +23,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       attribute="class"
       defaultTheme="light"
       enableSystem={true}
-      themes={["light", "dark", "chocolate", "sweet", "broccoli"]}
+      themes={["light", "dark", "chocolate", "sweet", "broccoli", "watermelon", "honey"]}
       {...props}
     >
       {children}
