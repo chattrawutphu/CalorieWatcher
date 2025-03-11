@@ -782,7 +782,7 @@ const FoodDetail = ({
   );
 };
 
-const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClose: () => void; onMealAdded: (food: FoodItem) => void }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const { addMeal } = useNutritionStore();
@@ -851,46 +851,42 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             className="fixed inset-0 bg-black/40 z-40"
           />
           
-          {/* Full Screen Sheet */}
+          {/* Main Sheet Container - draggable */}
           <motion.div
-            initial={{ y: "100%", scaleX: 0.8, scaleY: 0.9, borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+            initial={{ y: "100%" }}
             animate={{ 
-              y: 0, 
-              scaleX: 1, 
-              scaleY: 1,
-              borderTopLeftRadius: 0,
-              borderTopRightRadius: 0,
-              transition: {
-                y: { type: "spring", damping: 15, stiffness: 300 },
-                scaleX: { type: "spring", damping: 12, stiffness: 300, delay: 0.1 },
-                scaleY: { 
-                  type: "spring", 
-                  damping: 8, 
-                  stiffness: 200, 
-                  delay: 0.2,
-                  bounce: 0.5
-                },
-                borderTopLeftRadius: { duration: 0.3, delay: 0.3 },
-                borderTopRightRadius: { duration: 0.3, delay: 0.3 }
-              }
+              y: 0,
+              transition: { 
+                type: "spring", 
+                damping: 30,
+                stiffness: 300,
+                mass: 0.8
+              } 
             }}
             exit={{ 
               y: "100%", 
-              scaleX: 0.8, 
-              scaleY: 0.9,
-              borderTopLeftRadius: 40,
-              borderTopRightRadius: 40,
-              transition: {
-                y: { type: "spring", damping: 20, stiffness: 300 },
-                scaleX: { type: "spring", damping: 15, stiffness: 300, delay: 0.1 },
-                scaleY: { type: "spring", damping: 10, stiffness: 200 },
-                borderTopLeftRadius: { duration: 0.2 },
-                borderTopRightRadius: { duration: 0.2 }
+              transition: { 
+                type: "spring", 
+                damping: 25, 
+                stiffness: 300
+              } 
+            }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, info) => {
+              if (info.velocity.y > 200 || info.offset.y > window.innerHeight / 3) {
+                onClose();
               }
             }}
-            style={{ originY: 1, originX: 0.5 }}
-            className="fixed inset-0 z-50 bg-[hsl(var(--background))] overflow-y-auto"
+            className="fixed inset-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl"
+            style={{ minHeight: "calc(100vh + 100px)" }}
           >
+            {/* Drag Handle */}
+            <div className="pt-2 pb-1 flex justify-center items-center">
+              <div className="w-10 h-1 rounded-full bg-[hsl(var(--muted))]" />
+            </div>
+
             {/* Close button */}
             <button
               onClick={handleClose}
@@ -899,220 +895,221 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
               <X className="h-6 w-6" />
             </button>
             
-            {/* Content */}
-            <div className="sm:px-6 px-3 py-4 h-full max-w-md mx-auto">
-              {currentSection === "main" && (
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-            >
-              <motion.div variants={item}>
-                    <h2 className="text-2xl font-bold mb-2">{t.addFood.title}</h2>
-                    <p className="text-[hsl(var(--muted-foreground))] sm:mb-6 mb-4">{t.addFood.subtitle}</p>
-              </motion.div>
-              
-              {/* Search Bar */}
-              <motion.div variants={item} className="relative sm:mb-6 mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                <Input
-                  type="text"
-                      placeholder={t.mobileNav.common.searchPlaceholder}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
-                />
-              </motion.div>
-
-              {/* AI Assistant Button */}
-              <motion.div variants={jellyItem}>
-                <motion.div
-                  whileHover={{ 
-                    scale: 1.03,
-                    transition: { type: "spring", damping: 8, stiffness: 300 }
-                  }}
-                  whileTap={{ 
-                    scale: 0.97,
-                    transition: { type: "spring", damping: 10, stiffness: 300 }
-                  }}
-                >
-                  <Button
-                    onClick={() => {
-                      // Keep this as a page navigation for now
-                      router.push("/add/ai");
-                      onClose();
-                    }}
-                    className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <motion.div 
-                        className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
-                        animate={{ 
-                          rotate: [0, 0, -5, 5, -3, 3, 0],
-                          scale: [1, 1, 1.1, 1.1, 1.05, 1.05, 1]
-                        }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          repeatDelay: 3,
-                          duration: 1.5,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
-                      </motion.div>
-                      <div className="flex-grow text-left">
-                        <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
-                        <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
-                      </div>
-                      <motion.div
-                        animate={{ 
-                          rotate: [0, 10, -10, 10, 0],
-                          scale: [1, 1.2, 1.2, 1.2, 1]
-                        }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          repeatDelay: 2,
-                          duration: 1,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <Sparkles className="sm:h-5 sm:w-5 h-4 w-4" />
-                      </motion.div>
-                    </div>
-                  </Button>
-                </motion.div>
-              </motion.div>
-
-              {/* Quick Actions */}
-              <motion.div variants={item} className="space-y-3">
-                <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
-                  {t.mobileNav.common.quickActions}
-                </h3>
-                
-                <QuickActionButton
-                  icon={<Apple className="h-6 w-6" />}
-                      label={t.mobileNav.commonFoods.title}
-                      description={t.mobileNav.common.commonFoodsDesc}
-                      onClick={() => setCurrentSection("common")}
-                />
-
-                <QuickActionButton
-                  icon={<Pencil className="h-6 w-6" />}
-                      label={t.addFood.customFood}
-                      description={t.mobileNav.common.customFoodDesc}
-                      onClick={() => setCurrentSection("custom")}
-                />
-
-                <QuickActionButton
-                  icon={<Scan className="h-6 w-6" />}
-                      label={t.mobileNav.barcodeScanner.title}
-                      description={t.mobileNav.common.barcodeScannerDesc}
-                      onClick={() => setCurrentSection("barcode")}
-                />
-
-                <QuickActionButton
-                  icon={<Clock className="h-6 w-6" />}
-                      label={t.mobileNav.recentFoods.title}
-                      description={t.mobileNav.common.recentFoodsDesc}
-                      onClick={() => setCurrentSection("recent")}
-                />
-              </motion.div>
-
-              {/* Search Results */}
-                  {searchQuery.length > 0 && (
-                    <motion.div variants={item} className="mt-6 space-y-2">
-                  <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
-                    Search Results
-                  </h3>
-                      
-                      {filteredFoodItems.length > 0 ? (
-                        <div className="divide-y divide-[hsl(var(--border))]">
-                          {filteredFoodItems.slice(0, 10).map((food) => (
-                            <div
-                              key={food.id}
-                              onClick={() => {
-                                // แปลง FoodDatabaseItem เป็น FoodItem ก่อนกำหนดให้ selectedFood
-                                const foodItem: FoodItem = {
-                                  ...food,
-                                  favorite: false,
-                                  createdAt: new Date()
-                                };
-                                setSelectedFood(foodItem);
-                                setCurrentSection("detail");
-                              }}
-                              className="py-3 flex items-center justify-between cursor-pointer hover:bg-[hsl(var(--muted))] -mx-2 px-2 rounded-lg transition-colors"
-                            >
-                              <div>
-                                <div className="font-medium">{food.name}</div>
-                                <div className="text-sm text-[hsl(var(--muted-foreground))]">
-                                  {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
-                                </div>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-[hsl(var(--muted-foreground))] italic">
-                          No food items found matching "{searchQuery}"
-                        </div>
-                      )}
+            {/* Scrollable Content Container */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
+                {currentSection === "main" && (
+                  <motion.div variants={container} initial="hidden" animate="show">
+                    <motion.div variants={item}>
+                      <h2 className="text-2xl font-bold mb-2">{t.addFood.title}</h2>
+                      <p className="text-[hsl(var(--muted-foreground))] sm:mb-6 mb-4">{t.addFood.subtitle}</p>
                     </motion.div>
-                  )}
-                </motion.div>
-              )}
-              
-              {currentSection === "common" && (
-                <CommonFoods 
-                  onSelectFood={(food) => {
-                    setSelectedFood(food);
-                    setCurrentSection("detail");
-                  }} 
-                  onBack={() => setCurrentSection("main")}
-                />
-              )}
-              
-              {currentSection === "custom" && (
-                <CustomFood 
-                  onAdd={(food) => {
-                    setSelectedFood(food);
-                    setCurrentSection("detail");
-                  }} 
-                  onBack={() => setCurrentSection("main")}
-                />
-              )}
-              
-              {currentSection === "barcode" && (
-                <BarcodeScanner 
-                  onFoodFound={(food) => {
-                    setSelectedFood(food);
-                    setCurrentSection("detail");
-                  }} 
-                  onBack={() => setCurrentSection("main")}
-                />
-              )}
-              
-              {currentSection === "recent" && (
-                <RecentFoods 
-                  onSelectFood={(food) => {
-                    setSelectedFood(food);
-                    setCurrentSection("detail");
-                  }} 
-                  onBack={() => setCurrentSection("main")}
-                />
-              )}
-              
-              {currentSection === "detail" && selectedFood && (
-                <FoodDetail 
-                  food={selectedFood} 
-                  onBack={() => {
-                    setSelectedFood(null);
-                    setCurrentSection("main");
-                  }}
-                  onAddFood={handleAddFood}
-                />
-              )}
+                    
+                    {/* Search Bar */}
+                    <motion.div variants={item} className="relative sm:mb-6 mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+                      <Input
+                        type="text"
+                        placeholder={t.mobileNav.common.searchPlaceholder}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
+                      />
+                    </motion.div>
+
+                    {/* AI Assistant Button */}
+                    <motion.div variants={jellyItem}>
+                      <motion.div
+                        whileHover={{ 
+                          scale: 1.03,
+                          transition: { type: "spring", damping: 8, stiffness: 300 }
+                        }}
+                        whileTap={{ 
+                          scale: 0.97,
+                          transition: { type: "spring", damping: 10, stiffness: 300 }
+                        }}
+                      >
+                        <Button
+                          onClick={() => {
+                            // Keep this as a page navigation for now
+                            router.push("/add/ai");
+                            onClose();
+                          }}
+                          className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+                        >
+                          <div className="flex items-center gap-4">
+                            <motion.div 
+                              className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
+                              animate={{ 
+                                rotate: [0, 0, -5, 5, -3, 3, 0],
+                                scale: [1, 1, 1.1, 1.1, 1.05, 1.05, 1]
+                              }}
+                              transition={{ 
+                                repeat: Infinity, 
+                                repeatDelay: 3,
+                                duration: 1.5,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
+                            </motion.div>
+                            <div className="flex-grow text-left">
+                              <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
+                              <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
+                            </div>
+                            <motion.div
+                              animate={{ 
+                                rotate: [0, 10, -10, 10, 0],
+                                scale: [1, 1.2, 1.2, 1.2, 1]
+                              }}
+                              transition={{ 
+                                repeat: Infinity, 
+                                repeatDelay: 2,
+                                duration: 1,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              <Sparkles className="sm:h-5 sm:w-5 h-4 w-4" />
+                            </motion.div>
+                          </div>
+                        </Button>
+                      </motion.div>
+                    </motion.div>
+
+                    {/* Quick Actions */}
+                    <motion.div variants={item} className="space-y-3">
+                      <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
+                        {t.mobileNav.common.quickActions}
+                      </h3>
+                      
+                      <QuickActionButton
+                        icon={<Apple className="h-6 w-6" />}
+                        label={t.mobileNav.commonFoods.title}
+                        description={t.mobileNav.common.commonFoodsDesc}
+                        onClick={() => setCurrentSection("common")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Pencil className="h-6 w-6" />}
+                        label={t.addFood.customFood}
+                        description={t.mobileNav.common.customFoodDesc}
+                        onClick={() => setCurrentSection("custom")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Scan className="h-6 w-6" />}
+                        label={t.mobileNav.barcodeScanner.title}
+                        description={t.mobileNav.common.barcodeScannerDesc}
+                        onClick={() => setCurrentSection("barcode")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Clock className="h-6 w-6" />}
+                        label={t.mobileNav.recentFoods.title}
+                        description={t.mobileNav.common.recentFoodsDesc}
+                        onClick={() => setCurrentSection("recent")}
+                      />
+                    </motion.div>
+
+                    {/* Search Results */}
+                    {searchQuery.length > 0 && (
+                      <motion.div variants={item} className="mt-6 space-y-2">
+                        <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
+                          Search Results
+                        </h3>
+                        
+                        {filteredFoodItems.length > 0 ? (
+                          <div className="divide-y divide-[hsl(var(--border))]">
+                            {filteredFoodItems.slice(0, 10).map((food) => (
+                              <div
+                                key={food.id}
+                                onClick={() => {
+                                  // แปลง FoodDatabaseItem เป็น FoodItem ก่อนกำหนดให้ selectedFood
+                                  const foodItem: FoodItem = {
+                                    ...food,
+                                    favorite: false,
+                                    createdAt: new Date()
+                                  };
+                                  setSelectedFood(foodItem);
+                                  setCurrentSection("detail");
+                                }}
+                                className="py-3 flex items-center justify-between cursor-pointer hover:bg-[hsl(var(--muted))] -mx-2 px-2 rounded-lg transition-colors"
+                              >
+                                <div>
+                                  <div className="font-medium">{food.name}</div>
+                                  <div className="text-sm text-[hsl(var(--muted-foreground))]">
+                                    {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
+                                  </div>
+                                </div>
+                                <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-[hsl(var(--muted-foreground))] italic">
+                            No food items found matching "{searchQuery}"
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+                
+                {currentSection === "common" && (
+                  <CommonFoods 
+                    onSelectFood={(food) => {
+                      setSelectedFood(food);
+                      setCurrentSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {currentSection === "custom" && (
+                  <CustomFood 
+                    onAdd={(food) => {
+                      setSelectedFood(food);
+                      setCurrentSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {currentSection === "barcode" && (
+                  <BarcodeScanner 
+                    onFoodFound={(food) => {
+                      setSelectedFood(food);
+                      setCurrentSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {currentSection === "recent" && (
+                  <RecentFoods 
+                    onSelectFood={(food) => {
+                      setSelectedFood(food);
+                      setCurrentSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {currentSection === "detail" && selectedFood && (
+                  <FoodDetail 
+                    food={selectedFood} 
+                    onBack={() => {
+                      setSelectedFood(null);
+                      setCurrentSection("main");
+                    }}
+                    onAddFood={handleAddFood}
+                  />
+                )}
+              </div>
             </div>
+            
+            {/* เพิ่มพื้นที่ด้านล่างเพื่อให้มีสีพื้นหลัง */}
+            <div className="h-24 w-full bg-[hsl(var(--background))]"></div>
           </motion.div>
         </>
       )}
