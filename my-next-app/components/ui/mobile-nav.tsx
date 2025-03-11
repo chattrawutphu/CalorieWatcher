@@ -78,14 +78,36 @@ const container = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      delayChildren: 0.2
+      delayChildren: 0.3
     }
   }
 };
 
 const item = {
   hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1 }
+  show: { 
+    y: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      damping: 12,
+      stiffness: 200
+    }
+  }
+};
+
+const jellyItem = {
+  hidden: { scale: 0.8, opacity: 0 },
+  show: { 
+    scale: 1, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      damping: 8,
+      stiffness: 100,
+      bounce: 0.5
+    }
+  }
 };
 
 const QuickActionButton = ({ icon, label, onClick, description }: { 
@@ -94,23 +116,46 @@ const QuickActionButton = ({ icon, label, onClick, description }: {
   onClick: () => void;
   description?: string;
 }) => (
-  <motion.div variants={item}>
-    <Button
-      onClick={onClick}
-      variant="outline"
-      className="w-full flex items-center gap-4 h-auto p-4 text-left font-normal hover:bg-[hsl(var(--accent))/0.1] transition-colors"
+  <motion.div variants={jellyItem}>
+    <motion.div
+      whileTap={{ 
+        scale: 0.95,
+        x: [0, -5, 5, -3, 3, 0],
+        transition: { 
+          scale: { type: "spring", damping: 5, stiffness: 300 },
+          x: { type: "spring", stiffness: 300, damping: 10, duration: 0.5 }
+        }
+      }}
     >
-      <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-[hsl(var(--accent))/0.1] flex items-center justify-center text-[hsl(var(--foreground))]">
-        {icon}
-      </div>
-      <div className="flex-grow">
-        <div className="font-medium">{label}</div>
-        {description && (
-          <div className="text-sm text-[hsl(var(--muted-foreground))]">{description}</div>
-        )}
-      </div>
-      <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-    </Button>
+      <Button
+        onClick={onClick}
+        variant="outline"
+        className="w-full flex items-center gap-4 h-auto p-4 sm:p-4 p-2 text-left font-normal hover:bg-[hsl(var(--accent))/0.1] transition-colors sm:rounded-lg rounded-none sm:border border-0 sm:my-2 my-1"
+      >
+        <motion.div 
+          className="flex-shrink-0 sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-[hsl(var(--accent))/0.1] flex items-center justify-center text-[hsl(var(--foreground))]"
+          whileTap={{ 
+            scale: 0.8,
+            rotate: [0, -8, 8, -5, 5, 0],
+            transition: { 
+              type: "spring",
+              damping: 5,
+              stiffness: 300,
+              rotate: { duration: 0.5 }
+            }
+          }}
+        >
+          {icon}
+        </motion.div>
+        <div className="flex-grow">
+          <div className="font-medium sm:text-base text-sm">{label}</div>
+          {description && (
+            <div className="text-sm sm:text-sm text-xs text-[hsl(var(--muted-foreground))]">{description}</div>
+          )}
+        </div>
+        <ChevronRight className="sm:h-5 sm:w-5 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+      </Button>
+    </motion.div>
   </motion.div>
 );
 
@@ -752,6 +797,17 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   // State for selected food
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
 
+  // State to track icon animation
+  const [animatedIcons, setAnimatedIcons] = useState<number[]>([]);
+
+  // Function to trigger animation on icon
+  const animateIcon = (index: number) => {
+    setAnimatedIcons([...animatedIcons, index]);
+    setTimeout(() => {
+      setAnimatedIcons(prevState => prevState.filter(i => i !== index));
+    }, 300);
+  };
+
   // Handle adding a food to the log
   const handleAddFood = (food: FoodItem, quantity: number, mealType: string) => {
     const meal: MealEntry = {
@@ -797,10 +853,42 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           
           {/* Full Screen Sheet */}
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            initial={{ y: "100%", scaleX: 0.8, scaleY: 0.9, borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+            animate={{ 
+              y: 0, 
+              scaleX: 1, 
+              scaleY: 1,
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              transition: {
+                y: { type: "spring", damping: 15, stiffness: 300 },
+                scaleX: { type: "spring", damping: 12, stiffness: 300, delay: 0.1 },
+                scaleY: { 
+                  type: "spring", 
+                  damping: 8, 
+                  stiffness: 200, 
+                  delay: 0.2,
+                  bounce: 0.5
+                },
+                borderTopLeftRadius: { duration: 0.3, delay: 0.3 },
+                borderTopRightRadius: { duration: 0.3, delay: 0.3 }
+              }
+            }}
+            exit={{ 
+              y: "100%", 
+              scaleX: 0.8, 
+              scaleY: 0.9,
+              borderTopLeftRadius: 40,
+              borderTopRightRadius: 40,
+              transition: {
+                y: { type: "spring", damping: 20, stiffness: 300 },
+                scaleX: { type: "spring", damping: 15, stiffness: 300, delay: 0.1 },
+                scaleY: { type: "spring", damping: 10, stiffness: 200 },
+                borderTopLeftRadius: { duration: 0.2 },
+                borderTopRightRadius: { duration: 0.2 }
+              }
+            }}
+            style={{ originY: 1, originX: 0.5 }}
             className="fixed inset-0 z-50 bg-[hsl(var(--background))] overflow-y-auto"
           >
             {/* Close button */}
@@ -812,7 +900,7 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             </button>
             
             {/* Content */}
-            <div className="px-6 py-4 h-full max-w-md mx-auto">
+            <div className="sm:px-6 px-3 py-4 h-full max-w-md mx-auto">
               {currentSection === "main" && (
             <motion.div
               variants={container}
@@ -821,48 +909,84 @@ const BottomSheet = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             >
               <motion.div variants={item}>
                     <h2 className="text-2xl font-bold mb-2">{t.addFood.title}</h2>
-                    <p className="text-[hsl(var(--muted-foreground))] mb-6">{t.addFood.subtitle}</p>
+                    <p className="text-[hsl(var(--muted-foreground))] sm:mb-6 mb-4">{t.addFood.subtitle}</p>
               </motion.div>
               
               {/* Search Bar */}
-              <motion.div variants={item} className="relative mb-6">
+              <motion.div variants={item} className="relative sm:mb-6 mb-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
                 <Input
                   type="text"
                       placeholder={t.mobileNav.common.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 pr-4 h-14 text-lg rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
+                  className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
                 />
               </motion.div>
 
               {/* AI Assistant Button */}
-              <motion.div variants={item}>
-                <Button
-                  onClick={() => {
-                        // Keep this as a page navigation for now
-                    router.push("/add/ai");
-                    onClose();
+              <motion.div variants={jellyItem}>
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.03,
+                    transition: { type: "spring", damping: 8, stiffness: 300 }
                   }}
-                  className="w-full h-auto p-4 mb-6 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity"
+                  whileTap={{ 
+                    scale: 0.97,
+                    transition: { type: "spring", damping: 10, stiffness: 300 }
+                  }}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                      <Bot className="h-6 w-6" />
+                  <Button
+                    onClick={() => {
+                      // Keep this as a page navigation for now
+                      router.push("/add/ai");
+                      onClose();
+                    }}
+                    className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+                  >
+                    <div className="flex items-center gap-4">
+                      <motion.div 
+                        className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
+                        animate={{ 
+                          rotate: [0, 0, -5, 5, -3, 3, 0],
+                          scale: [1, 1, 1.1, 1.1, 1.05, 1.05, 1]
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          repeatDelay: 3,
+                          duration: 1.5,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
+                      </motion.div>
+                      <div className="flex-grow text-left">
+                        <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
+                        <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
+                      </div>
+                      <motion.div
+                        animate={{ 
+                          rotate: [0, 10, -10, 10, 0],
+                          scale: [1, 1.2, 1.2, 1.2, 1]
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          repeatDelay: 2,
+                          duration: 1,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Sparkles className="sm:h-5 sm:w-5 h-4 w-4" />
+                      </motion.div>
                     </div>
-                    <div className="flex-grow text-left">
-                          <div className="font-medium">{t.mobileNav.aiAssistant.title}</div>
-                          <div className="text-sm opacity-90">{t.mobileNav.aiAssistant.description}</div>
-                    </div>
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                </Button>
+                  </Button>
+                </motion.div>
               </motion.div>
 
               {/* Quick Actions */}
               <motion.div variants={item} className="space-y-3">
-                <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
-                      {t.mobileNav.common.quickActions}
+                <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
+                  {t.mobileNav.common.quickActions}
                 </h3>
                 
                 <QuickActionButton
@@ -1001,61 +1125,146 @@ export function MobileNav() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
+  
+  // State to track icon animation
+  const [animatedIcons, setAnimatedIcons] = useState<number[]>([]);
+
+  // Function to trigger animation on icon
+  const animateIcon = (index: number) => {
+    setAnimatedIcons([...animatedIcons, index]);
+    setTimeout(() => {
+      setAnimatedIcons(prevState => prevState.filter(i => i !== index));
+    }, 300);
+  };
 
   return (
     <>
       <BottomSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
       
-      <nav className="fixed bottom-0 left-0 z-50 w-full">
-        <div className="mx-auto px-6">
-          <div className="flex h-16 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md rounded-t-xl border border-[hsl(var(--border))] shadow-lg max-w-md mx-auto">
-            {navItems.map((item) => (
-              <div
+      <motion.nav 
+        className="fixed bottom-0 left-0 z-50 w-full"
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ 
+          type: "spring", 
+          damping: 20, 
+          stiffness: 300,
+          delay: 0.3
+        }}
+      >
+        <div className="mx-auto sm:px-6 px-2">
+          <motion.div 
+            className="flex pb-8 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
+            initial={{ scaleX: 0.9, borderTopLeftRadius: 30, borderTopRightRadius: 30 }}
+            animate={{ scaleX: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
+            transition={{ 
+              type: "spring", 
+              damping: 15, 
+              stiffness: 300,
+              delay: 0.4
+            }}
+          >
+            {navItems.map((item, index) => (
+              <motion.div
                 key={item.href}
-                onClick={() => {
-                  if (item.href === "#") {
-                    setIsAddOpen(true);
-                  }
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ 
+                  type: "spring", 
+                  damping: 12, 
+                  stiffness: 300,
+                  delay: 0.5 + (index * 0.1)
                 }}
-                className="flex flex-col items-center justify-center cursor-pointer"
+                className="flex-1 flex items-stretch"
               >
                 {item.href === "#" ? (
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center justify-center -mt-6 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
+                  <div
+                    onClick={() => {
+                      setIsAddOpen(true);
+                      animateIcon(index);
+                    }}
+                    className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1"
                   >
-                    {item.icon}
-                  </motion.div>
-                ) : (
-                  <Link href={item.href} className="flex flex-col items-center">
                     <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={cn(
-                        "flex items-center justify-center h-10 w-10 rounded-full",
-                        pathname === item.href
-                          ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
-                          : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                      )}
+                      animate={animatedIcons.includes(index) ? {
+                        scale: [1, 0.9, 1.1, 1],
+                        y: [0, 0, -5, 0],
+                        transition: { duration: 0.3 }
+                      } : {}}
+                      whileHover={{ 
+                        scale: 1.1,
+                        y: -5,
+                        transition: { type: "spring", damping: 5, stiffness: 300 }
+                      }}
+                      whileTap={{ 
+                        scale: 0.9,
+                        transition: { type: "spring", damping: 10, stiffness: 300 }
+                      }}
+                      className="sm:-mt-6 -mt-5"
                     >
-                      {item.icon}
+                      <div className="flex items-center justify-center sm:h-14 sm:w-14 h-12 w-12 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg">
+                        {item.icon}
+                      </div>
                     </motion.div>
-                    <span className={cn(
-                      "mt-1 text-xs",
-                      pathname === item.href
-                        ? "text-[hsl(var(--foreground))] font-medium"
-                        : "text-[hsl(var(--muted-foreground))]"
-                    )}>
-                      {t.mobileNav.navigation[item.labelKey]}
-                    </span>
-                  </Link>
+                  </div>
+                ) : (
+                  <div 
+                    className="flex-1"
+                    onClick={() => animateIcon(index)}
+                  >
+                    <Link 
+                      href={item.href} 
+                      className="flex flex-col items-center w-full h-full px-4 py-1 cursor-pointer"
+                      onClick={(e) => e.stopPropagation()} // Prevent double triggering
+                    >
+                      <div className="flex flex-col items-center">
+                        <motion.div
+                          animate={animatedIcons.includes(index) ? {
+                            scale: [1, 0.9, 1.1, 1],
+                            y: [0, 0, -2, 0],
+                            transition: { duration: 0.3 }
+                          } : {}}
+                          whileHover={{ 
+                            scale: 1.1,
+                            y: -2,
+                            transition: { type: "spring", damping: 5, stiffness: 300 }
+                          }}
+                          whileTap={{ 
+                            scale: 0.9,
+                            transition: { type: "spring", damping: 10, stiffness: 300 }
+                          }}
+                          className={cn(
+                            "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",
+                            pathname === item.href
+                              ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                          )}
+                        >
+                          {item.icon}
+                        </motion.div>
+                        <motion.span 
+                          className={cn(
+                            "mt-1 sm:text-xs text-[10px]",
+                            pathname === item.href
+                              ? "text-[hsl(var(--foreground))] font-medium"
+                              : "text-[hsl(var(--muted-foreground))]"
+                          )}
+                          animate={pathname === item.href ? {
+                            scale: [1, 1.2, 1],
+                            transition: { duration: 0.3 }
+                          } : {}}
+                        >
+                          {t.mobileNav.navigation[item.labelKey]}
+                        </motion.span>
+                      </div>
+                    </Link>
+                  </div>
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </nav>
+      </motion.nav>
     </>
   );
 } 

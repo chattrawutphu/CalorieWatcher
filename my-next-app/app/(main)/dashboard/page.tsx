@@ -468,7 +468,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto min-h-screen pb-24">
+    <div className="max-w-md mx-auto min-h-screen pb-24">
       <motion.div
         variants={container}
         initial="hidden"
@@ -564,7 +564,7 @@ export default function DashboardPage() {
                             isDifferentMonth ? 'text-[hsl(var(--muted-foreground))] opacity-40' : ''}
                           ${isTodayDate && !isSelected ? 'ring-1 ring-[hsl(var(--primary))]' : ''}
                           ${hasData && !isSelected ? 'bg-[hsl(var(--accent))/0.1]' : ''}
-                          hover:bg-[hsl(var(--accent))/0.2] transition-all
+                          ${isSelected ? 'hover:opacity-90' : 'hover:bg-[hsl(var(--muted))]/0.5'}
                         `}
                         onClick={() => handleSelectDate(day)}
                       >
