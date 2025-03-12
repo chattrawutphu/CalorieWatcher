@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/providers/language-provider";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Translations
 const translations = {
@@ -61,6 +62,15 @@ export default function SignInPage() {
   const { locale } = useLanguage();
   const t = translations[locale as keyof typeof translations] || translations.en;
   const [loading, setLoading] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [status, router]);
 
   const handleSignIn = async () => {
     try {
@@ -72,6 +82,28 @@ export default function SignInPage() {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 mx-auto mb-4">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-full h-full rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent"
+            />
+          </div>
+          <p className="text-[hsl(var(--muted-foreground))]">{t.description}</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[hsl(var(--background))]">

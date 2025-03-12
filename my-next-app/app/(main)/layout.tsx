@@ -66,7 +66,7 @@ export default function MainLayout({
         </div>
       </div>
 
-      <main className="flex-1 container px-4 pb-20 pt-4 relative z-10">
+      <main className="flex-1 container px-4 pb-20 pt-safe relative z-10">
         {status === "loading" ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-500"></div>

@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
     labelKey: "dashboard",
   },
   {
-    icon: <Plus className="h-7 w-7" />,
+    icon: <Plus className="h-8 w-8" />,
     href: "#",
     labelKey: "add",
   },
@@ -797,16 +797,45 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
   // State for selected food
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
 
-  // State to track icon animation
-  const [animatedIcons, setAnimatedIcons] = useState<number[]>([]);
-
-  // Function to trigger animation on icon
-  const animateIcon = (index: number) => {
-    setAnimatedIcons([...animatedIcons, index]);
-    setTimeout(() => {
-      setAnimatedIcons(prevState => prevState.filter(i => i !== index));
-    }, 300);
-  };
+  // Effect to prevent body scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Add the no-scroll class to the document body
+      document.body.classList.add('overflow-hidden');
+      
+      // Add a style tag to hide all scrollbars
+      const styleElement = document.createElement('style');
+      styleElement.id = 'hide-scrollbars-style';
+      styleElement.textContent = `
+        ::-webkit-scrollbar {
+          display: none !important;
+        }
+        * {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
+    } else {
+      // Remove the no-scroll class when modal is closed
+      document.body.classList.remove('overflow-hidden');
+      
+      // Remove the style tag
+      const styleElement = document.getElementById('hide-scrollbars-style');
+      if (styleElement) {
+        styleElement.remove();
+      }
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+      const styleElement = document.getElementById('hide-scrollbars-style');
+      if (styleElement) {
+        styleElement.remove();
+      }
+    };
+  }, [isOpen]);
 
   // Handle adding a food to the log
   const handleAddFood = (food: FoodItem, quantity: number, mealType: string) => {
@@ -851,60 +880,71 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
             className="fixed inset-0 bg-black/40 z-40"
           />
           
-          {/* Main Sheet Container - draggable */}
+          {/* Main Sheet Container */}
           <motion.div
             initial={{ y: "100%" }}
             animate={{ 
               y: 0,
               transition: { 
                 type: "spring", 
-                damping: 30,
+                damping: 25,
                 stiffness: 300,
-                mass: 0.8
+                mass: 0.5
               } 
             }}
             exit={{ 
               y: "100%", 
               transition: { 
                 type: "spring", 
-                damping: 25, 
+                damping: 20, 
                 stiffness: 300
               } 
             }}
-            drag="y"
-            dragConstraints={{ top: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(e, info) => {
-              if (info.velocity.y > 200 || info.offset.y > window.innerHeight / 3) {
-                onClose();
-              }
-            }}
-            className="fixed inset-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl"
-            style={{ minHeight: "calc(100vh + 100px)" }}
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl max-h-[90vh] overflow-hidden scrollbar-hide"
           >
-            {/* Drag Handle */}
-            <div className="pt-2 pb-1 flex justify-center items-center">
-              <div className="w-10 h-1 rounded-full bg-[hsl(var(--muted))]" />
-            </div>
+            {/* Header */}
+            <div>
+              {/* Drag Handle */}
+              <div className="pt-2 pb-1 flex justify-center items-center">
+                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
+              </div>
 
-            {/* Close button */}
-            <button
-              onClick={handleClose}
-              className="absolute right-4 top-4 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
+              {/* Header with Title, Description and Close Button */}
+              <div className="px-6 py-3 flex justify-between">
+                {/* Title and Description */}
+                <div className="flex-1 pr-2">
+                  {currentSection === "main" ? (
+                    <>
+                      <h2 className="text-xl font-bold">{t.addFood.title}</h2>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
+                    </>
+                  ) : (
+                    <>
+                      {currentSection === "common" && <h2 className="text-xl font-bold">{t.mobileNav.commonFoods.title}</h2>}
+                      {currentSection === "custom" && <h2 className="text-xl font-bold">{t.addFood.customFood}</h2>}
+                      {currentSection === "barcode" && <h2 className="text-xl font-bold">{t.mobileNav.barcodeScanner.title}</h2>}
+                      {currentSection === "recent" && <h2 className="text-xl font-bold">{t.mobileNav.recentFoods.title}</h2>}
+                      {currentSection === "detail" && <h2 className="text-xl font-bold">{selectedFood?.name}</h2>}
+                    </>
+                  )}
+                </div>
+                
+                {/* Close button */}
+                <button
+                  onClick={handleClose}
+                  className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
             
             {/* Scrollable Content Container */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
                 {currentSection === "main" && (
                   <motion.div variants={container} initial="hidden" animate="show">
-                    <motion.div variants={item}>
-                      <h2 className="text-2xl font-bold mb-2">{t.addFood.title}</h2>
-                      <p className="text-[hsl(var(--muted-foreground))] sm:mb-6 mb-4">{t.addFood.subtitle}</p>
-                    </motion.div>
-                    
                     {/* Search Bar */}
                     <motion.div variants={item} className="relative sm:mb-6 mb-4">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
@@ -1107,9 +1147,6 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
                 )}
               </div>
             </div>
-            
-            {/* เพิ่มพื้นที่ด้านล่างเพื่อให้มีสีพื้นหลัง */}
-            <div className="h-24 w-full bg-[hsl(var(--background))]"></div>
           </motion.div>
         </>
       )}
@@ -1119,125 +1156,88 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
 
 export function MobileNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
   
-  // State to track icon animation
-  const [animatedIcons, setAnimatedIcons] = useState<number[]>([]);
-
-  // Function to trigger animation on icon
-  const animateIcon = (index: number) => {
-    setAnimatedIcons([...animatedIcons, index]);
+  // State to track which button is currently animating
+  const [animatingButton, setAnimatingButton] = useState<string | null>(null);
+  
+  // Handle button click with animation
+  const handleButtonClick = (href: string) => {
+    // Set this button as animating but still navigate immediately
+    setAnimatingButton(href);
+    
+    // Reset animation state after animation completes (animation will continue in background)
     setTimeout(() => {
-      setAnimatedIcons(prevState => prevState.filter(i => i !== index));
-    }, 300);
+      setAnimatingButton(null);
+    }, 400);
+    
+    // Handle menu actions immediately
+    if (href === "#") {
+      setIsAddOpen(true);
+    } else {
+      // Navigate to the page immediately
+      router.push(href);
+      
+      // Close the Add Food Popup if it's open
+      if (isAddOpen) {
+        setIsAddOpen(false);
+      }
+    }
   };
-
+  
   return (
     <>
       <BottomSheet 
         isOpen={isAddOpen} 
         onClose={() => setIsAddOpen(false)} 
         onMealAdded={(food) => {
-          // จัดการเมื่อมีการเพิ่มอาหาร
-          // อาจจะต้องอัพเดทข้อมูลหรือ state ที่เกี่ยวข้อง
+          // Handle meal added if needed
           setIsAddOpen(false);
         }} 
       />
       
-      <motion.nav 
-        className="fixed bottom-0 left-0 z-50 w-full"
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ 
-          type: "spring", 
-          damping: 20, 
-          stiffness: 300,
-          delay: 0.3
-        }}
-      >
+      <nav className="fixed bottom-0 left-0 z-50 w-full">
         <div className="mx-auto sm:px-6 px-2">
-          <motion.div 
-            className="flex pb-8 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
-            initial={{ scaleX: 0.9, borderTopLeftRadius: 30, borderTopRightRadius: 30 }}
-            animate={{ scaleX: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
-            transition={{ 
-              type: "spring", 
-              damping: 15, 
-              stiffness: 300,
-              delay: 0.4
-            }}
+          <div
+            className="flex pb-6 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
           >
-            {navItems.map((item, index) => (
-              <motion.div
+            {navItems.map((item) => (
+              <div
                 key={item.href}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ 
-                  type: "spring", 
-                  damping: 12, 
-                  stiffness: 300,
-                  delay: 0.5 + (index * 0.1)
-                }}
-                className="flex-1 flex items-stretch"
+                className="flex-1 flex items-stretch justify-center"
               >
                 {item.href === "#" ? (
                   <div
-                    onClick={() => {
-                      setIsAddOpen(true);
-                      animateIcon(index);
-                    }}
-                    className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1"
+                    onClick={() => handleButtonClick(item.href)}
+                    className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 max-w-[80px]"
                   >
-                    <motion.div
-                      animate={animatedIcons.includes(index) ? {
-                        scale: [1, 0.9, 1.1, 1],
-                        y: [0, 0, -5, 0],
-                        transition: { duration: 0.3 }
-                      } : {}}
-                      whileHover={{ 
-                        scale: 1.1,
-                        y: -5,
-                        transition: { type: "spring", damping: 5, stiffness: 300 }
-                      }}
-                      whileTap={{ 
-                        scale: 0.9,
-                        transition: { type: "spring", damping: 10, stiffness: 300 }
-                      }}
-                      className="sm:-mt-6 -mt-5"
-                    >
-                      <div className="flex items-center justify-center sm:h-14 sm:w-14 h-12 w-12 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg">
+                    <div className="sm:-mt-6 -mt-5">
+                      <motion.div 
+                        animate={animatingButton === item.href ? {
+                          scale: [1, 1.5, 0.8, 1.2, 1],
+                          transition: { times: [0, 0.2, 0.5, 0.8, 1], duration: 0.4 }
+                        } : {}}
+                        className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
+                      >
                         {item.icon}
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    </div>
                   </div>
                 ) : (
-                  <div 
-                    className="flex-1"
-                    onClick={() => animateIcon(index)}
-                  >
-                    <Link 
-                      href={item.href} 
-                      className="flex flex-col items-center w-full h-full px-4 py-1 cursor-pointer"
-                      onClick={(e) => e.stopPropagation()} // Prevent double triggering
+                  <div className="flex-1 flex justify-center">
+                    <button
+                      onClick={() => handleButtonClick(item.href)}
+                      className="flex flex-col items-center w-full h-full px-1 py-1 cursor-pointer max-w-[60px]"
                     >
                       <div className="flex flex-col items-center">
                         <motion.div
-                          animate={animatedIcons.includes(index) ? {
-                            scale: [1, 0.9, 1.1, 1],
-                            y: [0, 0, -2, 0],
-                            transition: { duration: 0.3 }
+                          animate={animatingButton === item.href ? {
+                            scale: [1, 1.5, 0.8, 1.2, 1],
+                            transition: { times: [0, 0.2, 0.5, 0.8, 1], duration: 0.4 }
                           } : {}}
-                          whileHover={{ 
-                            scale: 1.1,
-                            y: -2,
-                            transition: { type: "spring", damping: 5, stiffness: 300 }
-                          }}
-                          whileTap={{ 
-                            scale: 0.9,
-                            transition: { type: "spring", damping: 10, stiffness: 300 }
-                          }}
                           className={cn(
                             "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",
                             pathname === item.href
@@ -1247,29 +1247,25 @@ export function MobileNav() {
                         >
                           {item.icon}
                         </motion.div>
-                        <motion.span 
+                        <span 
                           className={cn(
-                            "mt-1 sm:text-xs text-[10px]",
+                            "mt-1 sm:text-xs text-[10px] truncate w-full text-center",
                             pathname === item.href
                               ? "text-[hsl(var(--foreground))] font-medium"
                               : "text-[hsl(var(--muted-foreground))]"
                           )}
-                          animate={pathname === item.href ? {
-                            scale: [1, 1.2, 1],
-                            transition: { duration: 0.3 }
-                          } : {}}
                         >
                           {t.mobileNav.navigation[item.labelKey]}
-                        </motion.span>
+                        </span>
                       </div>
-                    </Link>
+                    </button>
                   </div>
                 )}
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
-      </motion.nav>
+      </nav>
     </>
   );
 } 

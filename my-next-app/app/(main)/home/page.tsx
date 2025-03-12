@@ -332,15 +332,22 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+      staggerChildren: 0.05
     }
   }
 };
 
 const item = {
   hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1 }
+  show: { 
+    y: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      damping: 12,
+      stiffness: 200
+    }
+  }
 };
 
 const ThemeCard = ({ 
@@ -547,7 +554,7 @@ export default function ShopPage() {
     // เพิ่มเอฟเฟกต์เมื่อสลับเป็น Pro
     if (newStatus === "pro") {
       setShowProAnimation(true);
-      setTimeout(() => setShowProAnimation(false), 2000);
+      setTimeout(() => setShowProAnimation(false), 1200);
     }
     
     setSubscriptionStatus(newStatus);
@@ -718,7 +725,7 @@ export default function ShopPage() {
               rotate: [0, 10, -10, 0]
             }}
             transition={{ 
-              duration: 1.5,
+              duration: 1,
               times: [0, 0.5, 1],
               ease: "easeInOut"
             }}
@@ -734,10 +741,10 @@ export default function ShopPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
               className="absolute inset-0 z-0"
             >
-              {Array.from({ length: 20 }).map((_, i) => (
+              {Array.from({ length: 10 }).map((_, i) => (
                 <motion.div
                   key={i}
                   initial={{ 
@@ -753,7 +760,7 @@ export default function ShopPage() {
                     opacity: 0 
                   }}
                   transition={{ 
-                    duration: Math.random() * 1.5 + 0.5,
+                    duration: Math.random() * 0.7 + 0.3,
                     ease: "easeOut"
                   }}
                   className="absolute"
@@ -817,7 +824,7 @@ export default function ShopPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 className="space-y-4 mt-4"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -941,7 +948,12 @@ export default function ShopPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ 
+                      duration: 0.2,
+                      type: "spring",
+                      damping: 15,
+                      stiffness: 300
+                    }}
                     className="mt-6 p-4 rounded-lg bg-[hsl(var(--accent))/0.2] border border-[hsl(var(--accent))/0.2]"
                   >
                     <h4 className="font-semibold text-center mb-4 text-[hsl(var(--foreground))]">
