@@ -1136,7 +1136,15 @@ export function MobileNav() {
 
   return (
     <>
-      <BottomSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <BottomSheet 
+        isOpen={isAddOpen} 
+        onClose={() => setIsAddOpen(false)} 
+        onMealAdded={(food) => {
+          // จัดการเมื่อมีการเพิ่มอาหาร
+          // อาจจะต้องอัพเดทข้อมูลหรือ state ที่เกี่ยวข้อง
+          setIsAddOpen(false);
+        }} 
+      />
       
       <motion.nav 
         className="fixed bottom-0 left-0 z-50 w-full"
