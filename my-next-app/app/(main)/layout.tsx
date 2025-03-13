@@ -12,6 +12,15 @@ export default function MainLayout({
 }) {
   const { data: session, status } = useSession();
 
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+      </div>
+    );
+  }
+
   // Redirect unauthenticated users to sign in page
   if (status === "unauthenticated") {
     redirect("/auth/signin");

@@ -1187,6 +1187,175 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
   );
 };
 
+// PageTransition component for showing loading animation between page navigations
+const PageTransition = ({ isLoading }: { isLoading: boolean }) => {
+  return (
+    <AnimatePresence>
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--background))/90] backdrop-blur-sm"
+        >
+          <motion.div 
+            className="flex flex-col items-center gap-4"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ 
+              scale: 1, 
+              opacity: 1,
+              transition: { 
+                type: "spring", 
+                damping: 8, 
+                stiffness: 100
+              }
+            }}
+            exit={{ 
+              scale: 0.8, 
+              opacity: 0,
+              transition: { duration: 0.2 } 
+            }}
+          >
+            {/* Cute character animation */}
+            <div className="relative w-24 h-24 mb-2">
+              {/* Character body - circle */}
+              <motion.div 
+                className="absolute w-20 h-20 bg-[hsl(var(--primary))] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                animate={{ 
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              />
+              
+              {/* Eyes */}
+              <div className="absolute w-full h-full flex justify-center items-center">
+                {/* Left eye */}
+                <motion.div 
+                  className="absolute w-4 h-4 bg-white rounded-full left-6 top-8"
+                  animate={{ 
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                >
+                  {/* Pupil */}
+                  <motion.div 
+                    className="absolute w-2 h-2 bg-black rounded-full top-1 right-0.5"
+                    animate={{ 
+                      x: [0, 1, 0, -1, 0],
+                      y: [0, 1, 0, -1, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                  />
+                </motion.div>
+                
+                {/* Right eye */}
+                <motion.div 
+                  className="absolute w-4 h-4 bg-white rounded-full right-6 top-8"
+                  animate={{ 
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                >
+                  {/* Pupil */}
+                  <motion.div 
+                    className="absolute w-2 h-2 bg-black rounded-full top-1 left-0.5"
+                    animate={{ 
+                      x: [0, 1, 0, -1, 0],
+                      y: [0, 1, 0, -1, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                  />
+                </motion.div>
+              </div>
+              
+              {/* Smile */}
+              <motion.div 
+                className="absolute w-10 h-5 border-b-4 border-white rounded-b-full left-1/2 top-14 -translate-x-1/2"
+                animate={{
+                  width: [40, 32, 40],
+                  height: [20, 16, 20]
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              />
+              
+              {/* Bouncing animation */}
+              <motion.div 
+                className="absolute w-full h-full"
+                animate={{ 
+                  y: [0, -5, 0]
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              />
+            </div>
+            
+            <motion.div 
+              className="text-lg font-medium text-center px-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: { delay: 0.3 }
+              }}
+            >
+              <span className="font-semibold">กำลังโหลด</span><span className="inline-block">
+                <motion.span
+                  animate={{ y: [0, -2, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0 }}
+                  className="inline-block"
+                >.</motion.span>
+                <motion.span
+                  animate={{ y: [0, -2, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.1 }}
+                  className="inline-block"
+                >.</motion.span>
+                <motion.span
+                  animate={{ y: [0, -2, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.2 }}
+                  className="inline-block"
+                >.</motion.span>
+              </span>
+            </motion.div>
+            
+            <motion.div
+              className="text-sm text-[hsl(var(--muted-foreground))]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.5 }}}
+            >
+              รอสักครู่นะ
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 export function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -1200,10 +1369,34 @@ export function MobileNav() {
   // Add state to track if the initial animation has played
   const [hasAnimated, setHasAnimated] = useState(false);
   
+  // Add state for page loading
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Set hasAnimated to true after component mounts
   useEffect(() => {
     setHasAnimated(true);
   }, []);
+  
+  // Add event listeners for route changes
+  useEffect(() => {
+    // In Next.js App Router, we don't have router.events
+    // We'll use a different approach with usePathname
+    // When pathname changes, it means navigation completed
+    return () => {
+      // No cleanup needed in this approach
+    };
+  }, []);
+  
+  // Watch for pathname changes to track when navigation completes
+  useEffect(() => {
+    // When pathname changes, it means navigation has completed
+    if (isLoading) {
+      // Add a small delay to make the loading animation visible longer
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 800);
+    }
+  }, [pathname, isLoading]);
   
   // Handle button click with animation
   const handleButtonClick = (href: string) => {
@@ -1219,18 +1412,31 @@ export function MobileNav() {
     if (href === "#") {
       setIsAddOpen(true);
     } else {
-      // Navigate to the page immediately
-      router.push(href);
+      // Show loading before navigation
+      setIsLoading(true);
       
-      // Close the Add Food Popup if it's open
-      if (isAddOpen) {
-        setIsAddOpen(false);
-      }
+      // Add a small delay before navigation for better UX
+      setTimeout(() => {
+        // Navigate to the page
+        router.push(href);
+        
+        // Close the Add Food Popup if it's open
+        if (isAddOpen) {
+          setIsAddOpen(false);
+        }
+        
+        // For instant navigation, we can rely on the route change events
+        // But for manual control, we could use:
+        // setTimeout(() => setIsLoading(false), 1500);
+      }, 100);
     }
   };
   
   return (
     <>
+      {/* Page transition/loading component */}
+      <PageTransition isLoading={isLoading} />
+      
       <BottomSheet 
         isOpen={isAddOpen} 
         onClose={() => setIsAddOpen(false)} 

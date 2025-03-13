@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import AppleProvider from "next-auth/providers/apple";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 
@@ -23,6 +25,7 @@ if (!process.env.NEXTAUTH_SECRET) {
   throw new Error('Missing NEXTAUTH_SECRET environment variable');
 }
 
+// สร้างการกำหนดค่า NextAuth
 const handler = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   providers: [
@@ -30,9 +33,44 @@ const handler = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+    // Apple Sign In เป็น dummy (ใช้ Credentials Provider แทน)
+    CredentialsProvider({
+      id: "apple", // สำคัญ: ให้ ID เป็น "apple" เพื่อให้สามารถใช้ signIn("apple") ได้
+      name: "Apple ID (Dummy)",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        name: { label: "Name", type: "text" },
+      },
+      async authorize(credentials) {
+        // Dummy authorization สำหรับการทดสอบ
+        if (credentials) {
+          // สร้าง user object แบบ dummy
+          return {
+            id: "apple-dummy-id",
+            name: credentials.name || "Apple User",
+            email: credentials.email || "dummy-apple-user@example.com",
+            image: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+          };
+        }
+        return null;
+      },
+    }),
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -54,6 +92,7 @@ const handler = NextAuth({
     signIn: "/auth/signin",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST }; 
