@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Providers } from "@/components/providers/providers";
 import { Toaster } from "@/components/ui/toaster";
 import IOSInstallPromptWrapper from "@/components/ios-install-prompt-wrapper";
+import { AppInitializer } from "@/components/app-initializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -115,7 +116,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark", "chocolate", "sweet"]}>
           <Providers>
-            {children}
+            <AppInitializer>
+              {children}
+            </AppInitializer>
             <IOSInstallPromptWrapper />
             <Toaster />
           </Providers>

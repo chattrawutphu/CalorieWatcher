@@ -83,6 +83,31 @@ const container = {
   }
 };
 
+// Add new navigation entrance animation variants
+const navContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const navItem = {
+  hidden: { y: 20, opacity: 0 },
+  show: { 
+    y: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      damping: 12,
+      stiffness: 200
+    }
+  }
+};
+
 const item = {
   hidden: { y: 20, opacity: 0 },
   show: { 
@@ -797,6 +822,14 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
   // State for selected food
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
 
+  // Add state to track if the initial animation has played
+  const [hasAnimated, setHasAnimated] = useState(false);
+  
+  // Set hasAnimated to true after component mounts
+  useEffect(() => {
+    setHasAnimated(true);
+  }, []);
+
   // Effect to prevent body scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -1164,6 +1197,14 @@ export function MobileNav() {
   // State to track which button is currently animating
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   
+  // Add state to track if the initial animation has played
+  const [hasAnimated, setHasAnimated] = useState(false);
+  
+  // Set hasAnimated to true after component mounts
+  useEffect(() => {
+    setHasAnimated(true);
+  }, []);
+  
   // Handle button click with animation
   const handleButtonClick = (href: string) => {
     // Set this button as animating but still navigate immediately
@@ -1201,13 +1242,17 @@ export function MobileNav() {
       
       <nav className="fixed bottom-0 left-0 z-50 w-full">
         <div className="mx-auto sm:px-6 px-2">
-          <div
+          <motion.div
+            variants={navContainer}
+            initial="hidden"
+            animate="show"
             className="flex pb-6 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
           >
-            {navItems.map((item) => (
-              <div
+            {navItems.map((item, index) => (
+              <motion.div
                 key={item.href}
                 className="flex-1 flex items-stretch justify-center"
+                variants={navItem}
               >
                 {item.href === "#" ? (
                   <div
@@ -1261,9 +1306,9 @@ export function MobileNav() {
                     </button>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </nav>
     </>
