@@ -12,6 +12,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+
+// Animation variants
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { y: 20, opacity: 0 },
+  show: { y: 0, opacity: 1 }
+};
 
 // Translations
 const translations = {
@@ -202,244 +219,185 @@ export default function SettingsPage() {
   };
   
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t.settings}</h1>
-      </div>
+    <motion.div
+      className="max-w-md mx-auto min-h-screen pb-24"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.h1 variants={item} className="text-3xl font-bold mb-6">
+        {t.settings}
+      </motion.h1>
       
-      {/* Account Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.account}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            {session?.user?.image ? (
-              <img
-                src={session.user.image}
-                alt={session.user.name || "User"}
-                className="h-12 w-12 rounded-full"
-              />
-            ) : (
-              <User className="h-12 w-12 rounded-full border p-2" />
-            )}
-            <div>
-              <div className="font-medium">{session?.user?.name}</div>
-              <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
+      {/* Account Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.account}</h2>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-medium">{session?.user?.name || "User"}</p>
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{session?.user?.email || ""}</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => signOut()}
+                className="text-[hsl(var(--muted-foreground))]"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {t.signOut}
+              </Button>
             </div>
-          </div>
-          
-          <Button variant="destructive" onClick={() => signOut()} className="w-full sm:w-auto">
-            <LogOut className="mr-2 h-4 w-4" />
-            {t.signOut}
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
       
-      {/* Appearance Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.appearance}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="theme">{t.theme}</Label>
-            <ThemeToggle />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="language">{t.language}</Label>
-            <LanguageSelector />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Appearance Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.appearance}</h2>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>{t.theme}</Label>
+              <ThemeToggle />
+            </div>
+            <div className="flex justify-between items-center">
+              <Label>{t.language}</Label>
+              <LanguageSelector />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
       
-      {/* Nutrition Goals */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.nutritionGoals}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="dailyCalories">{t.dailyCalories}</Label>
-            <div className="flex items-center gap-4">
+      {/* Nutrition Goals Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.nutritionGoals}</h2>
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="calories">{t.dailyCalories}</Label>
               <Input
-                id="dailyCalories"
+                id="calories"
                 type="number"
-                min={1000}
-                max={5000}
                 value={dailyCalories}
                 onChange={(e) => setDailyCalories(Number(e.target.value))}
-                className="w-24"
+                min={500}
+                max={10000}
+                step={50}
               />
-              <span>{t.calories}</span>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <Label className="text-base">{t.macroDistribution}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t.protein}: {proteinPercentage}% • {t.fat}: {fatPercentage}% • {t.carbs}: {carbsPercentage}%
-              </p>
             </div>
             
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="protein">{t.protein} ({proteinPercentage}%)</Label>
-                  <span className="text-sm">{proteinGrams}g</span>
-                </div>
-                <Slider
-                  id="protein"
-                  min={10}
-                  max={70}
-                  step={1}
-                  value={[proteinPercentage]}
-                  onValueChange={(value) => handleProteinChange(value[0])}
-                  className="[&_[role=slider]]:bg-blue-600"
-                />
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <Label>{t.macroDistribution}</Label>
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">100%</span>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="fat">{t.fat} ({fatPercentage}%)</Label>
-                  <span className="text-sm">{fatGrams}g</span>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.protein} ({proteinPercentage}%)</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{proteinGrams}g</span>
+                  </div>
+                  <Slider
+                    value={[proteinPercentage]}
+                    min={10}
+                    max={60}
+                    step={1}
+                    onValueChange={(values) => handleProteinChange(values[0])}
+                  />
                 </div>
-                <Slider
-                  id="fat"
-                  min={10}
-                  max={70}
-                  step={1}
-                  value={[fatPercentage]}
-                  onValueChange={(value) => handleFatChange(value[0])}
-                  className="[&_[role=slider]]:bg-red-600"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="carbs">{t.carbs} ({carbsPercentage}%)</Label>
-                  <span className="text-sm">{carbsGrams}g</span>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.fat} ({fatPercentage}%)</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{fatGrams}g</span>
+                  </div>
+                  <Slider
+                    value={[fatPercentage]}
+                    min={10}
+                    max={60}
+                    step={1}
+                    onValueChange={(values) => handleFatChange(values[0])}
+                  />
                 </div>
-                <Slider
-                  id="carbs"
-                  min={10}
-                  max={70}
-                  step={1}
-                  value={[carbsPercentage]}
-                  onValueChange={(value) => handleCarbsChange(value[0])}
-                  className="[&_[role=slider]]:bg-yellow-600"
-                />
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.carbs} ({carbsPercentage}%)</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{carbsGrams}g</span>
+                  </div>
+                  <Slider
+                    value={[carbsPercentage]}
+                    min={10}
+                    max={60}
+                    step={1}
+                    onValueChange={(values) => handleCarbsChange(values[0])}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Water Goal */}
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <Droplet className="h-5 w-5 text-blue-500" />
-              <Label className="text-base font-medium">{t.waterSettings}</Label>
-            </div>
-            
-            <div className="bg-[hsl(var(--accent))/0.1] p-4 rounded-lg space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="waterGoal" className="font-medium">{t.dailyWaterGoal}</Label>
-                <div className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
-                  <CupSoda className="h-4 w-4" />
-                  <span className="text-sm">{Math.ceil(waterGoal / 250)} {t.glass.toLowerCase()}</span>
-                </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* Water Goal Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.waterSettings}</h2>
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="water">{t.dailyWaterGoal}</Label>
+                <span className="text-sm text-[hsl(var(--primary))]">{waterGoal} {t.ml} ({(waterGoal / 1000).toFixed(1)} {t.liters})</span>
               </div>
-              
-              <div className="flex items-center gap-4">
-                <Input
-                  id="waterGoal"
-                  type="number"
-                  min={500}
-                  max={5000}
-                  step={100}
-                  value={waterGoal}
-                  onChange={(e) => setWaterGoal(Number(e.target.value))}
-                  className="w-24"
-                />
-                <span>{t.ml}</span>
-                <span className="text-[hsl(var(--primary))] font-medium text-base">
-                  ({(waterGoal / 1000).toFixed(1)} {t.liters})
-                </span>
-              </div>
-              
-              {/* Quick preset buttons */}
-              <div className="flex flex-wrap gap-2">
-                {[1500, 2000, 2500, 3000].map((amount) => (
-                  <Button 
-                    key={amount} 
-                    type="button" 
-                    variant={waterGoal === amount ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setWaterGoal(amount)}
-                    className="flex items-center"
-                  >
-                    {amount === 2000 && <Check className="mr-1 h-3 w-3" />}
-                    {amount / 1000}{t.liters}
-                  </Button>
-                ))}
-              </div>
-              
-              <div className="space-y-1">
-                <Slider
-                  defaultValue={[waterGoal]}
-                  min={500}
-                  max={5000}
-                  step={100}
-                  onValueChange={(value) => setWaterGoal(value[0])}
-                  value={[waterGoal]}
-                  className="[&_[role=slider]]:bg-blue-500"
-                />
-                <div className="flex justify-between text-xs text-[hsl(var(--muted-foreground))]">
-                  <span>0.5 {t.liters}</span>
-                  <span className="text-center">2.5 {t.liters}</span>
-                  <span>5 {t.liters}</span>
-                </div>
-              </div>
-              
-              <div className="text-[hsl(var(--muted-foreground))] text-sm bg-[hsl(var(--background))] p-2 rounded border border-[hsl(var(--border))] flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <Slider
+                id="water"
+                value={[waterGoal]}
+                min={500}
+                max={5000}
+                step={100}
+                onValueChange={(values) => setWaterGoal(values[0])}
+              />
+              <div className="flex items-center text-sm text-[hsl(var(--muted-foreground))]">
+                <AlertCircle className="h-4 w-4 mr-1" />
                 <span>{t.recommendedWater}</span>
               </div>
               
-              {/* Visual representation */}
-              <div className="flex justify-center space-x-1 py-2">
-                {Array.from({ length: Math.min(8, Math.ceil(waterGoal / 250)) }).map((_, i) => (
-                  <div key={i} className="relative w-6 h-8 rounded-b-lg border border-t-0 border-blue-500">
-                    <div className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-blue-500/20" style={{ height: '100%' }}></div>
-                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] text-white z-10">
-                      💧
-                    </span>
-                  </div>
-                ))}
-                {waterGoal > 2000 && (
-                  <div className="flex items-center">
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">+{Math.ceil((waterGoal - 2000) / 250)}</span>
-                  </div>
-                )}
+              <div className="flex items-center justify-center mt-4 space-x-2">
+                <CupSoda className="h-5 w-5 text-blue-500" />
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                  = {Math.round(waterGoal / 250)} {t.glass} ({250} {t.ml})
+                </span>
               </div>
             </div>
-          </div>
-          
-          <Button onClick={handleSave} className="w-full" disabled={isSaved}>
-            {isSaved ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                {t.saved}
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {t.save}
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* Save Button */}
+      <motion.div variants={item} className="mb-8">
+        <Button 
+          className="w-full"
+          onClick={handleSave}
+        >
+          {isSaved ? (
+            <>
+              <Check className="h-4 w-4 mr-2" /> {t.saved}
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" /> {t.save}
+            </>
+          )}
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 } 

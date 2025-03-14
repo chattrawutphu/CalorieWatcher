@@ -7,197 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useNutrition } from "@/components/providers/nutrition-provider";
 import { useLanguage } from "@/components/providers/language-provider";
+import { dashboardTranslations, formatTranslation } from "@/app/locales/dashboard";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from "recharts";
-import { ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, Sun, Moon, Check, SmilePlus, Pencil } from "lucide-react";
+import { ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, Sun, Moon, Check, SmilePlus, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
 import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths, parse, isSameDay, getMonth, getYear, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import { th, ja, zhCN } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { WaterTracker } from "@/components/ui/water-tracker";
-
-const translations = {
-  en: {
-    welcome: "Welcome back!",
-    stats: "Today's Stats",
-    calories: "Calories",
-    remaining: "remaining",
-    protein: "Protein",
-    carbs: "Carbs",
-    fat: "Fat",
-    addMeal: "Add Meal",
-    viewMeals: "View All Meals",
-    recentMeals: "Recent Meals",
-    noRecent: "No recent meals",
-    macros: "Macros Distribution",
-    g: "g",
-    dashboard: "Dashboard",
-    of: "of",
-    kcal: "kcal",
-    calendar: "Calendar",
-    today: "Today",
-    selectDate: "Select date",
-    previousWeek: "Previous week",
-    nextWeek: "Next week",
-    mealHistory: "Meal History",
-    noMealsOnThisDay: "No meals on this day",
-    mood: "Mood & Notes",
-    moodRating: "How was your day?",
-    notes: "Notes",
-    saveNotes: "Save",
-    editNotes: "Edit",
-    placeholder: "Write your thoughts about today...",
-    terrible: "Terrible",
-    bad: "Bad",
-    okay: "Okay",
-    good: "Good",
-    great: "Great",
-    saved: "Saved!",
-    water: {
-      title: "Water Intake",
-      completed: "completed",
-      reset: "Reset",
-      add: "Add",
-      tip: "Experts recommend drinking at least 2 liters of water daily.",
-      goal: "Goal"
-    }
-  },
-  th: {
-    welcome: "ยินดีต้อนรับกลับ!",
-    stats: "สถิติวันนี้",
-    calories: "แคลอรี่",
-    remaining: "เหลืออยู่",
-    protein: "โปรตีน",
-    carbs: "คาร์บ",
-    fat: "ไขมัน",
-    addMeal: "เพิ่มมื้ออาหาร",
-    viewMeals: "ดูมื้ออาหารทั้งหมด",
-    recentMeals: "มื้ออาหารล่าสุด",
-    noRecent: "ไม่มีมื้ออาหารล่าสุด",
-    macros: "การกระจายของมหโภชนาการ",
-    g: "ก.",
-    dashboard: "แดชบอร์ด",
-    of: "จาก",
-    kcal: "แคลอรี่",
-    calendar: "ปฏิทิน",
-    today: "วันนี้",
-    selectDate: "เลือกวันที่",
-    previousWeek: "สัปดาห์ก่อน",
-    nextWeek: "สัปดาห์ถัดไป",
-    mealHistory: "ประวัติมื้ออาหาร",
-    noMealsOnThisDay: "ไม่มีมื้ออาหารในวันนี้",
-    mood: "อารมณ์และบันทึก",
-    moodRating: "วันนี้เป็นอย่างไรบ้าง?",
-    notes: "บันทึก",
-    saveNotes: "บันทึก",
-    editNotes: "แก้ไข",
-    placeholder: "เขียนความคิดของคุณเกี่ยวกับวันนี้...",
-    terrible: "แย่มาก",
-    bad: "แย่",
-    okay: "พอใช้",
-    good: "ดี",
-    great: "ดีมาก",
-    saved: "บันทึกแล้ว!",
-    water: {
-      title: "การดื่มน้ำ",
-      completed: "สำเร็จแล้ว",
-      reset: "รีเซ็ต",
-      add: "เพิ่ม",
-      tip: "ผู้เชี่ยวชาญแนะนำให้ดื่มน้ำอย่างน้อย 2 ลิตรต่อวัน",
-      goal: "เป้าหมาย"
-    }
-  },
-  ja: {
-    welcome: "お帰りなさい！",
-    stats: "今日の統計",
-    calories: "カロリー",
-    remaining: "残り",
-    protein: "タンパク質",
-    carbs: "炭水化物",
-    fat: "脂肪",
-    addMeal: "食事を追加",
-    viewMeals: "すべての食事を見る",
-    recentMeals: "最近の食事",
-    noRecent: "最近の食事はありません",
-    macros: "栄養素の分布",
-    g: "g",
-    dashboard: "ダッシュボード",
-    of: "の",
-    kcal: "kcal",
-    calendar: "カレンダー",
-    today: "今日",
-    selectDate: "日付を選択",
-    previousWeek: "前の週",
-    nextWeek: "次の週",
-    mealHistory: "食事履歴",
-    noMealsOnThisDay: "この日の食事はありません",
-    mood: "気分とメモ",
-    moodRating: "今日はどうでしたか？",
-    notes: "メモ",
-    saveNotes: "保存",
-    editNotes: "編集",
-    placeholder: "今日についての考えを書いてください...",
-    terrible: "ひどい",
-    bad: "悪い",
-    okay: "まあまあ",
-    good: "良い",
-    great: "素晴らしい",
-    saved: "保存しました！",
-    water: {
-      title: "水分摂取量",
-      completed: "完了",
-      reset: "リセット",
-      add: "追加",
-      tip: "専門家は1日に少なくとも2リットルの水を飲むことをお勧めします。",
-      goal: "目標"
-    }
-  },
-  zh: {
-    welcome: "欢迎回来！",
-    stats: "今日统计",
-    calories: "卡路里",
-    remaining: "剩余",
-    protein: "蛋白质",
-    carbs: "碳水化合物",
-    fat: "脂肪",
-    addMeal: "添加餐点",
-    viewMeals: "查看所有餐点",
-    recentMeals: "最近餐点",
-    noRecent: "没有最近餐点",
-    macros: "营养分布",
-    g: "克",
-    dashboard: "仪表板",
-    of: "的",
-    kcal: "卡路里",
-    calendar: "日历",
-    today: "今天",
-    selectDate: "选择日期",
-    previousWeek: "上周",
-    nextWeek: "下周",
-    mealHistory: "餐点历史",
-    noMealsOnThisDay: "这一天没有餐点",
-    mood: "心情和笔记",
-    moodRating: "今天怎么样？",
-    notes: "笔记",
-    saveNotes: "保存",
-    editNotes: "编辑",
-    placeholder: "写下你对今天的想法...",
-    terrible: "糟糕",
-    bad: "不好",
-    okay: "一般",
-    good: "好",
-    great: "很好",
-    saved: "已保存！",
-    water: {
-      title: "饮水量",
-      completed: "已完成",
-      reset: "重置",
-      add: "添加",
-      tip: "专家建议每天至少饮用2升水。",
-      goal: "目标"
-    }
-  },
-};
 
 // Animation variants
 const container = {
@@ -219,6 +37,43 @@ const calendarVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
+};
+
+// Calendar popup animation variants
+const popupVariants = {
+  hidden: { opacity: 0, y: 100, scale: 0.98 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.3 }
+  },
+  exit: { 
+    opacity: 0, 
+    y: 100,
+    scale: 0.98,
+    transition: { 
+      duration: 0.25,
+      ease: "easeInOut" 
+    }
+  }
+};
+
+// Overlay animation variants
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.25 }
+  },
+  exit: { 
+    opacity: 0,
+    transition: { 
+      duration: 0.25,
+      ease: "easeInOut",
+      delay: 0.05
+    }
+  }
 };
 
 // Define colors - updating with more vibrant, cute theme-compatible colors
@@ -259,10 +114,269 @@ const MoodEmoji = ({ rating, selected, onClick }: { rating: number, selected: bo
   );
 };
 
+// Calendar popup component
+const CalendarPopup = ({ 
+  isOpen, 
+  onClose, 
+  selectedDate, 
+  onSelectDate 
+}: { 
+  isOpen: boolean;
+  onClose: () => void;
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+}) => {
+  const { locale } = useLanguage();
+  const t = dashboardTranslations[locale as keyof typeof dashboardTranslations] || dashboardTranslations.en;
+  const { dailyLogs, goals } = useNutritionStore();
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+  
+  useEffect(() => {
+    // Set the current month to the month of the selected date when opening
+    if (isOpen) {
+      setCurrentMonthDate(parse(selectedDate, 'yyyy-MM-dd', new Date()));
+    }
+    
+    // Prevent body scroll when popup is open
+    if (isOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isOpen, selectedDate]);
+  
+  // Get date locale based on app language
+  const getDateLocale = () => {
+    switch (locale) {
+      case 'th': return th;
+      case 'ja': return ja;
+      case 'zh': return zhCN;
+      default: return undefined;
+    }
+  };
+  
+  // Get days of week labels based on app language
+  const getDaysOfWeekLabels = () => {
+    switch (locale) {
+      case 'th': return DAYS_OF_WEEK_TH;
+      case 'ja': return DAYS_OF_WEEK_JA;
+      case 'zh': return DAYS_OF_WEEK_ZH;
+      default: return DAYS_OF_WEEK;
+    }
+  };
+  
+  // Navigation functions
+  const goToPreviousMonth = () => {
+    const newDate = new Date(currentMonthDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentMonthDate(newDate);
+  };
+  
+  const goToNextMonth = () => {
+    const newDate = new Date(currentMonthDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentMonthDate(newDate);
+  };
+  
+  const goToToday = () => {
+    setCurrentMonthDate(new Date());
+    onSelectDate(format(new Date(), 'yyyy-MM-dd'));
+    
+    // Add a slight delay before closing to allow tap/click feedback
+    setTimeout(() => {
+      onClose();
+    }, 120);
+  };
+  
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const monthStart = startOfMonth(currentMonthDate);
+    const monthEnd = endOfMonth(currentMonthDate);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = endOfWeek(monthEnd);
+    
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  };
+  
+  // Helper functions for displaying calendar data
+  const hasEntries = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate] && dailyLogs[formattedDate].meals.length > 0;
+  };
+  
+  const getEntryCount = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate]?.meals.length || 0;
+  };
+  
+  const getTotalCalories = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate]?.totalCalories || 0;
+  };
+  
+  const calendarDays = generateCalendarDays();
+  const daysInWeek = getDaysOfWeekLabels();
+  const selectedDateObj = parse(selectedDate, 'yyyy-MM-dd', new Date());
+  
+  // Handle date selection
+  const handleDateSelect = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    onSelectDate(formattedDate);
+    
+    // Add a slight delay before closing to allow tap/click feedback
+    setTimeout(() => {
+      onClose();
+    }, 120);
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            className="fixed inset-0 bg-black/70 z-50 touch-none"
+            variants={overlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={onClose}
+          />
+          
+          {/* Calendar Popup */}
+          <motion.div
+            className="fixed inset-x-0 bottom-0 z-50 bg-[hsl(var(--background))] rounded-t-xl p-5 max-h-[90vh] overflow-y-auto touch-auto shadow-md border-t border-[hsl(var(--border))]"
+            variants={popupVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="max-w-md mx-auto">
+              <div className="relative mb-4">
+                <h2 className="text-lg font-semibold text-center">{t.calendar}</h2>
+                <button
+                  onClick={onClose}
+                  className="absolute right-0 top-0 p-2 rounded-full hover:bg-[hsl(var(--muted))]"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="flex justify-between items-center mb-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={goToToday}
+                  className="text-xs px-2 py-1 h-8 text-[hsl(var(--primary))]"
+                >
+                  {t.today}
+                </Button>
+                
+                <div className="flex items-center">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={goToPreviousMonth} 
+                    className="rounded-full w-8 h-8"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <span className="text-base font-medium mx-2">
+                    {format(currentMonthDate, 'MMMM yyyy', { locale: getDateLocale() })}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={goToNextMonth} 
+                    className="rounded-full w-8 h-8"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+                
+                <div className="w-16"></div> {/* Spacer for balance */}
+              </div>
+              
+              <div className="grid grid-cols-7 text-center mb-2">
+                {daysInWeek.map((day, i) => (
+                  <div key={i} className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1 mb-5">
+                {calendarDays.map((day, i) => {
+                  const formattedDate = format(day, 'yyyy-MM-dd');
+                  const isSelected = formattedDate === selectedDate;
+                  const isDifferentMonth = !isSameMonth(day, currentMonthDate);
+                  const isTodayDate = isToday(day);
+                  const dayEntryCount = getEntryCount(day);
+                  const dayTotalCalories = getTotalCalories(day);
+                  const hasData = dayEntryCount > 0;
+                  
+                  // Calculate calorie percentage for visual indicator
+                  const caloriePercentage = Math.min(100, (dayTotalCalories / (goals.dailyCalorieGoal || 2000)) * 100);
+                  
+                  return (
+                    <Button
+                      key={i}
+                      variant="ghost"
+                      size="sm"
+                      className={`
+                        relative p-0 h-auto aspect-square flex flex-col items-center justify-center
+                        ${isSelected ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 
+                          isDifferentMonth ? 'text-[hsl(var(--muted-foreground))] opacity-40' : ''}
+                        ${isTodayDate && !isSelected ? 'ring-1 ring-[hsl(var(--primary))]' : ''}
+                        ${hasData && !isSelected ? 'bg-[hsl(var(--accent))/0.1]' : ''}
+                        ${isSelected ? 'hover:opacity-90' : 'hover:bg-[hsl(var(--muted))]/0.5'}
+                      `}
+                      onClick={() => handleDateSelect(day)}
+                    >
+                      <span className="text-sm font-semibold">
+                        {format(day, 'd')}
+                      </span>
+                      
+                      {hasData && (
+                        <div className="absolute bottom-1 w-full px-1">
+                          <div className="w-full h-[3px] rounded-full bg-[hsl(var(--muted))/0.3]">
+                            <div 
+                              className="h-full rounded-full bg-[hsl(var(--primary))]" 
+                              style={{ width: `${caloriePercentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {hasData && (
+                        <div className="absolute top-1 right-1">
+                          <span className="text-[8px] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-full w-3 h-3 flex items-center justify-center">
+                            {dayEntryCount}
+                          </span>
+                        </div>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { locale } = useLanguage();
-  const t = translations[locale as keyof typeof translations] || translations.en;
+  const t = dashboardTranslations[locale as keyof typeof dashboardTranslations] || dashboardTranslations.en;
   const { getTodayStats, goals, recentMeals = [], updateDailyMood, getDailyMood } = useNutrition();
   const { dailyLogs, setCurrentDate, currentDate } = useNutritionStore();
   
@@ -274,6 +388,9 @@ export default function DashboardPage() {
   const [notes, setNotes] = useState("");
   const [moodRating, setMoodRating] = useState<number | undefined>(undefined);
   const [saved, setSaved] = useState(false);
+  
+  // State for calendar popup
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const getDateLocale = () => {
     switch (locale) {
@@ -301,16 +418,15 @@ export default function DashboardPage() {
     setCurrentMonthDate(prevDate => addMonths(prevDate, 1));
   };
   
-  const handleSelectDate = (date: Date) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    setSelectedDate(formattedDate);
-    setCurrentDate(formattedDate);
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date);
+    setCurrentDate(date);
   };
   
   const goToToday = () => {
     const today = new Date();
     setCurrentMonthDate(today);
-    handleSelectDate(today);
+    handleSelectDate(format(today, 'yyyy-MM-dd'));
   };
   
   // Get stats for the currently selected date
@@ -476,135 +592,39 @@ export default function DashboardPage() {
         className="space-y-5"
       >
         <motion.div variants={item} className="mb-6">
-          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
-            {t.dashboard}
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
+              {t.dashboard}
+            </h1>
+            <motion.div 
+              className="h-10 w-10 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center text-[hsl(var(--foreground))]"
+              variants={item}
+              onClick={() => setIsCalendarOpen(true)}
+            >
+              <CalendarIcon className="h-5 w-5" />
+            </motion.div>
+          </div>
           <p className="text-[hsl(var(--muted-foreground))]">
             {t.welcome}
           </p>
         </motion.div>
 
-        {/* Calendar Section */}
-        <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.calendar}</h2>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={goToToday}
-                className="text-xs px-2 py-1 h-8 text-[hsl(var(--primary))]"
-              >
-                {t.today}
-              </Button>
-            </div>
-            
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={format(currentMonthDate, 'yyyy-MM')}
-                variants={calendarVariants}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-                className="overflow-hidden"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={goToPreviousMonth} 
-                    aria-label={t.previousWeek}
-                    className="rounded-full w-8 h-8"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                  <span className="text-base font-medium">
-                    {format(currentMonthDate, 'MMMM yyyy', { locale: getDateLocale() })}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={goToNextMonth} 
-                    aria-label={t.nextWeek}
-                    className="rounded-full w-8 h-8"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-7 text-center mb-2">
-                  {daysInWeek.map((day, i) => (
-                    <div key={i} className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="grid grid-cols-7 gap-1">
-                  {calendarDays.map((day, i) => {
-                    const formattedDate = format(day, 'yyyy-MM-dd');
-                    const isSelected = formattedDate === selectedDate;
-                    const isDifferentMonth = !isSameMonth(day, currentMonthDate);
-                    const isTodayDate = isToday(day);
-                    const dayEntryCount = getEntryCount(day);
-                    const dayTotalCalories = getTotalCalories(day);
-                    const hasData = dayEntryCount > 0;
-                    
-                    // Calculate calorie percentage for visual indicator
-                    const caloriePercentage = Math.min(100, (dayTotalCalories / goals.dailyCalorieGoal) * 100);
-                    
-                    return (
-                      <Button
-                        key={i}
-                        variant="ghost"
-                        size="sm"
-                        className={`
-                          relative p-0 h-auto aspect-square flex flex-col items-center justify-center
-                          ${isSelected ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 
-                            isDifferentMonth ? 'text-[hsl(var(--muted-foreground))] opacity-40' : ''}
-                          ${isTodayDate && !isSelected ? 'ring-1 ring-[hsl(var(--primary))]' : ''}
-                          ${hasData && !isSelected ? 'bg-[hsl(var(--accent))/0.1]' : ''}
-                          ${isSelected ? 'hover:opacity-90' : 'hover:bg-[hsl(var(--muted))]/0.5'}
-                        `}
-                        onClick={() => handleSelectDate(day)}
-                      >
-                        <span className="text-sm font-semibold">
-                          {format(day, 'd')}
-                        </span>
-                        
-                        {hasData && (
-                          <div className="absolute bottom-1 w-full px-1">
-                            <div className="w-full h-[3px] rounded-full bg-[hsl(var(--muted))/0.3]">
-                              <div 
-                                className="h-full rounded-full bg-[hsl(var(--primary))]" 
-                                style={{ width: `${caloriePercentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {hasData && (
-                          <div className="absolute top-1 right-1">
-                            <span className="text-[8px] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-full w-3 h-3 flex items-center justify-center">
-                              {dayEntryCount}
-                            </span>
-                          </div>
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </Card>
-        </motion.div>
-
         {/* Selected Day Stats */}
         <motion.div variants={item}>
           <Card className="p-5 shadow-md rounded-2xl">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
-              {format(selectedDateObj, 'PPPP', { locale: getDateLocale() })}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                {format(selectedDateObj, 'PPPP', { locale: getDateLocale() })}
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsCalendarOpen(true)}
+                className="text-xs px-2 py-1 h-8 text-[hsl(var(--primary))]"
+              >
+                {t.calendar}
+              </Button>
+            </div>
             
             <div className="space-y-5">
               {/* Calories */}
@@ -946,6 +966,17 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
+
+        {/* Calendar Popup */}
+        <CalendarPopup 
+          isOpen={isCalendarOpen}
+          onClose={() => setIsCalendarOpen(false)}
+          selectedDate={selectedDate}
+          onSelectDate={(date) => {
+            setSelectedDate(date);
+            setCurrentDate(date);
+          }}
+        />
       </motion.div>
     </div>
   );

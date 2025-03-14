@@ -10,6 +10,14 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
+  experimental: {
+    turbo: {
+      rules: {
+        // Option to configure client-side logging. Defaults to "error"
+        loaders: ["json"],
+      },
+    },
+  },
 };
 
 export default withPWA(nextConfig);

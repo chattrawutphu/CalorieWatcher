@@ -25,7 +25,8 @@ import {
   Camera,
   Bookmark,
   AlertCircle,
-  Loader2
+  Loader2,
+  Users
 } from "lucide-react";
 import { Input } from "./input";
 import { Button } from "./button";
@@ -1196,159 +1197,47 @@ const PageTransition = ({ isLoading }: { isLoading: boolean }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--background))/90] backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--background))/40] backdrop-blur-[1px]"
         >
           <motion.div 
-            className="flex flex-col items-center gap-4"
-            initial={{ scale: 0.8, opacity: 0 }}
+            className="flex items-center justify-center"
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ 
               scale: 1, 
               opacity: 1,
               transition: { 
                 type: "spring", 
-                damping: 8, 
-                stiffness: 100
+                damping: 20,
+                stiffness: 300
               }
             }}
             exit={{ 
-              scale: 0.8, 
+              scale: 0.9, 
               opacity: 0,
-              transition: { duration: 0.2 } 
+              transition: { duration: 0.15 } 
             }}
           >
-            {/* Cute character animation */}
-            <div className="relative w-24 h-24 mb-2">
-              {/* Character body - circle */}
-              <motion.div 
-                className="absolute w-20 h-20 bg-[hsl(var(--primary))] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                animate={{ 
-                  scale: [1, 1.05, 1]
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-              
-              {/* Eyes */}
-              <div className="absolute w-full h-full flex justify-center items-center">
-                {/* Left eye */}
-                <motion.div 
-                  className="absolute w-4 h-4 bg-white rounded-full left-6 top-8"
-                  animate={{ 
-                    scale: [1, 1.2, 1]
+            {/* Just dots in circular arrangement */}
+            <div className="relative flex items-center justify-center h-16 w-48">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute h-5 w-5 rounded-full bg-[hsl(var(--primary))]"
+                  style={{
+                    left: `${24 * i + 24}px`, 
                   }}
+                  initial={{ y: 0 }}
+                  animate={{ y: [0, -12, 0] }}
                   transition={{
-                    duration: 2,
+                    duration: 0.6,
                     repeat: Infinity,
-                    repeatType: "reverse"
+                    repeatDelay: 0.1,
+                    delay: i * 0.15,
+                    ease: "easeInOut"
                   }}
-                >
-                  {/* Pupil */}
-                  <motion.div 
-                    className="absolute w-2 h-2 bg-black rounded-full top-1 right-0.5"
-                    animate={{ 
-                      x: [0, 1, 0, -1, 0],
-                      y: [0, 1, 0, -1, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity
-                    }}
-                  />
-                </motion.div>
-                
-                {/* Right eye */}
-                <motion.div 
-                  className="absolute w-4 h-4 bg-white rounded-full right-6 top-8"
-                  animate={{ 
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                >
-                  {/* Pupil */}
-                  <motion.div 
-                    className="absolute w-2 h-2 bg-black rounded-full top-1 left-0.5"
-                    animate={{ 
-                      x: [0, 1, 0, -1, 0],
-                      y: [0, 1, 0, -1, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity
-                    }}
-                  />
-                </motion.div>
-              </div>
-              
-              {/* Smile */}
-              <motion.div 
-                className="absolute w-10 h-5 border-b-4 border-white rounded-b-full left-1/2 top-14 -translate-x-1/2"
-                animate={{
-                  width: [40, 32, 40],
-                  height: [20, 16, 20]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-              
-              {/* Bouncing animation */}
-              <motion.div 
-                className="absolute w-full h-full"
-                animate={{ 
-                  y: [0, -5, 0]
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
+                />
+              ))}
             </div>
-            
-            <motion.div 
-              className="text-lg font-medium text-center px-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                transition: { delay: 0.3 }
-              }}
-            >
-              <span className="font-semibold">กำลังโหลด</span><span className="inline-block">
-                <motion.span
-                  animate={{ y: [0, -2, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity, delay: 0 }}
-                  className="inline-block"
-                >.</motion.span>
-                <motion.span
-                  animate={{ y: [0, -2, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.1 }}
-                  className="inline-block"
-                >.</motion.span>
-                <motion.span
-                  animate={{ y: [0, -2, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.2 }}
-                  className="inline-block"
-                >.</motion.span>
-              </span>
-            </motion.div>
-            
-            <motion.div
-              className="text-sm text-[hsl(var(--muted-foreground))]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.5 }}}
-            >
-              รอสักครู่นะ
-            </motion.div>
           </motion.div>
         </motion.div>
       )}
@@ -1412,30 +1301,24 @@ export function MobileNav() {
     if (href === "#") {
       setIsAddOpen(true);
     } else {
-      // Show loading before navigation
-      setIsLoading(true);
+      // Nous désactivons le loader de page
+      // setIsLoading(true);
       
-      // Add a small delay before navigation for better UX
-      setTimeout(() => {
-        // Navigate to the page
-        router.push(href);
-        
-        // Close the Add Food Popup if it's open
-        if (isAddOpen) {
-          setIsAddOpen(false);
-        }
-        
-        // For instant navigation, we can rely on the route change events
-        // But for manual control, we could use:
-        // setTimeout(() => setIsLoading(false), 1500);
-      }, 100);
+      // Navigate to the page immediately without loading screen
+      router.push(href);
+      
+      // Close the Add Food Popup if it's open
+      if (isAddOpen) {
+        setIsAddOpen(false);
+      }
     }
   };
   
   return (
     <>
       {/* Page transition/loading component */}
-      <PageTransition isLoading={isLoading} />
+      {/* Commenté pour désactiver le loader de changement de page */}
+      {/* <PageTransition isLoading={isLoading} /> */}
       
       <BottomSheet 
         isOpen={isAddOpen} 

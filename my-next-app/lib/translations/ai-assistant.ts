@@ -162,7 +162,8 @@ export const aiAssistantTranslations = {
         dashboard: "Dashboard",
         add: "Add",
         history: "History",
-        settings: "Settings"
+        settings: "Settings",
+        social: "Social Club"
       }
     }
   },
@@ -328,8 +329,9 @@ export const aiAssistantTranslations = {
         home: "หน้าหลัก",
         dashboard: "แดชบอร์ด",
         add: "เพิ่ม",
-        history: "ประวัติ",
-        settings: "ตั้งค่า"
+        social: "โซเชียลคลับ",
+        settings: "ตั้งค่า",
+        history: "ประวัติ"
       }
     }
   },
@@ -496,7 +498,8 @@ export const aiAssistantTranslations = {
         dashboard: "ダッシュボード",
         add: "追加",
         history: "履歴",
-        settings: "設定"
+        settings: "設定",
+        social: "ソーシャルクラブ"
       }
     }
   },
@@ -663,7 +666,8 @@ export const aiAssistantTranslations = {
         dashboard: "仪表盘",
         add: "添加",
         history: "历史",
-        settings: "设置"
+        settings: "设置",
+        social: "社交俱乐部"
       }
     }
   }
