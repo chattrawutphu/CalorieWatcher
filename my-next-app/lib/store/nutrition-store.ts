@@ -13,6 +13,13 @@ export interface FoodItem {
   favorite: boolean;
   createdAt: Date;
   category: 'protein' | 'vegetable' | 'fruit' | 'grain' | 'dairy' | 'snack' | 'beverage' | 'other';
+  // USDA API related fields
+  usdaId?: number;
+  brandName?: string;
+  ingredients?: string;
+  dataType?: string;
+  // New field for meal categorization
+  mealCategory?: string;
 }
 
 export interface MealEntry {

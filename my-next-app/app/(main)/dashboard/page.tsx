@@ -9,7 +9,7 @@ import { useNutrition } from "@/components/providers/nutrition-provider";
 import { useLanguage } from "@/components/providers/language-provider";
 import { dashboardTranslations, formatTranslation } from "@/app/locales/dashboard";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from "recharts";
-import { ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, Sun, Moon, Check, SmilePlus, Pencil, X } from "lucide-react";
+import { ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, Sun, Moon, Check, SmilePlus, Pencil, X, Trash2, Minus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
 import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths, parse, isSameDay, getMonth, getYear, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
@@ -392,6 +392,32 @@ export default function DashboardPage() {
   // State for calendar popup
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
+  // State for meal history editing
+  const [isEditingMeals, setIsEditingMeals] = useState(false);
+  const [mealToDelete, setMealToDelete] = useState<string | null>(null);
+  const [mealToEdit, setMealToEdit] = useState<any | null>(null);
+  const [editedQuantity, setEditedQuantity] = useState<number>(1);
+  
+  // Create additional translations for meal editing feature
+  const additionalTranslations = {
+    edit: locale === 'th' ? 'แก้ไข' : locale === 'ja' ? '編集' : locale === 'zh' ? '编辑' : 'Edit',
+    done: locale === 'th' ? 'เสร็จสิ้น' : locale === 'ja' ? '完了' : locale === 'zh' ? '完成' : 'Done',
+    confirmDelete: locale === 'th' ? 'ยืนยันการลบ' : locale === 'ja' ? '削除の確認' : locale === 'zh' ? '确认删除' : 'Confirm Delete',
+    confirmDeleteMessage: locale === 'th' ? 'คุณแน่ใจหรือว่าต้องการลบรายการอาหารนี้? การกระทำนี้ไม่สามารถย้อนกลับได้' : 
+                          locale === 'ja' ? 'この食事を削除してもよろしいですか？この操作は元に戻せません。' : 
+                          locale === 'zh' ? '您确定要删除此餐食吗？此操作无法撤消。' : 
+                          'Are you sure you want to delete this meal? This cannot be undone.',
+    cancel: locale === 'th' ? 'ยกเลิก' : locale === 'ja' ? 'キャンセル' : locale === 'zh' ? '取消' : 'Cancel',
+    delete: locale === 'th' ? 'ลบ' : locale === 'ja' ? '削除' : locale === 'zh' ? '删除' : 'Delete',
+    editMeal: locale === 'th' ? 'แก้ไขอาหาร' : locale === 'ja' ? '食事の編集' : locale === 'zh' ? '编辑餐食' : 'Edit Meal',
+    quantity: locale === 'th' ? 'จำนวน' : locale === 'ja' ? '量' : locale === 'zh' ? '数量' : 'Quantity',
+    per: locale === 'th' ? 'ต่อ' : locale === 'ja' ? 'あたり' : locale === 'zh' ? '每' : 'per',
+    save: locale === 'th' ? 'บันทึกการเปลี่ยนแปลง' : locale === 'ja' ? '変更を保存' : locale === 'zh' ? '保存更改' : 'Save Changes'
+  };
+  
+  // Combine translations
+  const translations = { ...t, ...additionalTranslations };
+  
   const getDateLocale = () => {
     switch (locale) {
       case 'th': return th;
@@ -583,6 +609,99 @@ export default function DashboardPage() {
     }
   };
 
+  // Function to handle meal deletion
+  const handleDeleteMeal = (mealId: string) => {
+    // For confirmation dialog
+    setMealToDelete(mealId);
+  };
+  
+  // Function to confirm meal deletion
+  const confirmDeleteMeal = () => {
+    if (mealToDelete && dailyLogs[selectedDate]) {
+      const updatedMeals = dailyLogs[selectedDate].meals.filter(meal => meal.id !== mealToDelete);
+      
+      // Update nutrition calculations
+      const deletedMeal = dailyLogs[selectedDate].meals.find(meal => meal.id === mealToDelete);
+      if (deletedMeal) {
+        const mealCalories = deletedMeal.foodItem.calories * deletedMeal.quantity;
+        const mealProtein = deletedMeal.foodItem.protein * deletedMeal.quantity;
+        const mealCarbs = deletedMeal.foodItem.carbs * deletedMeal.quantity;
+        const mealFat = deletedMeal.foodItem.fat * deletedMeal.quantity;
+        
+        // Update daily logs with recalculated totals
+        const updatedDailyLog = {
+          ...dailyLogs[selectedDate],
+          meals: updatedMeals,
+          totalCalories: dailyLogs[selectedDate].totalCalories - mealCalories,
+          totalProtein: dailyLogs[selectedDate].totalProtein - mealProtein,
+          totalCarbs: dailyLogs[selectedDate].totalCarbs - mealCarbs,
+          totalFat: dailyLogs[selectedDate].totalFat - mealFat
+        };
+        
+        // Update store
+        useNutritionStore.setState({
+          dailyLogs: {
+            ...dailyLogs,
+            [selectedDate]: updatedDailyLog
+          }
+        });
+      }
+      
+      // Close confirmation dialog
+      setMealToDelete(null);
+    }
+  };
+  
+  // Function to open meal edit dialog
+  const handleEditMeal = (meal: any) => {
+    setMealToEdit(meal);
+    setEditedQuantity(meal.quantity);
+  };
+  
+  // Function to save edited meal
+  const saveEditedMeal = () => {
+    if (mealToEdit && dailyLogs[selectedDate]) {
+      // Calculate difference in nutrition values
+      const oldCalories = mealToEdit.foodItem.calories * mealToEdit.quantity;
+      const oldProtein = mealToEdit.foodItem.protein * mealToEdit.quantity;
+      const oldCarbs = mealToEdit.foodItem.carbs * mealToEdit.quantity;
+      const oldFat = mealToEdit.foodItem.fat * mealToEdit.quantity;
+      
+      const newCalories = mealToEdit.foodItem.calories * editedQuantity;
+      const newProtein = mealToEdit.foodItem.protein * editedQuantity;
+      const newCarbs = mealToEdit.foodItem.carbs * editedQuantity;
+      const newFat = mealToEdit.foodItem.fat * editedQuantity;
+      
+      // Update the meal in the array
+      const updatedMeals = dailyLogs[selectedDate].meals.map(meal => 
+        meal.id === mealToEdit.id 
+          ? { ...meal, quantity: editedQuantity } 
+          : meal
+      );
+      
+      // Update daily logs with recalculated totals
+      const updatedDailyLog = {
+        ...dailyLogs[selectedDate],
+        meals: updatedMeals,
+        totalCalories: dailyLogs[selectedDate].totalCalories - oldCalories + newCalories,
+        totalProtein: dailyLogs[selectedDate].totalProtein - oldProtein + newProtein,
+        totalCarbs: dailyLogs[selectedDate].totalCarbs - oldCarbs + newCarbs,
+        totalFat: dailyLogs[selectedDate].totalFat - oldFat + newFat
+      };
+      
+      // Update store
+      useNutritionStore.setState({
+        dailyLogs: {
+          ...dailyLogs,
+          [selectedDate]: updatedDailyLog
+        }
+      });
+      
+      // Close edit dialog
+      setMealToEdit(null);
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto min-h-screen pb-24">
       <motion.div
@@ -739,7 +858,7 @@ export default function DashboardPage() {
                     )}
                     <Tooltip 
                       formatter={(value: number, name: string, props: any) => [
-                        <span className="flex items-center gap-1">
+                        <span key="tooltip-value" className="flex items-center gap-1">
                           <span className="text-lg">{props.payload.icon}</span>
                           <span>
                             <span className="font-medium">{Math.round(value)}{t.g}</span>
@@ -811,6 +930,19 @@ export default function DashboardPage() {
           <Card className="p-5 shadow-md rounded-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingMeals(!isEditingMeals)}
+                className="rounded-full h-8 w-8 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95"
+              >
+                {isEditingMeals ? (
+                  <Check className="h-4 w-4 text-[hsl(var(--primary))]" />
+                ) : (
+                  <Pencil className="h-4 w-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
+                )}
+                <span className="sr-only">{isEditingMeals ? translations.done : translations.edit}</span>
+              </Button>
             </div>
             
             <div className="space-y-3">
@@ -827,16 +959,39 @@ export default function DashboardPage() {
                     transition={{ delay: index * 0.1 }}
                     className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-[hsl(var(--accent))/0.1] transition-colors cursor-pointer"
                   >
-                    <div>
+                    <div className="flex-1">
                       <div className="font-medium text-[hsl(var(--foreground))]">{meal.foodItem.name}</div>
                       <div className="text-xs text-[hsl(var(--muted-foreground))]">
                         {meal.quantity} {meal.foodItem.servingSize}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center">
                       <div className="font-medium text-[hsl(var(--primary))]">
                         {Math.round(meal.foodItem.calories * meal.quantity)} {t.kcal}
                       </div>
+                      
+                      {isEditingMeals && (
+                        <div className="flex ml-4 space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditMeal(meal)}
+                            className="h-7 w-7 p-0 rounded-full hover:bg-[hsl(var(--primary))/0.1]"
+                          >
+                            <Edit className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))]" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteMeal(meal.id)}
+                            className="h-7 w-7 p-0 rounded-full hover:bg-red-500/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))
@@ -899,6 +1054,135 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
+
+        {/* Delete Confirmation Dialog */}
+        <AnimatePresence>
+          {mealToDelete && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/70 z-50 touch-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMealToDelete(null)}
+              />
+              <motion.div
+                className="fixed inset-x-0 bottom-0 z-50 bg-[hsl(var(--background))] rounded-t-xl p-5 max-h-[90vh] overflow-y-auto touch-auto shadow-md border-t border-[hsl(var(--border))]"
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+              >
+                <div className="max-w-md mx-auto">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold">{translations.confirmDelete}</h3>
+                    <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
+                      {translations.confirmDeleteMessage}
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-center space-x-3 mt-6 pb-20">
+                    <Button
+                      variant="outline"
+                      onClick={() => setMealToDelete(null)}
+                      className="w-1/3"
+                    >
+                      {translations.cancel}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={confirmDeleteMeal}
+                      className="w-1/3"
+                    >
+                      {translations.delete}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Meal Dialog */}
+        <AnimatePresence>
+          {mealToEdit && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/70 z-50 touch-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMealToEdit(null)}
+              />
+              <motion.div
+                className="fixed inset-x-0 bottom-0 z-50 bg-[hsl(var(--background))] rounded-t-xl p-5 max-h-[90vh] overflow-y-auto touch-auto shadow-md border-t border-[hsl(var(--border))]"
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+              >
+                <div className="max-w-md mx-auto">
+                  <div className="relative mb-4">
+                    <h3 className="text-lg font-semibold text-center">{translations.editMeal}</h3>
+                    <button
+                      onClick={() => setMealToEdit(null)}
+                      className="absolute right-0 top-0 p-2 rounded-full hover:bg-[hsl(var(--muted))]"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium text-[hsl(var(--foreground))]">{mealToEdit?.foodItem.name}</h4>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                        {mealToEdit?.foodItem.calories} {translations.kcal} {translations.per} {mealToEdit?.foodItem.servingSize}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">{translations.quantity}</label>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => setEditedQuantity(prev => Math.max(0.5, prev - 0.5))}
+                          className="h-8 w-8 rounded-full"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </Button>
+                        
+                        <div className="flex-1 px-3 py-1.5 border rounded-md text-center bg-[hsl(var(--background))] text-sm">
+                          {editedQuantity} {mealToEdit?.foodItem.servingSize}
+                        </div>
+                        
+                        <Button
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => setEditedQuantity(prev => prev + 0.5)}
+                          className="h-8 w-8 rounded-full"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      
+                      <div className="text-right text-sm text-[hsl(var(--primary))]">
+                        {Math.round(mealToEdit?.foodItem.calories * editedQuantity)} {translations.kcal}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end mt-6 pb-20">
+                      <Button
+                        onClick={saveEditedMeal}
+                        className="bg-[hsl(var(--primary))]"
+                      >
+                        {translations.save}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Calendar Popup */}
         <CalendarPopup 

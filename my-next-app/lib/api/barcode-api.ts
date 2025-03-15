@@ -85,6 +85,9 @@ interface OpenFoodFactsResponse {
     product_name_th?: string;
     nutriments?: {
       energy_kcal_100g?: number;
+      energy_kj_100g?: number;
+      energy_100g?: number;
+      energy?: number;
       proteins_100g?: number;
       fat_100g?: number;
       carbohydrates_100g?: number;
@@ -150,6 +153,7 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
     // ตรวจสอบว่าพบข้อมูลหรือไม่
     if (data.status === 1 && data.product) {
       const product = data.product;
+      console.log('API response:', JSON.stringify(product.nutriments, null, 2));
       
       // ถ้ามีข้อมูลโภชนาการ
       if (product.nutriments) {
@@ -157,7 +161,54 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
         const productName = product.product_name_th || product.product_name || 'Unknown Product';
         
         // ข้อมูลโภชนาการต่อ 100g
-        const calories = product.nutriments.energy_kcal_100g || 0;
+        // คำนวณแคลอรี่ - ลองตรวจสอบทุกฟิลด์ที่เป็นไปได้
+        let calories = 0;
+        
+        if (product.nutriments.energy_kcal_100g !== undefined && product.nutriments.energy_kcal_100g > 0) {
+          // ถ้ามีค่าแคลอรี่ในหน่วย kcal
+          calories = product.nutriments.energy_kcal_100g;
+        } else if (product.nutriments.energy_kj_100g !== undefined && product.nutriments.energy_kj_100g > 0) {
+          // ถ้ามีค่าแคลอรี่ในหน่วย kJ แปลงเป็น kcal
+          calories = Math.round(product.nutriments.energy_kj_100g / 4.184);
+        } else if (product.nutriments.energy_100g !== undefined && product.nutriments.energy_100g > 0) {
+          // บางครั้ง energy_100g มีค่าเป็น kJ
+          if (product.nutriments.energy_100g > 400) {
+            // ถ้าค่ามากกว่า 400 น่าจะเป็น kJ
+            calories = Math.round(product.nutriments.energy_100g / 4.184);
+          } else {
+            // ถ้าน้อยกว่า 400 น่าจะเป็น kcal
+            calories = product.nutriments.energy_100g;
+          }
+        } else if (product.nutriments.energy !== undefined && product.nutriments.energy > 0) {
+          // บางครั้ง energy มีค่าเป็น kJ
+          if (product.nutriments.energy > 400) {
+            // ถ้าค่ามากกว่า 400 น่าจะเป็น kJ
+            calories = Math.round(product.nutriments.energy / 4.184);
+          } else {
+            // ถ้าน้อยกว่า 400 น่าจะเป็น kcal
+            calories = product.nutriments.energy;
+          }
+        }
+        
+        console.log(`Calculated calories: ${calories} kcal`);
+        
+        // ถ้าแคลอรี่ยังเป็น 0 ให้ประมาณจากโภชนาการอื่น
+        if (calories === 0) {
+          const protein = product.nutriments.proteins_100g || 0;
+          const fat = product.nutriments.fat_100g || 0;
+          const carbs = product.nutriments.carbohydrates_100g || 0;
+          
+          // แคลอรี่ = โปรตีน * 4 + คาร์บ * 4 + ไขมัน * 9
+          calories = Math.round((protein * 4) + (carbs * 4) + (fat * 9));
+          console.log(`Estimated calories from macros: ${calories} kcal`);
+        }
+        
+        // ถ้าแคลอรี่ยังเป็น 0 ให้กำหนดเป็นค่าเริ่มต้นตามประเภทอาหาร
+        if (calories === 0) {
+          calories = 100; // ค่าเริ่มต้นทั่วไป
+          console.log(`Using default calories: ${calories} kcal`);
+        }
+        
         const protein = product.nutriments.proteins_100g || 0;
         const fat = product.nutriments.fat_100g || 0;
         const carbs = product.nutriments.carbohydrates_100g || 0;
@@ -189,6 +240,20 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
     if (barcode in barcodeMockDatabase) {
       const foodData = barcodeMockDatabase[barcode];
       
+      // ตรวจสอบค่าแคลอรี่ ถ้าเป็น 0 ให้ประมาณจากข้อมูลอื่น
+      if (foodData.calories === 0) {
+        // แคลอรี่ = โปรตีน * 4 + คาร์บ * 4 + ไขมัน * 9
+        const calculatedCalories = Math.round((foodData.protein * 4) + (foodData.carbs * 4) + (foodData.fat * 9));
+        
+        if (calculatedCalories > 0) {
+          foodData.calories = calculatedCalories;
+          console.log(`Updated calories from mock database: ${calculatedCalories} kcal`);
+        } else {
+          foodData.calories = 100; // Default value
+          console.log(`Using default calories for mock data: 100 kcal`);
+        }
+      }
+      
       return {
         id: crypto.randomUUID(),
         favorite: false,
@@ -205,6 +270,20 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
     // ถ้าเกิดข้อผิดพลาด ให้ตรวจสอบใน mock database
     if (barcode in barcodeMockDatabase) {
       const foodData = barcodeMockDatabase[barcode];
+      
+      // ตรวจสอบค่าแคลอรี่ ถ้าเป็น 0 ให้ประมาณจากข้อมูลอื่น
+      if (foodData.calories === 0) {
+        // แคลอรี่ = โปรตีน * 4 + คาร์บ * 4 + ไขมัน * 9
+        const calculatedCalories = Math.round((foodData.protein * 4) + (foodData.carbs * 4) + (foodData.fat * 9));
+        
+        if (calculatedCalories > 0) {
+          foodData.calories = calculatedCalories;
+          console.log(`Updated calories from mock database (error path): ${calculatedCalories} kcal`);
+        } else {
+          foodData.calories = 100; // Default value
+          console.log(`Using default calories for mock data (error path): 100 kcal`);
+        }
+      }
       
       return {
         id: crypto.randomUUID(),

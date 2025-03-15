@@ -26,7 +26,12 @@ import {
   Bookmark,
   AlertCircle,
   Loader2,
-  Users
+  Users,
+  Check,
+  Filter,
+  AlignLeft,
+  Pizza,
+  Heart
 } from "lucide-react";
 import { Input } from "./input";
 import { Button } from "./button";
@@ -37,6 +42,8 @@ import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatE
 import { getFoodByBarcode, isValidBarcode } from "@/lib/api/barcode-api";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
+import { USDAFoodItem, convertToAppFoodItem, FOOD_CATEGORIES, searchFoods, searchFoodsByCategory } from "@/lib/api/usda-api";
+import { cacheService } from "@/lib/utils/cache-service";
 
 interface NavItem {
   icon: React.ReactNode;
@@ -171,58 +178,396 @@ const QuickActionButton = memo(({ icon, label, onClick, description }: {
 const CommonFoods = ({ onSelectFood, onBack }: { onSelectFood: (food: any) => void, onBack: () => void }) => {
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
-
-  // Group foods by category
-  const groupedFoods = FoodDatabase.reduce((acc: Record<string, any[]>, food) => {
-    if (!acc[food.category]) {
-      acc[food.category] = [];
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [foods, setFoods] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [searchMode, setSearchMode] = useState<'category' | 'search'>('category');
+  
+  // Import from USDA API
+  const { FOOD_CATEGORIES, searchFoods, searchFoodsByCategory, convertToAppFoodItem } = require('@/lib/api/usda-api');
+  // Import cache service
+  const { cacheService } = require('@/lib/utils/cache-service');
+  
+  // สำหรับตัวอย่าง - หมวดหมู่ย่อยของแต่ละหมวดหมู่
+  const subcategories = useMemo(() => {
+    switch (selectedCategory) {
+      case 'vegetables':
+        return [
+          { id: 'leafy', name: 'Leafy Greens', emoji: '🥬' },
+          { id: 'root', name: 'Root Vegetables', emoji: '🥕' },
+          { id: 'cruciferous', name: 'Cruciferous', emoji: '🥦' },
+          { id: 'allium', name: 'Allium', emoji: '🧅' },
+          { id: 'other_veg', name: 'Other Vegetables', emoji: '🌽' },
+        ];
+      case 'fruits':
+        return [
+          { id: 'berries', name: 'Berries', emoji: '🍓' },
+          { id: 'citrus', name: 'Citrus', emoji: '🍊' },
+          { id: 'tropical', name: 'Tropical', emoji: '🍍' },
+          { id: 'stone_fruits', name: 'Stone Fruits', emoji: '🍑' },
+          { id: 'other_fruits', name: 'Other Fruits', emoji: '🍏' },
+        ];
+      case 'protein_foods':
+        return [
+          { id: 'meat', name: 'Meat', emoji: '🥩' },
+          { id: 'poultry', name: 'Poultry', emoji: '🍗' },
+          { id: 'seafood', name: 'Seafood', emoji: '🐟' },
+          { id: 'eggs', name: 'Eggs', emoji: '🥚' },
+          { id: 'legumes', name: 'Legumes', emoji: '🫘' },
+          { id: 'nuts', name: 'Nuts & Seeds', emoji: '🥜' },
+        ];
+      case 'dairy':
+        return [
+          { id: 'milk', name: 'Milk', emoji: '🥛' },
+          { id: 'cheese', name: 'Cheese', emoji: '🧀' },
+          { id: 'yogurt', name: 'Yogurt', emoji: '🥣' },
+          { id: 'other_dairy', name: 'Other Dairy', emoji: '🍦' },
+        ];
+      case 'grains':
+        return [
+          { id: 'bread', name: 'Bread', emoji: '🍞' },
+          { id: 'rice', name: 'Rice', emoji: '🍚' },
+          { id: 'pasta', name: 'Pasta', emoji: '🍝' },
+          { id: 'cereal', name: 'Cereal', emoji: '🥣' },
+          { id: 'other_grains', name: 'Other Grains', emoji: '🌾' },
+        ];
+      case 'beverages':
+        return [
+          { id: 'water', name: 'Water', emoji: '💧' },
+          { id: 'juice', name: 'Juice', emoji: '🧃' },
+          { id: 'coffee', name: 'Coffee', emoji: '☕' },
+          { id: 'tea', name: 'Tea', emoji: '🍵' },
+          { id: 'smoothies', name: 'Smoothies', emoji: '🥤' },
+        ];
+      default:
+        return [];
     }
-    acc[food.category].push(food);
-    return acc;
-  }, {});
+  }, [selectedCategory]);
+  
+  // ค้นหาอาหารด้วย USDA API
+  const performSearch = useCallback(async (query: string, loadPage: number = 1) => {
+    if (!query || query.length < 2) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // ตรวจสอบแคชก่อน
+      const cachedResults = cacheService.getCachedFoodSearch(query, loadPage);
+      
+      if (cachedResults) {
+        // ใช้ผลลัพธ์จากแคช
+        const formattedFoods = cachedResults.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        
+        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setHasMore(formattedFoods.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
+      } else {
+        // เรียก API
+        const results = await searchFoods({
+          query,
+          pageNumber: loadPage,
+          pageSize: 20,
+          requireAllWords: false
+        });
+        
+        // แคชผลลัพธ์
+        cacheService.cacheFoodSearch(query, loadPage, results);
+        
+        // แปลงเป็นรูปแบบที่แอพใช้
+        const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        
+        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setHasMore(results.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
+      }
+    } catch (err) {
+      console.error("Error searching foods:", err);
+      setError("ไม่สามารถค้นหาอาหารได้ กรุณาลองอีกครั้ง");
+    } finally {
+      setLoading(false);
+    }
+  }, [foods, searchFoods, convertToAppFoodItem]);
+  
+  // ค้นหาอาหารตามหมวดหมู่
+  const loadCategoryFoods = useCallback(async (category: string, subcat: string | null = null, loadPage: number = 1) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // สร้างคำค้นหาจากหมวดหมู่และหมวดหมู่ย่อย
+      let searchTerm = category;
+      if (subcat) {
+        // เพิ่มคำสำคัญของหมวดหมู่ย่อย
+        switch (subcat) {
+          // กรณี vegetables
+          case 'leafy': searchTerm += ' AND (spinach OR lettuce OR kale OR greens)'; break;
+          case 'root': searchTerm += ' AND (carrot OR beet OR potato OR root)'; break;
+          case 'cruciferous': searchTerm += ' AND (broccoli OR cauliflower OR brussels OR cabbage)'; break;
+          case 'allium': searchTerm += ' AND (onion OR garlic OR leek OR shallot)'; break;
+          
+          // กรณี fruits
+          case 'berries': searchTerm += ' AND (berry OR berries OR strawberry OR blueberry OR raspberry)'; break;
+          case 'citrus': searchTerm += ' AND (orange OR lemon OR lime OR grapefruit OR citrus)'; break;
+          case 'tropical': searchTerm += ' AND (banana OR mango OR pineapple OR tropical)'; break;
+          case 'stone_fruits': searchTerm += ' AND (peach OR plum OR nectarine OR cherry OR apricot)'; break;
+          
+          // กรณี protein
+          case 'meat': searchTerm += ' AND (beef OR pork OR lamb OR meat)'; break;
+          case 'poultry': searchTerm += ' AND (chicken OR turkey OR duck OR poultry)'; break;
+          case 'seafood': searchTerm += ' AND (fish OR salmon OR tuna OR seafood OR shrimp)'; break;
+          case 'eggs': searchTerm += ' AND (egg OR eggs OR omelette)'; break;
+          case 'legumes': searchTerm += ' AND (bean OR beans OR lentil OR lentils OR legume)'; break;
+          case 'nuts': searchTerm += ' AND (nut OR nuts OR seed OR seeds OR almond OR walnut)'; break;
+          
+          // อื่นๆ สำหรับหมวดหมู่อื่น - เพิ่มตามต้องการ
+        }
+      }
+      
+      // ตรวจสอบแคชก่อน
+      const cacheKey = subcat ? `${category}_${subcat}` : category;
+      const cachedResults = cacheService.getCachedFoodCategory(cacheKey, loadPage);
+      
+      if (cachedResults) {
+        // ใช้ผลลัพธ์จากแคช
+        const formattedFoods = cachedResults.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        
+        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setHasMore(formattedFoods.length === 20);
+      } else {
+        // เรียก API
+        const results = await searchFoods({
+          query: searchTerm,
+          pageNumber: loadPage,
+          pageSize: 20,
+        });
+        
+        // แคชผลลัพธ์
+        cacheService.cacheFoodCategory(cacheKey, loadPage, results);
+        
+        // แปลงเป็นรูปแบบที่แอพใช้
+        const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        
+        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setHasMore(results.length === 20);
+      }
+    } catch (err) {
+      console.error(`Error loading foods for category ${category}:`, err);
+      setError("ไม่สามารถโหลดข้อมูลอาหารได้ กรุณาลองอีกครั้ง");
+    } finally {
+      setLoading(false);
+    }
+  }, [foods, searchFoods, convertToAppFoodItem]);
+  
+  // โหลดหน้าถัดไป
+  const loadMoreFoods = useCallback(() => {
+    const nextPage = page + 1;
+    
+    if (searchMode === 'search') {
+      performSearch(searchQuery, nextPage);
+    } else if (selectedCategory) {
+      loadCategoryFoods(selectedCategory, subcategory, nextPage);
+    }
+    
+    setPage(nextPage);
+  }, [page, searchMode, searchQuery, selectedCategory, subcategory, performSearch, loadCategoryFoods]);
+  
+  // ติดตามการเปลี่ยนแปลงคำค้นหา
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      setSearchMode('search');
+      setSelectedCategory(null);
+      setSubcategory(null);
+      setPage(1);
+      
+      // ใช้ debounce เพื่อลดการเรียก API บ่อยเกินไป
+      const debounceTimer = setTimeout(() => {
+        performSearch(searchQuery, 1);
+      }, 500);
+      
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [searchQuery, performSearch]);
+  
+  // โหลดอาหารเมื่อเลือกหมวดหมู่หรือหมวดหมู่ย่อย
+  useEffect(() => {
+    if (selectedCategory) {
+      setSearchMode('category');
+      setPage(1);
+      loadCategoryFoods(selectedCategory, subcategory, 1);
+    }
+  }, [selectedCategory, subcategory, loadCategoryFoods]);
+  
+  // ล้างการค้นหาและกลับไปที่หมวดหมู่
+  const resetSearch = () => {
+    setSearchQuery("");
+    setSearchMode('category');
+    setFoods([]);
+    setSelectedCategory(null);
+    setSubcategory(null);
+    setPage(1);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="space-y-4">
+      {/* ช่องค้นหา */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t.mobileNav.common.searchPlaceholder || "Search foods..."}
+          className="pl-11 pr-10 py-2 rounded-xl"
+        />
+        {searchQuery && (
         <button 
-          onClick={onBack} 
-          className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors mr-1"
+            onClick={resetSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
         >
-          <ArrowLeft className="h-5 w-5" />
+            <X className="h-5 w-5" />
         </button>
-        <Apple className="h-6 w-6 text-[hsl(var(--primary))]" />
-        <h2 className="text-xl font-semibold">{t.mobileNav.commonFoods.title}</h2>
+        )}
       </div>
       
-      {Object.entries(groupedFoods).map(([category, foods]) => (
-        <div key={category} className="space-y-3">
-          <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] capitalize">
-            {t.mobileNav.commonFoods.categories[category as keyof typeof t.mobileNav.commonFoods.categories] || category}
-          </h3>
+      {/* เนวิเกชันหมวดหมู่ */}
+      {!searchQuery && searchMode === 'category' && (
+        <div className="flex flex-col space-y-4">
+          {!selectedCategory ? (
+            // แสดงหมวดหมู่หลัก
+            <div className="grid grid-cols-2 gap-3">
+              {FOOD_CATEGORIES.map((category: { id: string; name: string; emoji: string }) => (
+                <div
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className="p-4 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))/0.1] cursor-pointer transition-colors flex flex-col items-center justify-center text-center aspect-square"
+                >
+                  <span className="text-3xl mb-2">{category.emoji}</span>
+                  <span className="font-medium">{category.name}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // แสดงหมวดหมู่ย่อย (ถ้ามี)
+            <>
+              <div className="flex items-center">
+                <button
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setSubcategory(null);
+                    setFoods([]);
+                  }}
+                  className="flex items-center text-[hsl(var(--primary))]"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  <span>Back to Categories</span>
+                </button>
+              </div>
+              
+              {subcategories.length > 0 && !subcategory && (
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {subcategories.map((subcat) => (
+                    <div
+                      key={subcat.id}
+                      onClick={() => setSubcategory(subcat.id)}
+                      className="p-3 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))/0.1] cursor-pointer transition-colors flex flex-col items-center justify-center text-center"
+                    >
+                      <span className="text-2xl mb-1">{subcat.emoji}</span>
+                      <span className="font-medium text-sm">{subcat.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {subcategory && (
+                <div className="flex items-center">
+                  <button
+                    onClick={() => {
+                      setSubcategory(null);
+                      setFoods([]);
+                    }}
+                    className="flex items-center text-[hsl(var(--primary))]"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    <span>Back to {selectedCategory}</span>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* ส่วนแสดงผลลัพธ์ */}
+      {error ? (
+        <div className="py-6 text-center">
+          <AlertCircle className="h-10 w-10 mx-auto mb-2 text-red-500" />
+          <p className="text-red-500">{error}</p>
+          <Button onClick={resetSearch} className="mt-4">
+            Reset Search
+          </Button>
+        </div>
+      ) : loading && foods.length === 0 ? (
+        <div className="py-10 text-center">
+          <Loader2 className="h-10 w-10 mx-auto mb-2 text-[hsl(var(--primary))] animate-spin" />
+          <p className="text-[hsl(var(--muted-foreground))]">Loading...</p>
+        </div>
+      ) : foods.length > 0 ? (
+        <div className="space-y-3">
           <div className="space-y-2">
             {foods.map((food) => (
               <div 
                 key={food.id}
-                onClick={() => {
-                  // แปลง FoodDatabaseItem เป็น FoodItem ก่อนส่งต่อไปยัง parent component
-                  const foodItem: FoodItem = {
-                    ...food,
-                    favorite: false,
-                    createdAt: new Date()
-                  };
-                  onSelectFood(foodItem);
-                }}
+                onClick={() => onSelectFood(food)}
                 className="p-4 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))/0.1] cursor-pointer transition-colors"
               >
                 <div className="font-medium">{food.name}</div>
+                <div className="flex justify-between items-center">
                 <div className="text-sm text-[hsl(var(--muted-foreground))]">
                   {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
                 </div>
+                  {food.brandName && (
+                    <div className="text-xs bg-[hsl(var(--muted))/0.5] px-2 py-0.5 rounded-full">
+                      {food.brandName}
               </div>
-            ))}
+                  )}
           </div>
+                {food.dataType && (
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className="text-xs text-[hsl(var(--primary))] bg-[hsl(var(--primary))/0.1] px-2 py-0.5 rounded-full">
+                      {food.dataType}
+                    </span>
+                  </div>
+                )}
         </div>
       ))}
+          </div>
+          
+          {/* Loader สำหรับการโหลดเพิ่ม */}
+          {loading && (
+            <div className="py-4 text-center">
+              <Loader2 className="h-6 w-6 mx-auto animate-spin text-[hsl(var(--primary))]" />
+            </div>
+          )}
+          
+          {/* ปุ่มโหลดเพิ่มเติม */}
+          {!loading && hasMore && (
+            <div className="text-center pt-2 pb-8">
+              <Button variant="outline" onClick={loadMoreFoods}>
+                Load More
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (searchQuery || selectedCategory) && !loading ? (
+        <div className="py-8 text-center">
+          <Clipboard className="h-10 w-10 mx-auto mb-2 text-[hsl(var(--muted-foreground))]" />
+          <p className="text-[hsl(var(--muted-foreground))]">No foods found.</p>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -231,6 +576,29 @@ const CommonFoods = ({ onSelectFood, onBack }: { onSelectFood: (food: any) => vo
 const CustomFood = ({ onAdd, onBack }: { onAdd: (food: FoodItem) => void, onBack: () => void }) => {
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
+  const [showAddForm, setShowAddForm] = useState(false);
+  const { favoriteFoods, dailyLogs, addFavoriteFood } = useNutritionStore();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("all");
+  
+  // รวบรวมรายการอาหารที่ผู้ใช้เคยสร้างไว้
+  const [userCustomFoods, setUserCustomFoods] = useState<FoodItem[]>([]);
+  
+  // หมวดหมู่อาหาร
+  const FOOD_CATEGORIES = [
+    { id: 'breakfast', name: 'Breakfast', emoji: '🍳' },
+    { id: 'lunch', name: 'Lunch', emoji: '🍱' },
+    { id: 'dinner', name: 'Dinner', emoji: '🍲' },
+    { id: 'snacks', name: 'Snacks', emoji: '🍿' },
+    { id: 'drinks', name: 'Drinks', emoji: '🥤' },
+    { id: 'desserts', name: 'Desserts', emoji: '🍰' },
+    { id: 'protein', name: 'Protein', emoji: '🥩' },
+    { id: 'vegetable', name: 'Vegetable', emoji: '🥦' },
+    { id: 'fruit', name: 'Fruit', emoji: '🍎' },
+    { id: 'grain', name: 'Grain', emoji: '🌾' },
+    { id: 'dairy', name: 'Dairy', emoji: '🧀' },
+    { id: 'other', name: 'Other', emoji: '🍴' }
+  ];
   
   const [customFood, setCustomFood] = useState<{
     name: string;
@@ -240,6 +608,7 @@ const CustomFood = ({ onAdd, onBack }: { onAdd: (food: FoodItem) => void, onBack
     carbs: number;
     servingSize: string;
     category: FoodItem['category'];
+    mealCategory: string; // เพิ่มหมวดหมู่มื้ออาหาร
   }>({
     name: "",
     calories: 0,
@@ -247,7 +616,65 @@ const CustomFood = ({ onAdd, onBack }: { onAdd: (food: FoodItem) => void, onBack
     fat: 0,
     carbs: 0,
     servingSize: "1 serving",
-    category: "other"
+    category: "other",
+    mealCategory: "other" // ค่าเริ่มต้น
+  });
+
+  // ดึงรายการอาหารที่ผู้ใช้เคยเพิ่มไว้
+  useEffect(() => {
+    // รวบรวมอาหารจาก favoriteFoods
+    const customFoodsFromFavorites = favoriteFoods.filter(food => !food.usdaId);
+    
+    // รวบรวมอาหารที่เคยบันทึกจาก dailyLogs
+    const foodsFromLogs: Record<string, FoodItem> = {};
+    
+    Object.values(dailyLogs).forEach(log => {
+      log.meals.forEach(meal => {
+        // เก็บเฉพาะอาหารที่ไม่ได้มาจาก USDA API (custom food)
+        if (!meal.foodItem.usdaId) {
+          foodsFromLogs[meal.foodItem.id] = meal.foodItem;
+        }
+      });
+    });
+    
+    // รวมรายการอาหารทั้งหมด และกำจัดรายการซ้ำ
+    const allCustomFoods = [
+      ...customFoodsFromFavorites,
+      ...Object.values(foodsFromLogs)
+    ];
+    
+    // กำจัดรายการซ้ำด้วย id
+    const uniqueFoods: FoodItem[] = [];
+    const seenIds = new Set();
+    
+    allCustomFoods.forEach(food => {
+      if (!seenIds.has(food.id)) {
+        seenIds.add(food.id);
+        uniqueFoods.push(food);
+      }
+    });
+    
+    // เรียงตามวันที่สร้าง (ล่าสุดขึ้นก่อน)
+    uniqueFoods.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    setUserCustomFoods(uniqueFoods);
+  }, [favoriteFoods, dailyLogs]);
+
+  // กรองอาหารตามการค้นหาและหมวดหมู่
+  const filteredFoods = userCustomFoods.filter(food => {
+    // กรองตามการค้นหา
+    const matchesSearch = !searchQuery || 
+      food.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // กรองตามหมวดหมู่
+    const matchesCategory = activeTab === "all" || 
+      (food.mealCategory ? food.mealCategory === activeTab : food.category === activeTab);
+    
+    return matchesSearch && matchesCategory;
   });
 
   const handleSubmit = () => {
@@ -263,12 +690,17 @@ const CustomFood = ({ onAdd, onBack }: { onAdd: (food: FoodItem) => void, onBack
       servingSize: customFood.servingSize || "1 serving",
       favorite: false,
       createdAt: new Date(),
-      category: customFood.category
+      category: customFood.category,
+      mealCategory: customFood.mealCategory // เพิ่มหมวดหมู่มื้ออาหาร
     };
     
+    // เพิ่มไปที่ favoriteFoods เพื่อให้เก็บไว้ใช้ต่อ
+    addFavoriteFood(newFood);
+    
+    // ส่งต่อไปยัง onAdd
     onAdd(newFood);
     
-    // Reset form
+    // Reset form และซ่อนฟอร์ม
     setCustomFood({
       name: "",
       calories: 0,
@@ -276,93 +708,258 @@ const CustomFood = ({ onAdd, onBack }: { onAdd: (food: FoodItem) => void, onBack
       fat: 0,
       carbs: 0,
       servingSize: "1 serving",
-      category: "other"
+      category: "other",
+      mealCategory: "other"
     });
+    setShowAddForm(false);
+  };
+
+  // ล้างการค้นหา
+  const resetSearch = () => {
+    setSearchQuery("");
+  };
+
+  // ดึงไอคอนสำหรับหมวดหมู่
+  const getCategoryEmoji = (categoryId: string) => {
+    const category = FOOD_CATEGORIES.find(cat => cat.id === categoryId);
+    return category ? category.emoji : '🍴';
+  };
+
+  // ดึงชื่อสำหรับหมวดหมู่
+  const getCategoryName = (categoryId: string) => {
+    const category = FOOD_CATEGORIES.find(cat => cat.id === categoryId);
+    return category ? category.name : 'Other';
   };
 
   return (
-    <div className="px-4 py-6">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onBack}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      
-      <h3 className="text-xl font-bold mb-4">{t.addFood.customFood}</h3>
-      
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Food Name</label>
-          <Input
-            value={customFood.name}
-            onChange={(e) => setCustomFood({...customFood, name: e.target.value})}
-            placeholder="e.g. Homemade Smoothie"
-            className="rounded-xl"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Calories</label>
-          <Input
-            type="number"
-            value={customFood.calories}
-            onChange={(e) => setCustomFood({...customFood, calories: Number(e.target.value)})}
-            placeholder="e.g. 250"
-            className="rounded-xl"
-          />
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Protein (g)</label>
-            <Input
-              type="number"
-              value={customFood.protein}
-              onChange={(e) => setCustomFood({...customFood, protein: Number(e.target.value)})}
-              className="rounded-xl"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Carbs (g)</label>
-            <Input
-              type="number"
-              value={customFood.carbs}
-              onChange={(e) => setCustomFood({...customFood, carbs: Number(e.target.value)})}
-              className="rounded-xl"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Fat (g)</label>
-            <Input
-              type="number"
-              value={customFood.fat}
-              onChange={(e) => setCustomFood({...customFood, fat: Number(e.target.value)})}
-              className="rounded-xl"
-            />
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Serving Size</label>
-          <Input
-            value={customFood.servingSize}
-            onChange={(e) => setCustomFood({...customFood, servingSize: e.target.value})}
-            placeholder="e.g. 1 cup, 100g"
-            className="rounded-xl"
-          />
-        </div>
-        
+    <div className="space-y-4">
+      {/* หัวข้อและปุ่ม Add Custom Food */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Your Custom Foods</h3>
         <Button 
-          className="w-full mt-4" 
-          onClick={handleSubmit}
-          disabled={!customFood.name || !customFood.calories}
+          onClick={() => setShowAddForm(true)} 
+          size="sm"
+          className="flex items-center gap-1"
         >
-          {t.addFood.submitButton}
+          <Plus className="h-4 w-4" /> Add New Custom Food
         </Button>
       </div>
+      
+      {/* ช่องค้นหา */}
+      {!showAddForm && userCustomFoods.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search your custom foods..."
+            className="pl-11 pr-10 py-2 rounded-xl"
+          />
+          {searchQuery && (
+            <button 
+              onClick={resetSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      )}
+      
+      {/* แท็บหมวดหมู่ */}
+      {!showAddForm && userCustomFoods.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex space-x-2 overflow-x-auto py-1 scrollbar-hide">
+            <Button 
+              variant={activeTab === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("all")}
+              className="flex-shrink-0"
+            >
+              All
+            </Button>
+            {FOOD_CATEGORIES.map(category => (
+              <Button 
+                key={category.id}
+                variant={activeTab === category.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab(category.id)}
+                className="flex-shrink-0"
+              >
+                <span className="mr-1">{category.emoji}</span> {category.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* ฟอร์มเพิ่มอาหารใหม่ */}
+      {showAddForm && (
+        <div className="bg-[hsl(var(--card))] p-4 rounded-xl border border-[hsl(var(--border))]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium">Add New Custom Food</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowAddForm(false)}
+              className="h-8 w-8 p-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Food Name</label>
+              <Input
+                value={customFood.name}
+                onChange={(e) => setCustomFood({...customFood, name: e.target.value})}
+                placeholder="e.g. Homemade Smoothie"
+                className="rounded-xl"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Calories</label>
+              <Input
+                type="number"
+                value={customFood.calories}
+                onChange={(e) => setCustomFood({...customFood, calories: Number(e.target.value)})}
+                placeholder="e.g. 250"
+                className="rounded-xl"
+              />
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Protein (g)</label>
+                <Input
+                  type="number"
+                  value={customFood.protein}
+                  onChange={(e) => setCustomFood({...customFood, protein: Number(e.target.value)})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Carbs (g)</label>
+                <Input
+                  type="number"
+                  value={customFood.carbs}
+                  onChange={(e) => setCustomFood({...customFood, carbs: Number(e.target.value)})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Fat (g)</label>
+                <Input
+                  type="number"
+                  value={customFood.fat}
+                  onChange={(e) => setCustomFood({...customFood, fat: Number(e.target.value)})}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Serving Size</label>
+              <Input
+                value={customFood.servingSize}
+                onChange={(e) => setCustomFood({...customFood, servingSize: e.target.value})}
+                placeholder="e.g. 1 cup, 100g"
+                className="rounded-xl"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category</label>
+              <select 
+                value={customFood.mealCategory}
+                onChange={(e) => setCustomFood({...customFood, mealCategory: e.target.value})}
+                className="w-full rounded-xl border border-[hsl(var(--border))] p-3 bg-transparent"
+              >
+                {FOOD_CATEGORIES.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.emoji} {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <Button 
+              className="w-full mt-4" 
+              onClick={handleSubmit}
+              disabled={!customFood.name || !customFood.calories}
+            >
+              {t.addFood.submitButton}
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* รายการอาหารที่ผู้ใช้เคยเพิ่มไว้ */}
+      {!showAddForm && filteredFoods.length > 0 ? (
+        <div className="space-y-3 mt-2">
+          {filteredFoods.map((food) => (
+            <div 
+              key={food.id}
+              onClick={() => onAdd(food)}
+              className="p-4 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))/0.1] cursor-pointer transition-colors"
+            >
+              <div className="flex justify-between items-start">
+                <div className="font-medium">{food.name}</div>
+                <div className="flex gap-1">
+                  {food.mealCategory && (
+                    <div className="text-xs bg-[hsl(var(--primary))/0.1] px-2 py-0.5 rounded-full flex items-center">
+                      <span className="mr-1">{getCategoryEmoji(food.mealCategory)}</span> 
+                      {getCategoryName(food.mealCategory)}
+                    </div>
+                  )}
+                  <div className="text-xs bg-[hsl(var(--primary))/0.1] px-2 py-0.5 rounded-full flex items-center">
+                    <Pencil className="h-3 w-3 mr-1" /> Custom
+                  </div>
+                </div>
+              </div>
+              <div className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                {food.calories} calories per {food.servingSize}
+              </div>
+              <div className="mt-1 flex items-center gap-1">
+                {food.protein > 0 && (
+                  <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 px-2 py-0.5 rounded-full">
+                    P: {food.protein}g
+                  </span>
+                )}
+                {food.carbs > 0 && (
+                  <span className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 px-2 py-0.5 rounded-full">
+                    C: {food.carbs}g
+                  </span>
+                )}
+                {food.fat > 0 && (
+                  <span className="text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100 px-2 py-0.5 rounded-full">
+                    F: {food.fat}g
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : !showAddForm && userCustomFoods.length > 0 ? (
+        <div className="text-center py-8">
+          <Clipboard className="h-10 w-10 mx-auto mb-2 text-[hsl(var(--muted-foreground))]" />
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">No custom foods found with this filter.</p>
+          <Button onClick={() => setActiveTab("all")}>
+            <Filter className="h-4 w-4 mr-2" /> Clear Filters
+          </Button>
+        </div>
+      ) : !showAddForm && (
+        <div className="text-center py-8">
+          <AlignLeft className="h-10 w-10 mx-auto mb-2 text-[hsl(var(--muted-foreground))]" />
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">No custom foods yet.</p>
+          <Button onClick={() => setShowAddForm(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Create Your First Custom Food
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -526,17 +1123,6 @@ const BarcodeScanner = ({ onFoodFound, onBack }: { onFoodFound: (food: FoodItem)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <button 
-          onClick={onBack} 
-          className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors mr-1"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Scan className="h-6 w-6 text-[hsl(var(--primary))]" />
-        <h2 className="text-xl font-semibold">{t.mobileNav.barcodeScanner.title}</h2>
-      </div>
-      
       {isScanning ? (
         <div className="relative rounded-xl overflow-hidden h-64 bg-black">
           {/* กล้องสำหรับสแกนบาร์โค้ด */}
@@ -647,17 +1233,6 @@ const RecentFoods = ({ onSelectFood, onBack }: { onSelectFood: (food: any) => vo
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <button 
-          onClick={onBack} 
-          className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors mr-1"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Clock className="h-6 w-6 text-[hsl(var(--primary))]" />
-        <h2 className="text-xl font-semibold">{t.mobileNav.recentFoods.title}</h2>
-      </div>
-      
       {uniqueFoods.length > 0 ? (
         <div className="space-y-2">
           {uniqueFoods.map((food) => (
@@ -693,43 +1268,176 @@ const FoodDetail = ({
   onBack: () => void,
   onAddFood: (food: FoodItem, quantity: number, mealType: string) => void 
 }) => {
+  // Change quantity state to support decimal values
   const [quantity, setQuantity] = useState(1);
   const [mealType, setMealType] = useState("breakfast");
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
+  
+  // Add state for editing mode and editable food data
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableFood, setEditableFood] = useState<FoodItem>({...food});
+  
+  // Update editable food when the food prop changes
+  useEffect(() => {
+    setEditableFood({...food});
+  }, [food]);
+
+  // Apply edited values to the food being displayed
+  const applyEdits = () => {
+    // Create a new FoodItem with edited values but preserve the original id
+    const updatedFood: FoodItem = {
+      ...editableFood,
+      id: food.id,
+      createdAt: food.createdAt,
+      favorite: food.favorite
+    };
+    
+    // The component expects food to be immutable, so we need to pass the edited food
+    // back up to the parent component where it's stored in state
+    onAddFood(updatedFood, quantity, mealType);
+    
+    // Exit edit mode
+    setIsEditing(false);
+  };
+
+  // Format number to prevent excessive decimals
+  const formatNumber = (num: number): number => {
+    return parseFloat(num.toFixed(2));
+  };
+
+  // Food data being used (either original or edited)
+  const displayFood = isEditing ? editableFood : food;
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-2">
       <Button 
         variant="ghost" 
-        className="flex items-center gap-2 p-0 h-auto mb-2"
+          className="flex items-center gap-2 p-0 h-auto"
         onClick={onBack}
       >
         <ArrowLeft className="h-4 w-4" />
         <span>{t.mobileNav.foodDetail.back}</span>
       </Button>
       
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => isEditing ? applyEdits() : setIsEditing(true)}
+          className="flex items-center gap-1"
+        >
+          {isEditing ? (
+            <>
+              <Check className="h-4 w-4" />
+              <span>Save</span>
+            </>
+          ) : (
+            <>
+              <Pencil className="h-4 w-4" />
+              <span>Edit</span>
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {isEditing ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Food Name</label>
+            <Input 
+              value={editableFood.name}
+              onChange={(e) => setEditableFood({...editableFood, name: e.target.value})}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Calories (kcal)</label>
+            <Input 
+              type="number"
+              value={editableFood.calories}
+              onChange={(e) => setEditableFood({
+                ...editableFood, 
+                calories: parseFloat(e.target.value) || 0
+              })}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Serving Size</label>
+            <Input 
+              value={editableFood.servingSize}
+              onChange={(e) => setEditableFood({...editableFood, servingSize: e.target.value})}
+              className="w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium">{t.result.protein} (g)</label>
+              <Input 
+                type="number"
+                value={editableFood.protein}
+                onChange={(e) => setEditableFood({
+                  ...editableFood, 
+                  protein: parseFloat(e.target.value) || 0
+                })}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">{t.result.carbs} (g)</label>
+              <Input 
+                type="number"
+                value={editableFood.carbs}
+                onChange={(e) => setEditableFood({
+                  ...editableFood, 
+                  carbs: parseFloat(e.target.value) || 0
+                })}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">{t.result.fat} (g)</label>
+              <Input 
+                type="number"
+                value={editableFood.fat}
+                onChange={(e) => setEditableFood({
+                  ...editableFood, 
+                  fat: parseFloat(e.target.value) || 0
+                })}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
       <div>
-        <h2 className="text-xl font-semibold">{food.name}</h2>
+            <h2 className="text-xl font-semibold">{displayFood.name}</h2>
         <p className="text-[hsl(var(--muted-foreground))]">
-          {food.servingSize} • {food.calories} kcal
+              {displayFood.servingSize} • {displayFood.calories} kcal
         </p>
       </div>
       
       <div className="grid grid-cols-3 gap-4 pb-2">
         <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
           <div className="text-xs text-[hsl(var(--primary))]">{t.result.protein}</div>
-          <div className="text-lg font-semibold">{food.protein}g</div>
+              <div className="text-lg font-semibold">{displayFood.protein}g</div>
         </div>
         <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
           <div className="text-xs text-[hsl(var(--primary))]">{t.result.carbs}</div>
-          <div className="text-lg font-semibold">{food.carbs}g</div>
+              <div className="text-lg font-semibold">{displayFood.carbs}g</div>
         </div>
         <div className="p-3 rounded-xl bg-[hsl(var(--accent))/0.1]">
           <div className="text-xs text-[hsl(var(--primary))]">{t.result.fat}</div>
-          <div className="text-lg font-semibold">{food.fat}g</div>
+              <div className="text-lg font-semibold">{displayFood.fat}g</div>
         </div>
       </div>
+        </>
+      )}
       
       <div className="space-y-4">
         <div className="space-y-2">
@@ -753,22 +1461,28 @@ const FoodDetail = ({
               variant="outline"
               size="icon"
               className="h-10 w-10 rounded-l-xl border-r-0"
-              onClick={() => quantity > 1 && setQuantity(quantity - 1)}
+              onClick={() => quantity > 0.25 && setQuantity(formatNumber(quantity - 0.25))}
             >
               -
             </Button>
             <Input
               type="number"
               value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value >= 0) {
+                  setQuantity(formatNumber(value));
+                }
+              }}
+              step="0.25"
+              min="0.25"
               className="h-10 rounded-none text-center border-x-0"
-              min="1"
             />
             <Button
               variant="outline"
               size="icon"
               className="h-10 w-10 rounded-r-xl border-l-0"
-              onClick={() => setQuantity(quantity + 1)}
+              onClick={() => setQuantity(formatNumber(quantity + 0.25))}
             >
               +
             </Button>
@@ -776,13 +1490,13 @@ const FoodDetail = ({
         </div>
         
         <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-          {t.mobileNav.foodDetail.totalCalories}: {food.calories * quantity} kcal
+          {t.mobileNav.foodDetail.totalCalories}: {formatNumber(displayFood.calories * quantity)} kcal
         </div>
       </div>
       
       <Button 
         className="w-full" 
-        onClick={() => onAddFood(food, quantity, mealType)}
+        onClick={() => onAddFood(displayFood, quantity, mealType)}
       >
         {t.mobileNav.foodDetail.addToMealButton}
       </Button>
@@ -796,7 +1510,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
   onClose: () => void; 
   onMealAdded: (food?: FoodItem) => void;
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const { addMeal } = useNutritionStore();
   const { locale } = useLanguage();
@@ -809,14 +1522,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
   
   // État pour l'aliment sélectionné
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-  
-  // Optimisation: Ne récupérer les données filtrées que si nécessaire avec useMemo
-  const filteredFoodItems = useMemo(() => {
-    if (!searchQuery || searchQuery.length < 2) return [];
-    return FoodDatabase.filter((food) =>
-      food.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 10); // Limiter à 10 résultats pour de meilleures performances
-  }, [searchQuery]);
 
   // Empêcher le défilement lorsque le modal est ouvert et réinitialiser l'état lors de la fermeture
   useEffect(() => {
@@ -825,7 +1530,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     } else {
       document.body.classList.remove('overflow-hidden');
       // Réinitialiser l'état lors de la fermeture pour éviter la persistance des données
-      setSearchQuery("");
       setCurrentSection("main");
       setSelectedFood(null);
     }
@@ -837,6 +1541,14 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
 
   // Ajouter un aliment au journal avec useCallback pour plus d'efficacité
   const handleAddFood = useCallback((food: FoodItem, quantity: number, mealType: string) => {
+    // Check if we're editing or adding to meal log
+    if (selectedFood && food.id === selectedFood.id && currentSection === "detail") {
+      // We're in edit mode, update the selected food
+      setSelectedFood(food);
+      // If we just want to edit without adding to meal, return early
+      if (mealType === "edit") return;
+    }
+    
     const meal: MealEntry = {
       id: crypto.randomUUID(),
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
@@ -848,14 +1560,14 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     addMeal(meal);
     onMealAdded(food);
     onClose();
-  }, [addMeal, onClose, onMealAdded]);
+  }, [addMeal, onClose, onMealAdded, selectedFood, currentSection]);
   
-  // Retourner null si fermé pour économiser des ressources
+  // Return null if closed to save resources
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop avec animations simplifiées */}
+      {/* Backdrop with simplified animations */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -868,7 +1580,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         className="fixed inset-0 bg-black/40 z-40"
       />
       
-      {/* Conteneur principal du Sheet avec animations optimisées */}
+      {/* Main container with optimized animations */}
       <motion.div
         initial={{ y: "100%" }}
         animate={{ 
@@ -889,34 +1601,45 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         }}
         className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl max-h-[90vh] overflow-hidden"
       >
-        {/* En-tête */}
+        {/* Header */}
         <div>
-          {/* Poignée de glissement */}
+          {/* Handle */}
           <div className="pt-2 pb-1 flex justify-center items-center">
             <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
           </div>
 
-          {/* En-tête avec titre, description et bouton de fermeture */}
-          <div className="px-6 py-3 flex justify-between">
-            {/* Titre et description */}
-            <div className="flex-1 pr-2">
-              {currentSection === "main" ? (
-                <>
-                  <h2 className="text-xl font-bold">{t.addFood.title}</h2>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
-                </>
-              ) : (
-                <>
-                  {currentSection === "common" && <h2 className="text-xl font-bold">{t.mobileNav.commonFoods.title}</h2>}
-                  {currentSection === "custom" && <h2 className="text-xl font-bold">{t.addFood.customFood}</h2>}
-                  {currentSection === "barcode" && <h2 className="text-xl font-bold">{t.mobileNav.barcodeScanner.title}</h2>}
-                  {currentSection === "recent" && <h2 className="text-xl font-bold">{t.mobileNav.recentFoods.title}</h2>}
-                  {currentSection === "detail" && <h2 className="text-xl font-bold">{selectedFood?.name}</h2>}
-                </>
+          {/* Header with title and close button */}
+          <div className="px-6 py-3 flex justify-between items-center">
+            {/* Title with icon and back button */}
+            <div className="flex items-center gap-2">
+              {currentSection !== "main" && (
+                <button 
+                  onClick={() => setCurrentSection("main")} 
+                  className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
               )}
+              
+              {/* Icon based on section - ลบไอคอนจากหน้าหลัก */}
+              {currentSection === "common" && <Apple className="h-6 w-6 text-[hsl(var(--primary))]" />}
+              {currentSection === "custom" && <Pencil className="h-6 w-6 text-[hsl(var(--primary))]" />}
+              {currentSection === "barcode" && <Scan className="h-6 w-6 text-[hsl(var(--primary))]" />}
+              {currentSection === "recent" && <Clock className="h-6 w-6 text-[hsl(var(--primary))]" />}
+              {currentSection === "detail" && <Clipboard className="h-6 w-6 text-[hsl(var(--primary))]" />}
+              
+              {/* Title based on section */}
+              <h2 className="text-xl font-semibold">
+                {currentSection === "main" && "Food"}
+                {currentSection === "common" && t.mobileNav.commonFoods.title}
+                {currentSection === "custom" && "Custom Food"}
+                {currentSection === "barcode" && t.mobileNav.barcodeScanner.title}
+                {currentSection === "recent" && t.mobileNav.recentFoods.title}
+                {currentSection === "detail" && selectedFood?.name}
+              </h2>
             </div>
             
-            {/* Bouton de fermeture */}
+            {/* Close button */}
             <button
               onClick={onClose}
               className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
@@ -925,27 +1648,22 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               <X className="h-5 w-5" />
             </button>
           </div>
+          
+          {/* Subtitle for main section only */}
+          {currentSection === "main" && (
+            <div className="px-6 pb-2">
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
+            </div>
+          )}
         </div>
         
-        {/* Conteneur de contenu défilant */}
+        {/* Scrolling content container */}
         <div className="flex-1 overflow-y-auto">
           <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
-            {/* Contenu suivant la section actuelle */}
+            {/* Content based on current section */}
             {currentSection === "main" && (
               <motion.div variants={container} initial="hidden" animate="show">
-                {/* Search Bar */}
-                <motion.div variants={item} className="relative sm:mb-6 mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                  <Input
-                    type="text"
-                    placeholder={t.mobileNav.common.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
-                  />
-                </motion.div>
-
-                {/* AI Assistant Button with optimized animations */}
+                {/* AI Assistant Button */}
                 <motion.div variants={jellyItem}>
                   <Button
                     onClick={() => {
@@ -993,8 +1711,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
 
                   <QuickActionButton
                     icon={<Pencil className="h-6 w-6" />}
-                    label={t.addFood.customFood}
-                    description={t.mobileNav.common.customFoodDesc}
+                    label="Custom Food"
+                    description="View and manage your custom foods"
                     onClick={() => setCurrentSection("custom")}
                   />
 
@@ -1012,48 +1730,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                     onClick={() => setCurrentSection("recent")}
                   />
                 </motion.div>
-
-                {/* Search Results */}
-                {searchQuery.length > 1 && (
-                  <motion.div variants={item} className="mt-6 space-y-2">
-                    <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
-                      {t.mobileNav.common.search || "Search Results"}
-                    </h3>
-                    
-                    {filteredFoodItems.length > 0 ? (
-                      <div className="divide-y divide-[hsl(var(--border))]">
-                        {filteredFoodItems.map((food) => (
-                          <div
-                            key={food.id}
-                            onClick={() => {
-                              // Convertir FoodDatabaseItem en FoodItem
-                              const foodItem: FoodItem = {
-                                ...food,
-                                favorite: false,
-                                createdAt: new Date()
-                              };
-                              setSelectedFood(foodItem);
-                              setCurrentSection("detail");
-                            }}
-                            className="py-3 flex items-center justify-between cursor-pointer hover:bg-[hsl(var(--muted))] -mx-2 px-2 rounded-lg transition-colors"
-                          >
-                            <div>
-                              <div className="font-medium">{food.name}</div>
-                              <div className="text-sm text-[hsl(var(--muted-foreground))]">
-                                {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
-                              </div>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-6 text-center">
-                        <p className="text-[hsl(var(--muted-foreground))]">{t.mobileNav.common.noResults}</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
               </motion.div>
             )}
             
