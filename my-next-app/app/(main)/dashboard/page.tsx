@@ -609,21 +609,13 @@ export default function DashboardPage() {
           </p>
         </motion.div>
 
-        {/* Selected Day Stats */}
+        {/* Selected Day Stats - Enhanced with Macros Distribution Charts */}
         <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl">
+          <Card className="p-5 shadow-md rounded-2xl overflow-hidden">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
                 {format(selectedDateObj, 'PPPP', { locale: getDateLocale() })}
               </h2>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsCalendarOpen(true)}
-                className="text-xs px-2 py-1 h-8 text-[hsl(var(--primary))]"
-              >
-                {t.calendar}
-              </Button>
             </div>
             
             <div className="space-y-5">
@@ -641,27 +633,214 @@ export default function DashboardPage() {
                 </div>
               </div>
               
-              {/* Macros */}
-              <div className="grid grid-cols-3 gap-3 text-center pt-2">
-                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.protein}</div>
-                  <div className="font-medium text-[hsl(var(--primary))]">
-                    {Math.round(protein)}{t.g} <span className="text-xs text-[hsl(var(--muted-foreground))]">/ {Math.round(data[0].goal)}{t.g}</span>
-                  </div>
-                </div>
-                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.fat}</div>
-                  <div className="font-medium text-[hsl(var(--primary))]">
-                    {Math.round(fat)}{t.g} <span className="text-xs text-[hsl(var(--muted-foreground))]">/ {Math.round(data[1].goal)}{t.g}</span>
-                  </div>
-                </div>
-                <div className="bg-[hsl(var(--accent))/0.1] p-2 rounded-lg">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.carbs}</div>
-                  <div className="font-medium text-[hsl(var(--primary))]">
-                    {Math.round(carbs)}{t.g} <span className="text-xs text-[hsl(var(--muted-foreground))]">/ {Math.round(data[2].goal)}{t.g}</span>
-                  </div>
-                </div>
+              {/* Macros Distribution Chart - Now part of the first card */}
+              <div className="relative h-[180px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <defs>
+                      {data.map((entry, index) => (
+                        <linearGradient key={`gradient-card1-${index}`} id={`gradientFill-card1-${index}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
+                          <stop offset="100%" stopColor={entry.color} stopOpacity={0.5}/>
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    {/* Show empty chart when no data */}
+                    {protein === 0 && fat === 0 && carbs === 0 ? (
+                      <Pie
+                        data={[{ name: "empty", value: 1 }]}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={65}
+                        cornerRadius={4}
+                        startAngle={90}
+                        endAngle={-270}
+                        paddingAngle={0}
+                      >
+                        <Cell fill="hsl(var(--muted))" opacity={0.2} />
+                        <Label
+                          content={() => (
+                            <g>
+                              <text 
+                                x={100} 
+                                y={90}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-2xl font-bold"
+                                fill="hsl(var(--foreground))"
+                              >
+                                0
+                              </text>
+                              <text 
+                                x={100} 
+                                y={110}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-xs"
+                                fill="hsl(var(--muted-foreground))"
+                              >
+                                {t.kcal}
+                              </text>
+                            </g>
+                          )}
+                        />
+                      </Pie>
+                    ) : (
+                      <Pie
+                        data={data}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={65}
+                        paddingAngle={3}
+                        dataKey="value"
+                        cornerRadius={4}
+                        startAngle={90}
+                        endAngle={-270}
+                      >
+                        {data.map((entry, index) => (
+                          <Cell 
+                            key={`cell-card1-${index}`} 
+                            fill={`url(#gradientFill-card1-${index})`}
+                            stroke={entry.color}
+                            strokeWidth={1.5}
+                          />
+                        ))}
+                        <Label
+                          content={() => (
+                            <g>
+                              <text 
+                                x={100} 
+                                y={90}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-2xl font-bold"
+                                fill="hsl(var(--foreground))"
+                              >
+                                {Math.round(calories)}
+                              </text>
+                              <text 
+                                x={100} 
+                                y={110}
+                                textAnchor="middle" 
+                                dominantBaseline="central" 
+                                className="text-xs"
+                                fill="hsl(var(--muted-foreground))"
+                              >
+                                {t.kcal}
+                              </text>
+                            </g>
+                          )}
+                        />
+                      </Pie>
+                    )}
+                    <Tooltip 
+                      formatter={(value: number, name: string, props: any) => [
+                        <span className="flex items-center gap-1">
+                          <span className="text-lg">{props.payload.icon}</span>
+                          <span>
+                            <span className="font-medium">{Math.round(value)}{t.g}</span>
+                            <span className="text-xs ml-1 text-[hsl(var(--muted-foreground))]">
+                              ({Math.round((value / props.payload.goal) * 100)}%)
+                            </span>
+                          </span>
+                        </span>,
+                        name
+                      ]}
+                      contentStyle={{ 
+                        borderRadius: '12px', 
+                        border: 'none', 
+                        boxShadow: '0px 4px 20px hsl(var(--foreground)/0.05)',
+                        backgroundColor: 'hsl(var(--background))',
+                        color: 'hsl(var(--foreground))',
+                        padding: '8px 12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
+              
+              {/* Cute Macro Bubbles */}
+              <div className="grid grid-cols-3 gap-3">
+                {data.map((entry, index) => (
+                  <div 
+                    key={`macro-${index}`}
+                    className="flex flex-col items-center p-2 rounded-xl relative overflow-hidden"
+                    style={{
+                      background: `linear-gradient(135deg, hsl(var(--accent)/0.1), hsl(var(--accent)/0.05))`
+                    }}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: index * 0.15 }}
+                      className="absolute inset-0 z-0 rounded-xl"
+                      style={{
+                        background: `linear-gradient(135deg, ${entry.color}20, ${entry.color}10)`,
+                        border: `1px solid ${entry.color}30`
+                      }}
+                    />
+                    
+                    <motion.div
+                      className="text-xl mb-1" 
+                      animate={{ y: [0, -2, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
+                    >
+                      {entry.icon}
+                    </motion.div>
+                    
+                    <div className="text-xs font-medium text-[hsl(var(--foreground))]">{entry.name}</div>
+                    <div className="text-xs font-bold" style={{ color: entry.color }}>
+                      {Math.round(entry.value)}{t.g}
+                      <span className="text-[10px] ml-1 text-[hsl(var(--muted-foreground))]">
+                        /{Math.round(entry.goal)}{t.g}
+                      </span>
+                </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Meals for selected day */}
+        <motion.div variants={item}>
+          <Card className="p-5 shadow-md rounded-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
+            </div>
+            
+            <div className="space-y-3">
+              {meals.length === 0 ? (
+                <div className="text-center py-6 text-[hsl(var(--muted-foreground))] text-sm">
+                  {t.noMealsOnThisDay}
+                </div>
+              ) : (
+                meals.map((meal, index) => (
+                  <motion.div 
+                    key={meal.id || index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-[hsl(var(--accent))/0.1] transition-colors cursor-pointer"
+                  >
+                    <div>
+                      <div className="font-medium text-[hsl(var(--foreground))]">{meal.foodItem.name}</div>
+                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                        {meal.quantity} {meal.foodItem.servingSize}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-[hsl(var(--primary))]">
+                        {Math.round(meal.foodItem.calories * meal.quantity)} {t.kcal}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </Card>
         </motion.div>
@@ -669,29 +848,6 @@ export default function DashboardPage() {
         {/* Water Tracker */}
         <motion.div variants={item}>
           <WaterTracker date={selectedDate} />
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div variants={item}>
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => {
-                router.push(`/add?date=${selectedDate}`);
-              }}
-              className="flex items-center justify-center h-16 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl shadow-md"
-            >
-              <Plus size={18} className="mr-2" />
-              {t.addMeal}
-            </Button>
-            <Button
-              onClick={() => router.push('/meals')}
-              variant="outline"
-              className="flex items-center justify-center h-16 bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))/0.1] rounded-xl"
-            >
-              <Utensils size={18} className="mr-2" />
-              {t.viewMeals}
-            </Button>
-          </div>
         </motion.div>
 
         {/* Mood & Notes Section */}
@@ -740,229 +896,6 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Macros Distribution Chart - Redesigned */}
-        <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl overflow-hidden">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2 flex items-center">
-              {t.macros}
-              <motion.span 
-                className="ml-2 inline-block" 
-                animate={{ rotate: [0, 10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-              >
-                📊
-              </motion.span>
-            </h2>
-            
-            <div className="relative h-[210px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <defs>
-                    {data.map((entry, index) => (
-                      <linearGradient key={`gradient-${index}`} id={`gradientFill-${index}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
-                        <stop offset="100%" stopColor={entry.color} stopOpacity={0.5}/>
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  {/* Show empty chart when no data */}
-                  {protein === 0 && fat === 0 && carbs === 0 ? (
-                    <Pie
-                      data={[{ name: "empty", value: 1 }]}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={75}
-                      cornerRadius={4}
-                      startAngle={90}
-                      endAngle={-270}
-                      paddingAngle={0}
-                    >
-                      <Cell fill="hsl(var(--muted))" opacity={0.2} />
-                      <Label
-                        content={() => (
-                          <g>
-                            <text 
-                              x={100} 
-                              y={100}
-                              textAnchor="middle" 
-                              dominantBaseline="central" 
-                              className="text-2xl font-bold"
-                              fill="hsl(var(--foreground))"
-                            >
-                              0
-                            </text>
-                            <text 
-                              x={100} 
-                              y={120}
-                              textAnchor="middle" 
-                              dominantBaseline="central" 
-                              className="text-xs"
-                              fill="hsl(var(--muted-foreground))"
-                            >
-                              {t.kcal}
-                            </text>
-                          </g>
-                        )}
-                      />
-                    </Pie>
-                  ) : (
-                    <Pie
-                      data={data}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={75}
-                      paddingAngle={3}
-                      dataKey="value"
-                      cornerRadius={4}
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      {data.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={`url(#gradientFill-${index})`}
-                          stroke={entry.color}
-                          strokeWidth={1.5}
-                        />
-                      ))}
-                      <Label
-                        content={({ viewBox }) => {
-                          return (
-                            <g>
-                              <text 
-                                x={100} 
-                                y={100}
-                                textAnchor="middle" 
-                                dominantBaseline="central" 
-                                className="text-2xl font-bold"
-                                fill="hsl(var(--foreground))"
-                              >
-                                {Math.round(calories)}
-                              </text>
-                              <text 
-                                x={100} 
-                                y={120}
-                                textAnchor="middle" 
-                                dominantBaseline="central" 
-                                className="text-xs"
-                                fill="hsl(var(--muted-foreground))"
-                              >
-                                {t.kcal}
-                              </text>
-                            </g>
-                          );
-                        }}
-                      />
-                    </Pie>
-                  )}
-                  <Tooltip 
-                    formatter={(value: number, name: string, props: any) => [
-                      <span className="flex items-center gap-1">
-                        <span className="text-lg">{props.payload.icon}</span>
-                        <span>
-                          <span className="font-medium">{Math.round(value)}{t.g}</span>
-                          <span className="text-xs ml-1 text-[hsl(var(--muted-foreground))]">
-                            ({Math.round((value / props.payload.goal) * 100)}%)
-                          </span>
-                        </span>
-                      </span>,
-                      name
-                    ]}
-                    contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: 'none', 
-                      boxShadow: '0px 4px 20px hsl(var(--foreground)/0.05)',
-                      backgroundColor: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))',
-                      padding: '8px 12px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            
-            {/* Cute Macro Bubbles */}
-            <div className="grid grid-cols-3 gap-3 mt-2">
-              {data.map((entry, index) => (
-                <div 
-                  key={`macro-${index}`}
-                  className="flex flex-col items-center p-2 rounded-xl relative overflow-hidden"
-                  style={{
-                    background: `linear-gradient(135deg, hsl(var(--accent)/0.1), hsl(var(--accent)/0.05))`
-                  }}
-                >
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: index * 0.15 }}
-                    className="absolute inset-0 z-0 rounded-xl"
-                    style={{
-                      background: `linear-gradient(135deg, ${entry.color}20, ${entry.color}10)`,
-                      border: `1px solid ${entry.color}30`
-                    }}
-                  />
-                  
-                  <motion.div
-                    className="text-2xl mb-1" 
-                    animate={{ y: [0, -2, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
-                  >
-                    {entry.icon}
-                  </motion.div>
-                  
-                  <div className="text-sm font-medium text-[hsl(var(--foreground))]">{entry.name}</div>
-                  <div className="text-sm font-bold" style={{ color: entry.color }}>
-                    {Math.round(entry.value)}{t.g}
-                  </div>
-              </div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Meals for selected day */}
-        <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
-            </div>
-            
-            <div className="space-y-3">
-              {meals.length === 0 ? (
-                <div className="text-center py-6 text-[hsl(var(--muted-foreground))] text-sm">
-                  {t.noMealsOnThisDay}
-                </div>
-              ) : (
-                meals.map((meal, index) => (
-                  <motion.div 
-                    key={meal.id || index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-[hsl(var(--accent))/0.1] transition-colors cursor-pointer"
-                  >
-                    <div>
-                      <div className="font-medium text-[hsl(var(--foreground))]">{meal.foodItem.name}</div>
-                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {meal.quantity} {meal.foodItem.servingSize}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium text-[hsl(var(--primary))]">
-                        {Math.round(meal.foodItem.calories * meal.quantity)} {t.kcal}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
             </div>
           </Card>
         </motion.div>
