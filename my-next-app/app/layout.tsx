@@ -6,8 +6,14 @@ import { Providers } from "@/components/providers/providers";
 import { Toaster } from "@/components/ui/toaster";
 import IOSInstallPromptWrapper from "@/components/ios-install-prompt-wrapper";
 import { AppInitializer } from "@/components/app-initializer";
+import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'sans-serif'],
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -112,9 +118,36 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        
+        <link rel="preload" href="/icons/apple-touch-icon.png" as="image" />
+        <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+        
+        <Script 
+          id="prevent-flash"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.classList.add(savedTheme);
+                document.documentElement.style.visibility = 'visible';
+              })();
+            `
+          }}
+        />
       </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem themes={["light", "dark", "chocolate", "sweet"]}>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="light" 
+          enableSystem 
+          themes={["light", "dark", "chocolate", "sweet"]}
+          disableTransitionOnChange
+        >
           <Providers>
             <AppInitializer>
               {children}
@@ -123,6 +156,28 @@ export default function RootLayout({
             <Toaster />
           </Providers>
         </ThemeProvider>
+        
+        <Script
+          id="performance-optimizations"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              const links = ['/dashboard', '/history', '/meals', '/settings', '/add'];
+              links.forEach(link => {
+                const preloadLink = document.createElement('link');
+                preloadLink.rel = 'prefetch';
+                preloadLink.href = link;
+                document.head.appendChild(preloadLink);
+              });
+              
+              const preloadImages = ['/icons/icon-192x192.png', '/images/logo.png'];
+              preloadImages.forEach(src => {
+                const img = new Image();
+                img.src = src;
+              });
+            `
+          }}
+        />
       </body>
     </html>
   );

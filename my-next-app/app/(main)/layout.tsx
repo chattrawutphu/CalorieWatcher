@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MobileNav } from "@/components/ui/mobile-nav";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter, usePathname } from "next/navigation";
+import PageTransition from "@/components/page-transition";
 
 export default function MainLayout({
   children,
@@ -11,8 +12,49 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isLoading, setIsLoading] = useState(true);
+  const [mainContentReady, setMainContentReady] = useState(false);
 
-  // Show loading state while checking authentication
+  // แสดงสถานะการโหลดตามเวลาจริง
+  useEffect(() => {
+    if (status !== 'loading') {
+      setIsLoading(false);
+    }
+  }, [status]);
+  
+  // ตั้งค่าว่าส่วนเนื้อหาหลักพร้อมแล้ว (ใช้ตรวจสอบเพื่อแสดง MobileNav)
+  useEffect(() => {
+    if (!isLoading) {
+      // เมื่อโหลดเสร็จแล้ว ให้ตั้งค่าว่าพร้อมแสดงเนื้อหาหลักแล้ว
+      setMainContentReady(true);
+    }
+  }, [isLoading]);
+
+  // Prefetch main routes on layout mount to improve navigation speed
+  useEffect(() => {
+    // Prefetch main navigation pages
+    router.prefetch('/dashboard');
+    router.prefetch('/history');
+    router.prefetch('/meals');
+    router.prefetch('/settings');
+    router.prefetch('/add');
+    
+    // Prefetch the next likely pages based on current location
+    if (pathname === '/dashboard') {
+      router.prefetch('/add');
+      router.prefetch('/history');
+    } else if (pathname === '/history') {
+      router.prefetch('/dashboard');
+      router.prefetch('/add');
+    } else if (pathname === '/meals') {
+      router.prefetch('/add');
+      router.prefetch('/dashboard');
+    }
+  }, [router, pathname]);
+
+  // Show loading state while checking authentication - real-time loading indicator
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -35,52 +77,39 @@ export default function MainLayout({
         <div className="absolute top-40 right-10 w-32 h-32 bg-[hsl(var(--secondary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000" />
         <div className="absolute -bottom-4 left-20 w-32 h-32 bg-[hsl(var(--accent))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000" />
         
-        {/* Theme-specific background elements */}
-        {/* Chocolate theme elements - only visible when chocolate theme is active */}
+        {/* Theme-specific background elements - Optimized */}
         <div className="hidden chocolate:block">
           <div className="chocolate-emoji-1" />
           <div className="chocolate-emoji-2" />
           <div className="chocolate-small-1" />
           <div className="chocolate-small-2" />
-          <div className="chocolate-small-3" />
-          <div className="chocolate-small-4" />
-          <div className="chocolate-small-5" />
-          <div className="chocolate-small-6" />
-          <div className="chocolate-small-7" />
-          <div className="chocolate-small-8" />
         </div>
         
-        {/* Sweet theme elements - only visible when sweet theme is active */}
         <div className="hidden sweet:block">
           <div className="sweet-emoji-1" />
           <div className="sweet-emoji-2" />
           <div className="sweet-small-1" />
           <div className="sweet-small-2" />
-          <div className="sweet-small-3" />
-          <div className="sweet-small-4" />
-          <div className="sweet-small-5" />
-          <div className="sweet-small-6" />
-          <div className="sweet-small-7" />
-          <div className="sweet-small-8" />
         </div>
 
-        {/* Broccoli theme elements - only visible when broccoli theme is active */}
         <div className="hidden broccoli:block">
           <div className="broccoli-emoji-1" />
           <div className="broccoli-emoji-2" />
           <div className="broccoli-small-1" />
           <div className="broccoli-small-2" />
-          <div className="broccoli-small-3" />
-          <div className="broccoli-small-4" />
         </div>
       </div>
 
       <main className="flex-1 container px-4 pb-20 pt-safe relative z-10">
         <div className="max-w-md mx-auto">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
-      <MobileNav />
+      
+      {/* รอให้เนื้อหาหลักพร้อมก่อนแสดง MobileNav */}
+      {mainContentReady && <MobileNav />}
     </div>
   );
 } 

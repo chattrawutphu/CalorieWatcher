@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, memo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -84,59 +84,56 @@ const container = {
   }
 };
 
-// Add new navigation entrance animation variants
+// Optimiser les animations pour qu'elles soient plus légères
 const navContainer = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0.8 },
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+      staggerChildren: 0.05, // Réduit de 0.1 à 0.05
+      delayChildren: 0.05 // Réduit de 0.2 à 0.05
     }
   }
 };
 
 const navItem = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 10, opacity: 0 },
   show: { 
     y: 0, 
     opacity: 1,
     transition: {
-      type: "spring",
-      damping: 12,
-      stiffness: 200
+      type: "tween", // Utiliser "tween" au lieu de "spring" pour des animations plus légères
+      duration: 0.2  // Réduire la durée
     }
   }
 };
 
+// Simplifier l'animation des items
 const item = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 10, opacity: 0 },
   show: { 
     y: 0, 
     opacity: 1,
     transition: {
-      type: "spring",
-      damping: 12,
-      stiffness: 200
+      type: "tween",
+      duration: 0.2
     }
   }
 };
 
+// Simplifier les animations de jelly
 const jellyItem = {
-  hidden: { scale: 0.8, opacity: 0 },
+  hidden: { opacity: 0 },
   show: { 
-    scale: 1, 
     opacity: 1,
     transition: {
-      type: "spring",
-      damping: 8,
-      stiffness: 100,
-      bounce: 0.5
+      duration: 0.2
     }
   }
 };
 
-const QuickActionButton = ({ icon, label, onClick, description }: { 
+// Version mémorisée du bouton d'action rapide pour éviter les re-rendus inutiles
+const QuickActionButton = memo(({ icon, label, onClick, description }: { 
   icon: React.ReactNode; 
   label: string; 
   onClick: () => void;
@@ -145,12 +142,7 @@ const QuickActionButton = ({ icon, label, onClick, description }: {
   <motion.div variants={jellyItem}>
     <motion.div
       whileTap={{ 
-        scale: 0.95,
-        x: [0, -5, 5, -3, 3, 0],
-        transition: { 
-          scale: { type: "spring", damping: 5, stiffness: 300 },
-          x: { type: "spring", stiffness: 300, damping: 10, duration: 0.5 }
-        }
+        scale: 0.98
       }}
     >
       <Button
@@ -158,21 +150,11 @@ const QuickActionButton = ({ icon, label, onClick, description }: {
         variant="outline"
         className="w-full flex items-center gap-4 h-auto p-4 sm:p-4 p-2 text-left font-normal hover:bg-[hsl(var(--accent))/0.1] transition-colors sm:rounded-lg rounded-none sm:border border-0 sm:my-2 my-1"
       >
-        <motion.div 
+        <div 
           className="flex-shrink-0 sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-[hsl(var(--accent))/0.1] flex items-center justify-center text-[hsl(var(--foreground))]"
-          whileTap={{ 
-            scale: 0.8,
-            rotate: [0, -8, 8, -5, 5, 0],
-            transition: { 
-              type: "spring",
-              damping: 5,
-              stiffness: 300,
-              rotate: { duration: 0.5 }
-            }
-          }}
         >
           {icon}
-        </motion.div>
+        </div>
         <div className="flex-grow">
           <div className="font-medium sm:text-base text-sm">{label}</div>
           {description && (
@@ -183,7 +165,7 @@ const QuickActionButton = ({ icon, label, onClick, description }: {
       </Button>
     </motion.div>
   </motion.div>
-);
+));
 
 // Common foods component
 const CommonFoods = ({ onSelectFood, onBack }: { onSelectFood: (food: any) => void, onBack: () => void }) => {
@@ -808,71 +790,53 @@ const FoodDetail = ({
   );
 };
 
-const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClose: () => void; onMealAdded: (food: FoodItem) => void }) => {
+// Optimisation du BottomSheet pour de meilleures performances
+const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onMealAdded: (food?: FoodItem) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const { addMeal } = useNutritionStore();
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
   
-  // State to manage different sections
+  // État pour gérer les différentes sections
   const [currentSection, setCurrentSection] = useState<
     "main" | "common" | "custom" | "barcode" | "recent" | "detail"
   >("main");
   
-  // State for selected food
+  // État pour l'aliment sélectionné
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-
-  // Add state to track if the initial animation has played
-  const [hasAnimated, setHasAnimated] = useState(false);
   
-  // Set hasAnimated to true after component mounts
-  useEffect(() => {
-    setHasAnimated(true);
-  }, []);
+  // Optimisation: Ne récupérer les données filtrées que si nécessaire avec useMemo
+  const filteredFoodItems = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    return FoodDatabase.filter((food) =>
+      food.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 10); // Limiter à 10 résultats pour de meilleures performances
+  }, [searchQuery]);
 
-  // Effect to prevent body scrolling when modal is open
+  // Empêcher le défilement lorsque le modal est ouvert et réinitialiser l'état lors de la fermeture
   useEffect(() => {
     if (isOpen) {
-      // Add the no-scroll class to the document body
       document.body.classList.add('overflow-hidden');
-      
-      // Add a style tag to hide all scrollbars
-      const styleElement = document.createElement('style');
-      styleElement.id = 'hide-scrollbars-style';
-      styleElement.textContent = `
-        ::-webkit-scrollbar {
-          display: none !important;
-        }
-        * {
-          -ms-overflow-style: none !important;
-          scrollbar-width: none !important;
-        }
-      `;
-      document.head.appendChild(styleElement);
     } else {
-      // Remove the no-scroll class when modal is closed
       document.body.classList.remove('overflow-hidden');
-      
-      // Remove the style tag
-      const styleElement = document.getElementById('hide-scrollbars-style');
-      if (styleElement) {
-        styleElement.remove();
-      }
+      // Réinitialiser l'état lors de la fermeture pour éviter la persistance des données
+      setSearchQuery("");
+      setCurrentSection("main");
+      setSelectedFood(null);
     }
     
-    // Cleanup on component unmount
     return () => {
       document.body.classList.remove('overflow-hidden');
-      const styleElement = document.getElementById('hide-scrollbars-style');
-      if (styleElement) {
-        styleElement.remove();
-      }
     };
   }, [isOpen]);
 
-  // Handle adding a food to the log
-  const handleAddFood = (food: FoodItem, quantity: number, mealType: string) => {
+  // Ajouter un aliment au journal avec useCallback pour plus d'efficacité
+  const handleAddFood = useCallback((food: FoodItem, quantity: number, mealType: string) => {
     const meal: MealEntry = {
       id: crypto.randomUUID(),
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
@@ -882,311 +846,278 @@ const BottomSheet = ({ isOpen, onClose, onMealAdded }: { isOpen: boolean; onClos
     };
     
     addMeal(meal);
-    
-    // Return to main view
-    setCurrentSection("main");
-  };
-  
-  // Reset view when modal closes
-  const handleClose = () => {
-    setCurrentSection("main");
-    setSelectedFood(null);
+    onMealAdded(food);
     onClose();
-  };
-
-  // Filter food items based on search term
-  const filteredFoodItems = searchQuery
-    ? FoodDatabase.filter((food) =>
-        food.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  }, [addMeal, onClose, onMealAdded]);
+  
+  // Retourner null si fermé pour économiser des ressources
+  if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="fixed inset-0 bg-black/40 z-40"
-          />
-          
-          {/* Main Sheet Container */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ 
-              y: 0,
-              transition: { 
-                type: "spring", 
-                damping: 25,
-                stiffness: 300,
-                mass: 0.5
-              } 
-            }}
-            exit={{ 
-              y: "100%", 
-              transition: { 
-                type: "spring", 
-                damping: 20, 
-                stiffness: 300
-              } 
-            }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl max-h-[90vh] overflow-hidden scrollbar-hide"
-          >
-            {/* Header */}
-            <div>
-              {/* Drag Handle */}
-              <div className="pt-2 pb-1 flex justify-center items-center">
-                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
-              </div>
+    <>
+      {/* Backdrop avec animations simplifiées */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ 
+          duration: 0.2,
+          ease: "easeInOut" 
+        }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/40 z-40"
+      />
+      
+      {/* Conteneur principal du Sheet avec animations optimisées */}
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ 
+          y: 0,
+          transition: { 
+            type: "tween", 
+            duration: 0.3,
+            ease: "easeOut"
+          } 
+        }}
+        exit={{ 
+          y: "100%", 
+          transition: { 
+            type: "tween", 
+            duration: 0.2,
+            ease: "easeIn"
+          } 
+        }}
+        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl max-h-[90vh] overflow-hidden"
+      >
+        {/* En-tête */}
+        <div>
+          {/* Poignée de glissement */}
+          <div className="pt-2 pb-1 flex justify-center items-center">
+            <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
+          </div>
 
-              {/* Header with Title, Description and Close Button */}
-              <div className="px-6 py-3 flex justify-between">
-                {/* Title and Description */}
-                <div className="flex-1 pr-2">
-                  {currentSection === "main" ? (
-                    <>
-                      <h2 className="text-xl font-bold">{t.addFood.title}</h2>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
-                    </>
-                  ) : (
-                    <>
-                      {currentSection === "common" && <h2 className="text-xl font-bold">{t.mobileNav.commonFoods.title}</h2>}
-                      {currentSection === "custom" && <h2 className="text-xl font-bold">{t.addFood.customFood}</h2>}
-                      {currentSection === "barcode" && <h2 className="text-xl font-bold">{t.mobileNav.barcodeScanner.title}</h2>}
-                      {currentSection === "recent" && <h2 className="text-xl font-bold">{t.mobileNav.recentFoods.title}</h2>}
-                      {currentSection === "detail" && <h2 className="text-xl font-bold">{selectedFood?.name}</h2>}
-                    </>
-                  )}
-                </div>
-                
-                {/* Close button */}
-                <button
-                  onClick={handleClose}
-                  className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+          {/* En-tête avec titre, description et bouton de fermeture */}
+          <div className="px-6 py-3 flex justify-between">
+            {/* Titre et description */}
+            <div className="flex-1 pr-2">
+              {currentSection === "main" ? (
+                <>
+                  <h2 className="text-xl font-bold">{t.addFood.title}</h2>
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
+                </>
+              ) : (
+                <>
+                  {currentSection === "common" && <h2 className="text-xl font-bold">{t.mobileNav.commonFoods.title}</h2>}
+                  {currentSection === "custom" && <h2 className="text-xl font-bold">{t.addFood.customFood}</h2>}
+                  {currentSection === "barcode" && <h2 className="text-xl font-bold">{t.mobileNav.barcodeScanner.title}</h2>}
+                  {currentSection === "recent" && <h2 className="text-xl font-bold">{t.mobileNav.recentFoods.title}</h2>}
+                  {currentSection === "detail" && <h2 className="text-xl font-bold">{selectedFood?.name}</h2>}
+                </>
+              )}
             </div>
             
-            {/* Scrollable Content Container */}
-            <div className="flex-1 overflow-y-auto overscroll-contain">
-              <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
-                {currentSection === "main" && (
-                  <motion.div variants={container} initial="hidden" animate="show">
-                    {/* Search Bar */}
-                    <motion.div variants={item} className="relative sm:mb-6 mb-4">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                      <Input
-                        type="text"
-                        placeholder={t.mobileNav.common.searchPlaceholder}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
-                      />
-                    </motion.div>
+            {/* Bouton de fermeture */}
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Conteneur de contenu défilant */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
+            {/* Contenu suivant la section actuelle */}
+            {currentSection === "main" && (
+              <motion.div variants={container} initial="hidden" animate="show">
+                {/* Search Bar */}
+                <motion.div variants={item} className="relative sm:mb-6 mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+                  <Input
+                    type="text"
+                    placeholder={t.mobileNav.common.searchPlaceholder}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-11 pr-4 sm:h-14 h-12 sm:text-lg text-base rounded-2xl border-2 focus-visible:ring-offset-0 focus-visible:ring-1"
+                  />
+                </motion.div>
 
-                    {/* AI Assistant Button */}
-                    <motion.div variants={jellyItem}>
-                      <motion.div
-                        whileHover={{ 
-                          scale: 1.03,
-                          transition: { type: "spring", damping: 8, stiffness: 300 }
+                {/* AI Assistant Button with optimized animations */}
+                <motion.div variants={jellyItem}>
+                  <Button
+                    onClick={() => {
+                      router.push("/add/ai");
+                      onClose();
+                    }}
+                    className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+                  >
+                    <div className="flex items-center gap-4">
+                      <motion.div 
+                        className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
+                        animate={{ 
+                          rotate: [0, 0, -3, 3, 0],
+                          scale: [1, 1, 1.05, 1.05, 1]
                         }}
-                        whileTap={{ 
-                          scale: 0.97,
-                          transition: { type: "spring", damping: 10, stiffness: 300 }
+                        transition={{ 
+                          repeat: Infinity, 
+                          repeatDelay: 4,
+                          duration: 1,
+                          ease: "easeInOut"
                         }}
                       >
-                        <Button
-                          onClick={() => {
-                            // Keep this as a page navigation for now
-                            router.push("/add/ai");
-                            onClose();
-                          }}
-                          className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
-                        >
-                          <div className="flex items-center gap-4">
-                            <motion.div 
-                              className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
-                              animate={{ 
-                                rotate: [0, 0, -5, 5, -3, 3, 0],
-                                scale: [1, 1, 1.1, 1.1, 1.05, 1.05, 1]
-                              }}
-                              transition={{ 
-                                repeat: Infinity, 
-                                repeatDelay: 3,
-                                duration: 1.5,
-                                ease: "easeInOut"
-                              }}
-                            >
-                              <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
-                            </motion.div>
-                            <div className="flex-grow text-left">
-                              <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
-                              <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
-                            </div>
-                            <motion.div
-                              animate={{ 
-                                rotate: [0, 10, -10, 10, 0],
-                                scale: [1, 1.2, 1.2, 1.2, 1]
-                              }}
-                              transition={{ 
-                                repeat: Infinity, 
-                                repeatDelay: 2,
-                                duration: 1,
-                                ease: "easeInOut"
-                              }}
-                            >
-                              <Sparkles className="sm:h-5 sm:w-5 h-4 w-4" />
-                            </motion.div>
-                          </div>
-                        </Button>
+                        <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
                       </motion.div>
-                    </motion.div>
+                      <div className="flex-grow text-left">
+                        <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
+                        <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
+                      </div>
+                    </div>
+                  </Button>
+                </motion.div>
 
-                    {/* Quick Actions */}
-                    <motion.div variants={item} className="space-y-3">
-                      <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
-                        {t.mobileNav.common.quickActions}
-                      </h3>
-                      
-                      <QuickActionButton
-                        icon={<Apple className="h-6 w-6" />}
-                        label={t.mobileNav.commonFoods.title}
-                        description={t.mobileNav.common.commonFoodsDesc}
-                        onClick={() => setCurrentSection("common")}
-                      />
+                {/* Quick Actions */}
+                <motion.div variants={item} className="space-y-3">
+                  <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
+                    {t.mobileNav.common.quickActions}
+                  </h3>
+                  
+                  <QuickActionButton
+                    icon={<Apple className="h-6 w-6" />}
+                    label={t.mobileNav.commonFoods.title}
+                    description={t.mobileNav.common.commonFoodsDesc}
+                    onClick={() => setCurrentSection("common")}
+                  />
 
-                      <QuickActionButton
-                        icon={<Pencil className="h-6 w-6" />}
-                        label={t.addFood.customFood}
-                        description={t.mobileNav.common.customFoodDesc}
-                        onClick={() => setCurrentSection("custom")}
-                      />
+                  <QuickActionButton
+                    icon={<Pencil className="h-6 w-6" />}
+                    label={t.addFood.customFood}
+                    description={t.mobileNav.common.customFoodDesc}
+                    onClick={() => setCurrentSection("custom")}
+                  />
 
-                      <QuickActionButton
-                        icon={<Scan className="h-6 w-6" />}
-                        label={t.mobileNav.barcodeScanner.title}
-                        description={t.mobileNav.common.barcodeScannerDesc}
-                        onClick={() => setCurrentSection("barcode")}
-                      />
+                  <QuickActionButton
+                    icon={<Scan className="h-6 w-6" />}
+                    label={t.mobileNav.barcodeScanner.title}
+                    description={t.mobileNav.common.barcodeScannerDesc}
+                    onClick={() => setCurrentSection("barcode")}
+                  />
 
-                      <QuickActionButton
-                        icon={<Clock className="h-6 w-6" />}
-                        label={t.mobileNav.recentFoods.title}
-                        description={t.mobileNav.common.recentFoodsDesc}
-                        onClick={() => setCurrentSection("recent")}
-                      />
-                    </motion.div>
+                  <QuickActionButton
+                    icon={<Clock className="h-6 w-6" />}
+                    label={t.mobileNav.recentFoods.title}
+                    description={t.mobileNav.common.recentFoodsDesc}
+                    onClick={() => setCurrentSection("recent")}
+                  />
+                </motion.div>
 
-                    {/* Search Results */}
-                    {searchQuery.length > 0 && (
-                      <motion.div variants={item} className="mt-6 space-y-2">
-                        <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
-                          Search Results
-                        </h3>
-                        
-                        {filteredFoodItems.length > 0 ? (
-                          <div className="divide-y divide-[hsl(var(--border))]">
-                            {filteredFoodItems.slice(0, 10).map((food) => (
-                              <div
-                                key={food.id}
-                                onClick={() => {
-                                  // แปลง FoodDatabaseItem เป็น FoodItem ก่อนกำหนดให้ selectedFood
-                                  const foodItem: FoodItem = {
-                                    ...food,
-                                    favorite: false,
-                                    createdAt: new Date()
-                                  };
-                                  setSelectedFood(foodItem);
-                                  setCurrentSection("detail");
-                                }}
-                                className="py-3 flex items-center justify-between cursor-pointer hover:bg-[hsl(var(--muted))] -mx-2 px-2 rounded-lg transition-colors"
-                              >
-                                <div>
-                                  <div className="font-medium">{food.name}</div>
-                                  <div className="text-sm text-[hsl(var(--muted-foreground))]">
-                                    {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
-                                  </div>
-                                </div>
-                                <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+                {/* Search Results */}
+                {searchQuery.length > 1 && (
+                  <motion.div variants={item} className="mt-6 space-y-2">
+                    <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-3">
+                      {t.mobileNav.common.search || "Search Results"}
+                    </h3>
+                    
+                    {filteredFoodItems.length > 0 ? (
+                      <div className="divide-y divide-[hsl(var(--border))]">
+                        {filteredFoodItems.map((food) => (
+                          <div
+                            key={food.id}
+                            onClick={() => {
+                              // Convertir FoodDatabaseItem en FoodItem
+                              const foodItem: FoodItem = {
+                                ...food,
+                                favorite: false,
+                                createdAt: new Date()
+                              };
+                              setSelectedFood(foodItem);
+                              setCurrentSection("detail");
+                            }}
+                            className="py-3 flex items-center justify-between cursor-pointer hover:bg-[hsl(var(--muted))] -mx-2 px-2 rounded-lg transition-colors"
+                          >
+                            <div>
+                              <div className="font-medium">{food.name}</div>
+                              <div className="text-sm text-[hsl(var(--muted-foreground))]">
+                                {food.calories} {t.mobileNav.common.calories} {t.mobileNav.common.per} {food.servingSize}
                               </div>
-                            ))}
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
                           </div>
-                        ) : (
-                          <div className="text-[hsl(var(--muted-foreground))] italic">
-                            No food items found matching "{searchQuery}"
-                          </div>
-                        )}
-                      </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center">
+                        <p className="text-[hsl(var(--muted-foreground))]">{t.mobileNav.common.noResults}</p>
+                      </div>
                     )}
                   </motion.div>
                 )}
-                
-                {currentSection === "common" && (
-                  <CommonFoods 
-                    onSelectFood={(food) => {
-                      setSelectedFood(food);
-                      setCurrentSection("detail");
-                    }} 
-                    onBack={() => setCurrentSection("main")}
-                  />
-                )}
-                
-                {currentSection === "custom" && (
-                  <CustomFood 
-                    onAdd={(food) => {
-                      setSelectedFood(food);
-                      setCurrentSection("detail");
-                    }} 
-                    onBack={() => setCurrentSection("main")}
-                  />
-                )}
-                
-                {currentSection === "barcode" && (
-                  <BarcodeScanner 
-                    onFoodFound={(food) => {
-                      setSelectedFood(food);
-                      setCurrentSection("detail");
-                    }} 
-                    onBack={() => setCurrentSection("main")}
-                  />
-                )}
-                
-                {currentSection === "recent" && (
-                  <RecentFoods 
-                    onSelectFood={(food) => {
-                      setSelectedFood(food);
-                      setCurrentSection("detail");
-                    }} 
-                    onBack={() => setCurrentSection("main")}
-                  />
-                )}
-                
-                {currentSection === "detail" && selectedFood && (
-                  <FoodDetail 
-                    food={selectedFood} 
-                    onBack={() => {
-                      setSelectedFood(null);
-                      setCurrentSection("main");
-                    }}
-                    onAddFood={handleAddFood}
-                  />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+              </motion.div>
+            )}
+            
+            {/* Common Foods Section */}
+            {currentSection === "common" && (
+              <CommonFoods 
+                onSelectFood={(food) => {
+                  setSelectedFood(food);
+                  setCurrentSection("detail");
+                }} 
+                onBack={() => setCurrentSection("main")}
+              />
+            )}
+            
+            {/* Custom Foods Form */}
+            {currentSection === "custom" && (
+              <CustomFood 
+                onAdd={(food) => {
+                  setSelectedFood(food);
+                  setCurrentSection("detail");
+                }} 
+                onBack={() => setCurrentSection("main")}
+              />
+            )}
+            
+            {/* Barcode Scanner */}
+            {currentSection === "barcode" && (
+              <BarcodeScanner 
+                onFoodFound={(food) => {
+                  setSelectedFood(food);
+                  setCurrentSection("detail");
+                }} 
+                onBack={() => setCurrentSection("main")}
+              />
+            )}
+            
+            {/* Recent Foods */}
+            {currentSection === "recent" && (
+              <RecentFoods 
+                onSelectFood={(food) => {
+                  setSelectedFood(food);
+                  setCurrentSection("detail");
+                }} 
+                onBack={() => setCurrentSection("main")}
+              />
+            )}
+            
+            {/* Food Detail */}
+            {currentSection === "detail" && selectedFood && (
+              <FoodDetail 
+                food={selectedFood} 
+                onBack={() => {
+                  setSelectedFood(null);
+                  setCurrentSection("main");
+                }}
+                onAddFood={handleAddFood}
+              />
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </>
   );
-};
+});
 
 // PageTransition component for showing loading animation between page navigations
 const PageTransition = ({ isLoading }: { isLoading: boolean }) => {
@@ -1245,161 +1176,156 @@ const PageTransition = ({ isLoading }: { isLoading: boolean }) => {
   );
 };
 
-export function MobileNav() {
+// Composant MobileNav optimisé et mémorisé pour éviter les re-rendus excessifs
+export const MobileNav = memo(function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
   
-  // State to track which button is currently animating
+  // สร้าง state เพื่อติดตามว่าควรจะเล่นอนิเมชั่นหรือไม่
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  
+  // État pour suivre quel bouton est actuellement en cours d'animation
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   
-  // Add state to track if the initial animation has played
-  const [hasAnimated, setHasAnimated] = useState(false);
-  
-  // Add state for page loading
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Set hasAnimated to true after component mounts
+  // ตรวจสอบสถานะอนิเมชั่นเมื่อคอมโพเนนต์ถูกโหลด
   useEffect(() => {
-    setHasAnimated(true);
-  }, []);
-  
-  // Add event listeners for route changes
-  useEffect(() => {
-    // In Next.js App Router, we don't have router.events
-    // We'll use a different approach with usePathname
-    // When pathname changes, it means navigation completed
-    return () => {
-      // No cleanup needed in this approach
-    };
-  }, []);
-  
-  // Watch for pathname changes to track when navigation completes
-  useEffect(() => {
-    // When pathname changes, it means navigation has completed
-    if (isLoading) {
-      // Add a small delay to make the loading animation visible longer
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 800);
+    // ตรวจสอบว่าเคยแสดงอนิเมชั่นไปแล้วหรือไม่
+    const hasAnimated = sessionStorage.getItem("nav_animated") === "true";
+    
+    // ถ้ายังไม่เคยแสดงอนิเมชั่น ให้แสดงอนิเมชั่น
+    setShouldAnimate(!hasAnimated);
+    
+    // ถ้ายังไม่เคยแสดงอนิเมชั่น เมื่อแสดงอนิเมชั่นแล้วให้บันทึกลงใน sessionStorage
+    if (!hasAnimated) {
+      const timer = setTimeout(() => {
+        sessionStorage.setItem("nav_animated", "true");
+      }, 800); // หลังจากอนิเมชั่นจบ
+      
+      return () => clearTimeout(timer);
     }
-  }, [pathname, isLoading]);
+  }, []);
   
-  // Handle button click with animation
-  const handleButtonClick = (href: string) => {
-    // Set this button as animating but still navigate immediately
+  // Mettre en cache les éléments de navigation pour éviter les recalculs
+  const navElements = useMemo(() => {
+    return navItems.map((item, index) => {
+      const isAddButton = item.href === "#";
+      const isActive = pathname === item.href;
+      
+      return (
+        <motion.div
+          key={item.href}
+          className="flex-1 flex items-stretch justify-center"
+          variants={navItem}
+        >
+          {isAddButton ? (
+            <div
+              onClick={() => handleButtonClick(item.href)}
+              className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 max-w-[80px]"
+            >
+              <div className="sm:-mt-6 -mt-5">
+                <motion.div 
+                  animate={animatingButton === item.href ? {
+                    scale: [1, 1.2, 0.9, 1.1, 1], // Animation simplifiée
+                    transition: { duration: 0.3 }  // Durée réduite
+                  } : {}}
+                  className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
+                >
+                  {item.icon}
+                </motion.div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex justify-center">
+              <button
+                onClick={() => handleButtonClick(item.href)}
+                className="flex flex-col items-center w-full h-full px-1 py-1 cursor-pointer max-w-[60px]"
+              >
+                <div className="flex flex-col items-center">
+                  <motion.div
+                    animate={animatingButton === item.href ? {
+                      scale: [1, 1.2, 0.9, 1.1, 1], // Animation simplifiée
+                      transition: { duration: 0.3 }  // Durée réduite
+                    } : {}}
+                    className={cn(
+                      "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",
+                      pathname === item.href
+                        ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                        : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                    )}
+                  >
+                    {item.icon}
+                  </motion.div>
+                  <span 
+                    className={cn(
+                      "mt-1 sm:text-xs text-[10px] truncate w-full text-center",
+                      pathname === item.href
+                        ? "text-[hsl(var(--foreground))] font-medium"
+                        : "text-[hsl(var(--muted-foreground))]"
+                    )}
+                  >
+                    {t.mobileNav.navigation[item.labelKey]}
+                  </span>
+                </div>
+              </button>
+            </div>
+          )}
+        </motion.div>
+      );
+    });
+  }, [pathname, animatingButton, t, locale]);
+  
+  // Optimisé pour utiliser un seul gestionnaire d'événements
+  const handleButtonClick = useCallback((href: string) => {
     setAnimatingButton(href);
     
-    // Reset animation state after animation completes (animation will continue in background)
     setTimeout(() => {
       setAnimatingButton(null);
-    }, 400);
+    }, 300); // Réduit à 300ms
     
-    // Handle menu actions immediately
     if (href === "#") {
       setIsAddOpen(true);
     } else {
-      // Nous désactivons le loader de page
-      // setIsLoading(true);
-      
-      // Navigate to the page immediately without loading screen
       router.push(href);
       
-      // Close the Add Food Popup if it's open
       if (isAddOpen) {
         setIsAddOpen(false);
       }
     }
-  };
+  }, [router, isAddOpen]);
+  
+  // Détecter le tab actif (optimisé)
+  const activeTab = useMemo(() => {
+    if (pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/add')) return 'add';
+    if (pathname.startsWith('/meals')) return 'meals';
+    if (pathname.startsWith('/settings')) return 'settings';
+    if (pathname.startsWith('/history')) return 'history';
+    return 'dashboard';
+  }, [pathname]);
   
   return (
     <>
-      {/* Page transition/loading component */}
-      {/* Commenté pour désactiver le loader de changement de page */}
-      {/* <PageTransition isLoading={isLoading} /> */}
-      
       <BottomSheet 
         isOpen={isAddOpen} 
         onClose={() => setIsAddOpen(false)} 
-        onMealAdded={(food) => {
-          // Handle meal added if needed
-          setIsAddOpen(false);
-        }} 
+        onMealAdded={() => setIsAddOpen(false)}
       />
       
       <nav className="fixed bottom-0 left-0 z-50 w-full">
         <div className="mx-auto sm:px-6 px-2">
           <motion.div
             variants={navContainer}
-            initial="hidden"
+            initial={shouldAnimate ? "hidden" : "show"}
             animate="show"
             className="flex pb-6 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
           >
-            {navItems.map((item, index) => (
-              <motion.div
-                key={item.href}
-                className="flex-1 flex items-stretch justify-center"
-                variants={navItem}
-              >
-                {item.href === "#" ? (
-                  <div
-                    onClick={() => handleButtonClick(item.href)}
-                    className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 max-w-[80px]"
-                  >
-                    <div className="sm:-mt-6 -mt-5">
-                      <motion.div 
-                        animate={animatingButton === item.href ? {
-                          scale: [1, 1.5, 0.8, 1.2, 1],
-                          transition: { times: [0, 0.2, 0.5, 0.8, 1], duration: 0.4 }
-                        } : {}}
-                        className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
-                      >
-                        {item.icon}
-                      </motion.div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex justify-center">
-                    <button
-                      onClick={() => handleButtonClick(item.href)}
-                      className="flex flex-col items-center w-full h-full px-1 py-1 cursor-pointer max-w-[60px]"
-                    >
-                      <div className="flex flex-col items-center">
-                        <motion.div
-                          animate={animatingButton === item.href ? {
-                            scale: [1, 1.5, 0.8, 1.2, 1],
-                            transition: { times: [0, 0.2, 0.5, 0.8, 1], duration: 0.4 }
-                          } : {}}
-                          className={cn(
-                            "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",
-                            pathname === item.href
-                              ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
-                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          {item.icon}
-                        </motion.div>
-                        <span 
-                          className={cn(
-                            "mt-1 sm:text-xs text-[10px] truncate w-full text-center",
-                            pathname === item.href
-                              ? "text-[hsl(var(--foreground))] font-medium"
-                              : "text-[hsl(var(--muted-foreground))]"
-                          )}
-                        >
-                          {t.mobileNav.navigation[item.labelKey]}
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+            {navElements}
           </motion.div>
         </div>
       </nav>
     </>
   );
-} 
+}); 
