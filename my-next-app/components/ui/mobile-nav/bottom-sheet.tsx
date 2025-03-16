@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, memo, useMemo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,17 @@ import { Search, Plus, X, Apple, Pencil, Scan, Clock, Bot, Clipboard, ChevronRig
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
-import { FoodDatabase } from "@/lib/food-database";
-import { FoodItem, useNutritionStore, MealEntry } from "@/lib/store/nutrition-store";
-import { container, item, jellyItem } from "./animations";
-import QuickActionButton from "./quick-action-button";
+import { useNutritionStore, FoodItem, MealEntry } from "@/lib/store/nutrition-store";
+import { cn } from "@/lib/utils";
 import CommonFoods from "./common-foods";
-import CustomFood from "./custom-food";
+import QuickActionButton from "./quick-action-button";
+import FoodDetail from "./food-detail";
 import BarcodeScanner from "./barcode-scanner";
 import RecentFoods from "./recent-foods";
-import FoodDetail from "./food-detail";
+import CustomFood from "./custom-food";
+
+// Animations
+import { container, item, jellyItem } from "./animations";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
   // Prevent scroll when modal is open and reset state on close
   useEffect(() => {
     if (isOpen) {
+      // ลบการใช้ overflow-hidden เพื่อป้องกันพื้นที่ด้านล่างเพิ่ม
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
@@ -115,7 +118,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
             ease: "easeIn"
           } 
         }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-xl max-h-[90vh] overflow-hidden"
+        className="fixed inset-0 pt-0 pb-16 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto"
       >
         {/* Header */}
         <div>

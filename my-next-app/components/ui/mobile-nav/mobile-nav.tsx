@@ -101,7 +101,7 @@ export const MobileNav = memo(function MobileNav() {
                 <motion.div 
                   animate={animatingButton === item.href ? {
                     scale: [1, 1.2, 0.9, 1.1, 1],
-                    transition: { duration: 0.3 }
+                    transition: { duration: 0.4 }
                   } : {}}
                   className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
                 >
@@ -119,7 +119,7 @@ export const MobileNav = memo(function MobileNav() {
                   <motion.div
                     animate={animatingButton === item.href ? {
                       scale: [1, 1.2, 0.9, 1.1, 1],
-                      transition: { duration: 0.3 }
+                      transition: { duration: 0.4 }
                     } : {}}
                     className={cn(
                       "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",

@@ -69,7 +69,7 @@ export default function MainLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[hsl(var(--background))] overflow-hidden">
+    <div className="flex h-screen flex-col bg-[hsl(var(--background))] ">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Animated blobs */}
@@ -100,7 +100,7 @@ export default function MainLayout({
         </div>
       </div>
 
-      <main className="flex-1 container px-4 pb-20 pt-safe relative z-10">
+      <main className="flex-1 container px-4 pb-20 pt-safe relative z-10 overflow-y-auto">
         <div className="max-w-md mx-auto">
           <PageTransition>
             {children}

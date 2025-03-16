@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FoodItem } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface FoodDetailProps {
   food: FoodItem;
@@ -21,6 +22,22 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
   
+  // เพิ่ม state สำหรับหน่วย
+  const [quantityUnit, setQuantityUnit] = useState("serving");
+  
+  // รายการหน่วยที่ใช้บ่อย
+  const commonUnits = [
+    { value: "serving", label: "serving" },
+    { value: "g", label: "g" },
+    { value: "ml", label: "ml" },
+    { value: "cup", label: "cup" },
+    { value: "tbsp", label: "tbsp" },
+    { value: "tsp", label: "tsp" },
+    { value: "pcs", label: "pcs" },
+    { value: "oz", label: "oz" },
+    { value: "lb", label: "lb" }
+  ];
+  
   // สถานะสำหรับโหมดแก้ไขและข้อมูลอาหารที่แก้ไขได้
   const [isEditing, setIsEditing] = useState(false);
   const [editableFood, setEditableFood] = useState<FoodItem>({...food});
@@ -28,6 +45,26 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
   // อัปเดต editableFood เมื่อ food prop เปลี่ยน
   useEffect(() => {
     setEditableFood({...food});
+    
+    // แยกปริมาณและหน่วยจาก serving size
+    try {
+      const servingSizeParts = food.servingSize.split(' ');
+      if (servingSizeParts.length >= 2) {
+        const amount = parseFloat(servingSizeParts[0]);
+        if (!isNaN(amount)) {
+          setQuantity(amount);
+        }
+        
+        const unit = servingSizeParts.slice(1).join(' ');
+        // ตรวจสอบว่าหน่วยมีอยู่ในรายการไหม
+        const unitExists = commonUnits.some(u => u.value === unit);
+        if (unitExists) {
+          setQuantityUnit(unit);
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing serving size:", e);
+    }
   }, [food]);
 
   // นำการแก้ไขไปใช้กับอาหารที่แสดง
@@ -54,6 +91,40 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
 
   // ข้อมูลอาหารที่จะแสดง (ต้นฉบับหรือที่แก้ไข)
   const displayFood = isEditing ? editableFood : food;
+  
+  // คำนวณแคลอรี่ตามปริมาณที่เลือก
+  const calculateCalories = () => {
+    // ดึงปริมาณจาก serving size เดิม
+    const servingSizeParts = food.servingSize.split(' ');
+    if (servingSizeParts.length >= 2) {
+      const originalAmount = parseFloat(servingSizeParts[0]);
+      if (!isNaN(originalAmount) && originalAmount > 0) {
+        // คำนวณตามสัดส่วน
+        return formatNumber((displayFood.calories / originalAmount) * quantity);
+      }
+    }
+    // หากไม่สามารถแยกได้ใช้วิธีคูณปกติ
+    return formatNumber(displayFood.calories * quantity);
+  };
+
+  // เมื่อกดปุ่มเพิ่มอาหาร
+  const handleAddFood = () => {
+    // สร้าง serving size ใหม่โดยรวมปริมาณและหน่วย
+    const newServingSize = `${quantity} ${quantityUnit}`;
+    
+    // คำนวณปริมาณอาหารตามสัดส่วน
+    const servingSizeRatio = quantity / parseFloat(food.servingSize.split(' ')[0] || "1");
+    
+    // สร้างอาหารใหม่ที่มีสัดส่วนตามที่เลือก
+    const adjustedFood: FoodItem = {
+      ...displayFood,
+      servingSize: newServingSize,
+      // ไม่ต้องปรับค่าโภชนาการเพราะจะคำนวณในฟังก์ชัน onAddFood จาก quantity ที่ส่งไป
+    };
+    
+    // ส่งอาหารและปริมาณไปยัง parent
+    onAddFood(adjustedFood, 1, mealType); // ส่ง quantity=1 เพราะเราได้ปรับ serving size แล้ว
+  };
 
   return (
     <div className="space-y-6">
@@ -202,47 +273,65 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
         
         <div className="space-y-2">
           <label className="text-sm font-medium">{t.mobileNav.foodDetail.quantity}</label>
-          <div className="flex items-center">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-l-xl border-r-0"
-              onClick={() => quantity > 0.25 && setQuantity(formatNumber(quantity - 0.25))}
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-l-xl border-r-0"
+                onClick={() => quantity > 0.25 && setQuantity(formatNumber(quantity - 0.25))}
+              >
+                -
+              </Button>
+              <Input
+                type="number"
+                value={quantity}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value >= 0) {
+                    setQuantity(formatNumber(value));
+                  }
+                }}
+                step="0.25"
+                min="0.25"
+                className="h-10 rounded-none text-center border-x-0"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-r-xl border-l-0"
+                onClick={() => setQuantity(formatNumber(quantity + 0.25))}
+              >
+                +
+              </Button>
+            </div>
+            
+            <Select
+              value={quantityUnit}
+              onValueChange={setQuantityUnit}
             >
-              -
-            </Button>
-            <Input
-              type="number"
-              value={quantity}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value) && value >= 0) {
-                  setQuantity(formatNumber(value));
-                }
-              }}
-              step="0.25"
-              min="0.25"
-              className="h-10 rounded-none text-center border-x-0"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-r-xl border-l-0"
-              onClick={() => setQuantity(formatNumber(quantity + 0.25))}
-            >
-              +
-            </Button>
+              <SelectTrigger className="w-32 rounded-xl">
+                <SelectValue placeholder="Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                {commonUnits.map((unit) => (
+                  <SelectItem key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         
         <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-          {t.mobileNav.foodDetail.totalCalories}: {formatNumber(displayFood.calories * quantity)} kcal
+          {t.mobileNav.foodDetail.totalCalories}: {calculateCalories()} kcal
         </div>
       </div>
       
       <Button 
         className="w-full" 
-        onClick={() => onAddFood(displayFood, quantity, mealType)}
+        onClick={handleAddFood}
       >
         {t.mobileNav.foodDetail.addToMealButton}
       </Button>
