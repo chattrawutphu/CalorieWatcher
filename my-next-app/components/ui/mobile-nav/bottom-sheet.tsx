@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, memo, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
+import { motion, PanInfo, useMotionValue } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, X, Apple, Pencil, Scan, Clock, Bot, Clipboard, ChevronRight, ArrowLeft } from "lucide-react";
@@ -57,7 +57,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
       document.body.classList.remove('overflow-hidden');
     };
   }, [isOpen]);
-
+  
   // Add a food to the journal with useCallback for better efficiency
   const handleAddFood = useCallback((food: FoodItem, quantity: number, mealType: string) => {
     // Check if we're editing or adding to meal log
@@ -80,55 +80,30 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     onMealAdded(food);
     onClose();
   }, [addMeal, onClose, onMealAdded, selectedFood, currentSection]);
-  
+
   // Return null if closed to save resources
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop with simplified animations */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ 
-          duration: 0.2,
-          ease: "easeInOut" 
-        }}
+      {/* Backdrop */}
+      <div
         onClick={onClose}
         className="fixed inset-0 bg-black/40 z-40"
       />
       
-      {/* Main container with optimized animations */}
+      {/* Main container with slide animations */}
       <motion.div
         initial={{ y: "100%" }}
-        animate={{ 
-          y: 0,
-          transition: { 
-            type: "tween", 
-            duration: 0.3,
-            ease: "easeOut"
-          } 
-        }}
-        exit={{ 
-          y: "100%", 
-          transition: { 
-            type: "tween", 
-            duration: 0.2,
-            ease: "easeIn"
-          } 
-        }}
-        className="fixed inset-0 pt-0 pb-16 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto"
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 pt-0 pb-16 z-50 flex flex-col bg-[hsl(var(--background))]"
       >
-        {/* Header */}
-        <div>
-          {/* Handle */}
-          <div className="pt-2 pb-1 flex justify-center items-center">
-            <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
-          </div>
-
+        {/* Header - Fixed position to prevent scroll issues */}
+        <div className="sticky top-0 z-10 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe">
           {/* Header with title and close button */}
-          <div className="px-6 py-3 flex justify-between items-center">
+          <div className="px-6 py-4 flex justify-between items-center">
             {/* Title with icon and back button */}
             <div className="flex items-center gap-2">
               {currentSection !== "main" && (
@@ -140,15 +115,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                 </button>
               )}
               
-              {/* Icon based on section - ตัดไอคอนสำหรับหน้าหลัก */}
-              {currentSection === "common" && <Apple className="h-6 w-6 text-[hsl(var(--primary))]" />}
-              {currentSection === "custom" && <Pencil className="h-6 w-6 text-[hsl(var(--primary))]" />}
-              {currentSection === "barcode" && <Scan className="h-6 w-6 text-[hsl(var(--primary))]" />}
-              {currentSection === "recent" && <Clock className="h-6 w-6 text-[hsl(var(--primary))]" />}
-              {currentSection === "detail" && <Clipboard className="h-6 w-6 text-[hsl(var(--primary))]" />}
-              
               {/* Title based on section */}
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-2xl font-semibold">
                 {currentSection === "main" && "Food"}
                 {currentSection === "common" && t.mobileNav.commonFoods.title}
                 {currentSection === "custom" && "Custom Food"}
@@ -170,20 +138,20 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
           
           {/* Subtitle for main section only */}
           {currentSection === "main" && (
-            <div className="px-6 pb-2">
+            <div className="px-6 pb-3">
               <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
             </div>
           )}
         </div>
         
-        {/* Scrolling content container */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Scrolling content container - Touch events will be contained within this div */}
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
             {/* Content based on current section */}
             {currentSection === "main" && (
-              <motion.div variants={container} initial="hidden" animate="show">
+              <div className="space-y-6">
                 {/* AI Assistant Button */}
-                <motion.div variants={jellyItem}>
+                <div>
                   <Button
                     onClick={() => {
                       router.push("/add/ai");
@@ -192,31 +160,19 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                     className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <motion.div 
-                        className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center"
-                        animate={{ 
-                          rotate: [0, 0, -3, 3, 0],
-                          scale: [1, 1, 1.05, 1.05, 1]
-                        }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          repeatDelay: 4,
-                          duration: 1,
-                          ease: "easeInOut"
-                        }}
-                      >
+                      <div className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center">
                         <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
-                      </motion.div>
+                      </div>
                       <div className="flex-grow text-left">
                         <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
                         <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
                       </div>
                     </div>
                   </Button>
-                </motion.div>
+                </div>
 
                 {/* Quick Actions */}
-                <motion.div variants={item} className="space-y-3">
+                <div className="space-y-3">
                   <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
                     {t.mobileNav.common.quickActions}
                   </h3>
@@ -248,8 +204,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                     description={t.mobileNav.common.recentFoodsDesc}
                     onClick={() => setCurrentSection("recent")}
                   />
-                </motion.div>
-              </motion.div>
+                </div>
+              </div>
             )}
             
             {/* Common Foods Section */}
