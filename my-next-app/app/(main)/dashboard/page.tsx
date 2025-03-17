@@ -16,6 +16,7 @@ import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths,
 import { th, ja, zhCN } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { WaterTracker } from "@/components/ui/water-tracker";
+import { SyncStatus } from '@/components/sync-status';
 
 // Animation variants
 const container = {
@@ -322,7 +323,7 @@ const CalendarPopup = ({
                   const hasData = dayEntryCount > 0;
                   
                   // Calculate calorie percentage for visual indicator
-                  const caloriePercentage = Math.min(100, (dayTotalCalories / (goals.dailyCalorieGoal || 2000)) * 100);
+                  const caloriePercentage = Math.min(100, (dayTotalCalories / (goals.calories || 2000)) * 100);
                   
                   return (
                     <Button
@@ -477,8 +478,9 @@ export default function DashboardPage() {
   const selectedDayStats = getStatsForSelectedDate();
   const { calories = 0, protein = 0, carbs = 0, fat = 0, meals = [] } = selectedDayStats;
   
-  const caloriesRemaining = Math.max(0, goals.dailyCalorieGoal - calories);
-  const caloriesPercentage = Math.min(100, (calories / goals.dailyCalorieGoal) * 100);
+  // Calculate calorie-related values
+  const caloriesRemaining = Math.max(0, goals.calories - calories);
+  const caloriesPercentage = Math.min(100, (calories / goals.calories) * 100);
   
   // Function to get theme-compatible colors
   const getCurrentThemeColors = () => {
@@ -533,7 +535,7 @@ export default function DashboardPage() {
     { 
       name: t.protein, 
       value: protein, 
-      goal: Math.round(((goals.macroRatios.protein || 30) / 100) * goals.dailyCalorieGoal / 4),
+      goal: Math.round(((goals.protein || 30) / 100) * goals.calories / 4),
       color: proteinColor,
       gradient: COLORS.protein.gradient,
       icon: "🍗"
@@ -541,7 +543,7 @@ export default function DashboardPage() {
     { 
       name: t.fat, 
       value: fat, 
-      goal: Math.round(((goals.macroRatios.fat || 30) / 100) * goals.dailyCalorieGoal / 9),
+      goal: Math.round(((goals.fat || 30) / 100) * goals.calories / 9),
       color: fatColor,
       gradient: COLORS.fat.gradient,
       icon: "🥑"
@@ -549,7 +551,7 @@ export default function DashboardPage() {
     { 
       name: t.carbs, 
       value: carbs, 
-      goal: Math.round(((goals.macroRatios.carbs || 40) / 100) * goals.dailyCalorieGoal / 4),
+      goal: Math.round(((goals.carbs || 40) / 100) * goals.calories / 4),
       color: carbsColor,
       gradient: COLORS.carbs.gradient,
       icon: "🍚"
@@ -712,9 +714,12 @@ export default function DashboardPage() {
       >
         <motion.div variants={item} className="mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
-              {t.dashboard}
-            </h1>
+            <div>
+              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
+                {t.dashboard}
+              </h1>
+              <SyncStatus />
+            </div>
             <motion.div 
               className="h-10 w-10 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center text-[hsl(var(--foreground))]"
               variants={item}
@@ -743,7 +748,7 @@ export default function DashboardPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-[hsl(var(--muted-foreground))]">{t.calories}</span>
                   <span className="font-medium text-[hsl(var(--primary))]">
-                    {Math.round(calories)} / {goals.dailyCalorieGoal} {t.kcal}
+                    {Math.round(calories)} / {goals.calories} {t.kcal}
                   </span>
                 </div>
                 <Progress value={caloriesPercentage} className="h-2" />

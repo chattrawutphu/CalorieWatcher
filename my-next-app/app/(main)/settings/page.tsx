@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useSession, signOut } from "next-auth/react";
@@ -139,20 +139,23 @@ export default function SettingsPage() {
   const { locale } = useLanguage();
   const t = translations[locale as keyof typeof translations] || translations.en;
   
-  const { goals, setGoals } = useNutritionStore();
+  const { goals, updateGoals } = useNutritionStore();
   
   // Local state for the form
-  const [dailyCalories, setDailyCalories] = useState(goals.dailyCalorieGoal);
-  const [proteinPercentage, setProteinPercentage] = useState(goals.macroRatios.protein);
-  const [fatPercentage, setFatPercentage] = useState(goals.macroRatios.fat);
-  const [carbsPercentage, setCarbsPercentage] = useState(goals.macroRatios.carbs);
-  const [waterGoal, setWaterGoal] = useState(goals.waterGoal);
+  const [dailyCalories, setDailyCalories] = useState(goals.calories);
+  const [proteinGrams, setProteinGrams] = useState(goals.protein);
+  const [fatGrams, setFatGrams] = useState(goals.fat);
+  const [carbsGrams, setCarbsGrams] = useState(goals.carbs);
+  const [waterGoal, setWaterGoal] = useState(goals.water);
   const [isSaved, setIsSaved] = useState(false);
   
-  // Calculate grams based on percentages and calorie goal
-  const proteinGrams = Math.round((dailyCalories * (proteinPercentage / 100)) / 4); // 4 calories per gram of protein
-  const fatGrams = Math.round((dailyCalories * (fatPercentage / 100)) / 9); // 9 calories per gram of fat
-  const carbsGrams = Math.round((dailyCalories * (carbsPercentage / 100)) / 4); // 4 calories per gram of carbs
+  // Calculate percentages based on grams
+  const totalCaloriesFromMacros = 
+    (proteinGrams * 4) + (fatGrams * 9) + (carbsGrams * 4);
+  
+  const proteinPercentage = Math.round((proteinGrams * 4 / totalCaloriesFromMacros) * 100) || 0;
+  const fatPercentage = Math.round((fatGrams * 9 / totalCaloriesFromMacros) * 100) || 0;
+  const carbsPercentage = Math.round((carbsGrams * 4 / totalCaloriesFromMacros) * 100) || 0;
   
   // Handle percentage changes while ensuring they sum to 100%
   const handleProteinChange = (value: number) => {
@@ -165,9 +168,10 @@ export default function SettingsPage() {
     const newFat = Math.round(remaining * (1 - currentRatio));
     const newCarbs = 100 - newProtein - newFat;
     
-    setProteinPercentage(newProtein);
-    setFatPercentage(newFat);
-    setCarbsPercentage(newCarbs);
+    // Convert percentage back to grams
+    setProteinGrams(Math.round((dailyCalories * newProtein / 100) / 4));
+    setFatGrams(Math.round((dailyCalories * newFat / 100) / 9));
+    setCarbsGrams(Math.round((dailyCalories * newCarbs / 100) / 4));
   };
   
   const handleFatChange = (value: number) => {
@@ -180,9 +184,10 @@ export default function SettingsPage() {
     const newProtein = Math.round(remaining * (1 - currentRatio));
     const newCarbs = 100 - newFat - newProtein;
     
-    setFatPercentage(newFat);
-    setProteinPercentage(newProtein);
-    setCarbsPercentage(newCarbs);
+    // Convert percentage back to grams
+    setProteinGrams(Math.round((dailyCalories * newProtein / 100) / 4));
+    setFatGrams(Math.round((dailyCalories * newFat / 100) / 9));
+    setCarbsGrams(Math.round((dailyCalories * newCarbs / 100) / 4));
   };
   
   const handleCarbsChange = (value: number) => {
@@ -195,21 +200,28 @@ export default function SettingsPage() {
     const newProtein = Math.round(remaining * currentRatio);
     const newFat = 100 - newCarbs - newProtein;
     
-    setCarbsPercentage(newCarbs);
-    setProteinPercentage(newProtein);
-    setFatPercentage(newFat);
+    // Convert percentage back to grams
+    setProteinGrams(Math.round((dailyCalories * newProtein / 100) / 4));
+    setFatGrams(Math.round((dailyCalories * newFat / 100) / 9));
+    setCarbsGrams(Math.round((dailyCalories * newCarbs / 100) / 4));
   };
   
+  // Update grams when calories change
+  useEffect(() => {
+    // Recalculate macro grams when calories change
+    setProteinGrams(Math.round((dailyCalories * proteinPercentage / 100) / 4));
+    setFatGrams(Math.round((dailyCalories * fatPercentage / 100) / 9));
+    setCarbsGrams(Math.round((dailyCalories * carbsPercentage / 100) / 4));
+  }, [dailyCalories]);
+  
   // Save changes
-  const handleSave = () => {
-    setGoals({
-      dailyCalorieGoal: dailyCalories,
-      macroRatios: {
-        protein: proteinPercentage,
-        fat: fatPercentage,
-        carbs: carbsPercentage,
-      },
-      waterGoal: waterGoal,
+  const handleSave = async () => {
+    await updateGoals({
+      calories: dailyCalories,
+      protein: proteinGrams,
+      fat: fatGrams,
+      carbs: carbsGrams,
+      water: waterGoal,
     });
     
     setIsSaved(true);

@@ -105,13 +105,12 @@ const getGoalName = (goal: 'muscleGain' | 'fatLoss' | 'both', t: TranslationType
 
 export default function ShopPage() {
   const { locale } = useLanguage();
-  const t = homeTranslations[locale as keyof typeof homeTranslations] as TranslationType;
+  const t = homeTranslations[locale as keyof typeof homeTranslations] || homeTranslations.en;
   const { theme, setTheme } = useTheme();
   const [subscriptionStatus, setSubscriptionStatus] = useState<"basic" | "pro">("basic");
   const [showProAnimation, setShowProAnimation] = useState(false);
   
-  // Add nutrition store
-  const { goals, updateGoals, setGoals } = useNutritionStore();
+  const { goals, updateGoals } = useNutritionStore();
   
   // TDD Calculator states
   const [showTddCalculator, setShowTddCalculator] = useState(false);
@@ -368,17 +367,20 @@ export default function ShopPage() {
   };
   
   // Add function to apply settings
-  const applyToSettings = () => {
+  const applyToSettings = async () => {
     if (!tddResult) return;
     
-    setGoals({
-      dailyCalorieGoal: tddResult,
-      macroRatios: {
-        protein: proteinPercentage,
-        fat: fatPercentage,
-        carbs: carbsPercentage,
-      },
-      waterGoal: waterIntakeResult || goals.waterGoal,
+    // คำนวณกรัมจากเปอร์เซ็นต์
+    const proteinGrams = Math.round((tddResult * proteinPercentage / 100) / 4);
+    const fatGrams = Math.round((tddResult * fatPercentage / 100) / 9);
+    const carbsGrams = Math.round((tddResult * carbsPercentage / 100) / 4);
+    
+    await updateGoals({
+      calories: tddResult,
+      protein: proteinGrams,
+      fat: fatGrams,
+      carbs: carbsGrams,
+      water: waterIntakeResult || goals.water,
     });
     
     setSettingsUpdated(true);

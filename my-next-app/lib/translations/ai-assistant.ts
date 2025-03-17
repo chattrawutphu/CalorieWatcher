@@ -165,6 +165,13 @@ export const aiAssistantTranslations = {
         settings: "Settings",
         social: "Social Club"
       }
+    },
+    app: {
+      sync: {
+        syncing: "Syncing data...",
+        syncFailed: "Sync failed",
+        syncComplete: "Data synced successfully"
+      }
     }
   },
   th: {
@@ -332,6 +339,13 @@ export const aiAssistantTranslations = {
         social: "โซเชียลคลับ",
         settings: "ตั้งค่า",
         history: "ประวัติ"
+      }
+    },
+    app: {
+      sync: {
+        syncing: "กำลังซิงค์ข้อมูล...",
+        syncFailed: "ไม่สามารถซิงค์ข้อมูลได้",
+        syncComplete: "ข้อมูลซิงค์เรียบร้อย"
       }
     }
   },
@@ -501,6 +515,13 @@ export const aiAssistantTranslations = {
         settings: "設定",
         social: "ソーシャルクラブ"
       }
+    },
+    app: {
+      sync: {
+        syncing: "データを同期中...",
+        syncFailed: "同期に失敗しました",
+        syncComplete: "データが正常に同期されました"
+      }
     }
   },
   zh: {
@@ -668,6 +689,13 @@ export const aiAssistantTranslations = {
         history: "历史",
         settings: "设置",
         social: "社交俱乐部"
+      }
+    },
+    app: {
+      sync: {
+        syncing: "正在同步数据...",
+        syncFailed: "同步失败",
+        syncComplete: "数据同步成功"
       }
     }
   }

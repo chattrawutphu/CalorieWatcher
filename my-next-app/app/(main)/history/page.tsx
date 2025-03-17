@@ -281,7 +281,7 @@ const CalendarPopup = ({
                   const hasData = dayEntryCount > 0;
                   
                   // Calculate calorie percentage for visual indicator
-                  const caloriePercentage = Math.min(100, (dayTotalCalories / (goals.dailyCalorieGoal || 2000)) * 100);
+                  const caloriePercentage = Math.min(100, (dayTotalCalories / (goals.calories || 2000)) * 100);
                   
                   return (
                     <Button

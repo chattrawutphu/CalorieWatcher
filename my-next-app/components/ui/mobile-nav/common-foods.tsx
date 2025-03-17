@@ -115,7 +115,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         // ใช้ผลลัพธ์จากแคช
         const formattedFoods = cachedResults.map((food: USDAFoodItem) => convertToAppFoodItem(food));
         
-        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
         setHasMore(formattedFoods.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
       } else {
         // เรียก API
@@ -134,7 +134,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         // แปลงเป็นรูปแบบที่แอพใช้
         const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
         
-        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
         setHasMore(results.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
       }
     } catch (err) {
@@ -143,7 +143,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
     } finally {
       setLoading(false);
     }
-  }, [foods, dataTypeFilter]);
+  }, [dataTypeFilter]);
   
   // ค้นหาอาหารตามหมวดหมู่
   const loadCategoryFoods = useCallback(async (category: string, subcat: string | null = null, loadPage: number = 1) => {
@@ -257,7 +257,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         // ใช้ผลลัพธ์จากแคช
         const formattedFoods = cachedResults.map((food: USDAFoodItem) => convertToAppFoodItem(food));
         
-        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
         setHasMore(formattedFoods.length === 20);
       } else {
         // เรียก API
@@ -275,7 +275,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         // แปลงเป็นรูปแบบที่แอพใช้
         const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
         
-        setFoods(loadPage === 1 ? formattedFoods : [...foods, ...formattedFoods]);
+        setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
         setHasMore(results.length === 20);
       }
     } catch (err) {
@@ -284,20 +284,22 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
     } finally {
       setLoading(false);
     }
-  }, [foods, searchFoods, convertToAppFoodItem]);
+  }, [dataTypeFilter]);
   
   // โหลดหน้าถัดไป
   const loadMoreFoods = useCallback(() => {
-    const nextPage = page + 1;
-    
-    if (searchMode === 'search') {
-      performSearch(searchQuery, nextPage);
-    } else if (selectedCategory) {
-      loadCategoryFoods(selectedCategory, subcategory, nextPage);
-    }
-    
-    setPage(nextPage);
-  }, [page, searchMode, searchQuery, selectedCategory, subcategory, performSearch, loadCategoryFoods]);
+    setPage(prevPage => {
+      const nextPage = prevPage + 1;
+      
+      if (searchMode === 'search') {
+        performSearch(searchQuery, nextPage);
+      } else if (selectedCategory) {
+        loadCategoryFoods(selectedCategory, subcategory, nextPage);
+      }
+      
+      return nextPage;
+    });
+  }, [searchMode, searchQuery, selectedCategory, subcategory, performSearch, loadCategoryFoods]);
   
   // ติดตามการเปลี่ยนแปลงคำค้นหา
   useEffect(() => {
@@ -335,7 +337,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
       // โหลดหมวดหมู่ใหม่เมื่อเปลี่ยนฟิลเตอร์
       loadCategoryFoods(selectedCategory, subcategory, 1);
     }
-  }, [dataTypeFilter]);
+  }, [dataTypeFilter, searchQuery, selectedCategory, subcategory, performSearch, loadCategoryFoods]);
   
   // ล้างการค้นหาและกลับไปที่หมวดหมู่
   const resetSearch = () => {
