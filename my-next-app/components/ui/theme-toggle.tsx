@@ -30,12 +30,12 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
-          <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0" />
-          <Cookie className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-0 chocolate:scale-100 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0" />
-          <CandyCane className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0" />
-          <Candy className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-0 sweet:scale-100 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0" />
-          <Leaf className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-0 broccoli:scale-100 blueberry:rotate-90 blueberry:scale-0" />
-          <Heart className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-0 blueberry:scale-100" />
+          <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0 light:rotate-0 light:scale-100" />
+          <Cookie className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-0 chocolate:scale-100 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0 light:rotate-90 light:scale-0" />
+          <CandyCane className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0 light:rotate-90 light:scale-0" />
+          <Candy className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-0 sweet:scale-100 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-90 blueberry:scale-0 light:rotate-90 light:scale-0" />
+          <Leaf className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-0 broccoli:scale-100 blueberry:rotate-90 blueberry:scale-0 light:rotate-90 light:scale-0" />
+          <Heart className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-90 dark:scale-0 chocolate:rotate-90 chocolate:scale-0 sweet:rotate-90 sweet:scale-0 broccoli:rotate-90 broccoli:scale-0 blueberry:rotate-0 blueberry:scale-100 light:rotate-90 light:scale-0" />
           <span className="sr-only">{t.toggleTheme}</span>
         </Button>
       </DropdownMenuTrigger>

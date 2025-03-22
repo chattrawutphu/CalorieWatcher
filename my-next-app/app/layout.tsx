@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import IOSInstallPromptWrapper from "@/components/ios-install-prompt-wrapper";
 import { AppInitializer } from "@/components/app-initializer";
 import Script from "next/script";
+import { NutritionProvider } from "@/components/providers/nutrition-provider";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -150,13 +151,58 @@ export default function RootLayout({
           attribute="class" 
           defaultTheme="light" 
           enableSystem 
-          themes={["light", "dark", "chocolate", "sweet"]}
+          themes={["light", "dark", "chocolate", "sweet", "broccoli", "watermelon", "honey", "blueberry"]}
           disableTransitionOnChange
         >
           <Providers>
-            <AppInitializer>
-              {children}
-            </AppInitializer>
+            <NutritionProvider>
+              <div className="min-h-screen">
+                {/* Theme Decorations */}
+                <div className="light-emoji-1"></div>
+                <div className="light-emoji-2"></div>
+                <div className="light-emoji-3"></div>
+                <div className="light-emoji-4"></div>
+                <div className="blueberry-emoji-1"></div>
+                <div className="blueberry-emoji-2"></div>
+                <div className="blueberry-emoji-3"></div>
+                <div className="blueberry-emoji-4"></div>
+                <div className="chocolate-emoji-1"></div>
+                <div className="chocolate-emoji-2"></div>
+                <div className="chocolate-small-1"></div>
+                <div className="chocolate-small-2"></div>
+                <div className="chocolate-small-3"></div>
+                <div className="chocolate-small-4"></div>
+                <div className="chocolate-small-5"></div>
+                <div className="chocolate-small-6"></div>
+                <div className="chocolate-small-7"></div>
+                <div className="chocolate-small-8"></div>
+                <div className="sweet-emoji-1"></div>
+                <div className="sweet-emoji-2"></div>
+                <div className="sweet-small-1"></div>
+                <div className="sweet-small-2"></div>
+                <div className="sweet-small-3"></div>
+                <div className="sweet-small-4"></div>
+                <div className="sweet-small-5"></div>
+                <div className="sweet-small-6"></div>
+                <div className="sweet-small-7"></div>
+                <div className="sweet-small-8"></div>
+                <div className="broccoli-emoji-1"></div>
+                <div className="broccoli-emoji-2"></div>
+                <div className="broccoli-small-1"></div>
+                <div className="broccoli-small-2"></div>
+                <div className="broccoli-small-3"></div>
+                <div className="broccoli-small-4"></div>
+                <div className="watermelon-emoji-1"></div>
+                <div className="watermelon-emoji-2"></div>
+                <div className="honey-emoji-1"></div>
+                <div className="honey-emoji-2"></div>
+                <div className="honey-small-1"></div>
+                <div className="honey-small-2"></div>
+                <AppInitializer>
+                  {children}
+                </AppInitializer>
+              </div>
+            </NutritionProvider>
             <IOSInstallPromptWrapper />
             <Toaster />
           </Providers>
