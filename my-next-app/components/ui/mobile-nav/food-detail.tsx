@@ -1,29 +1,38 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Check, Pencil } from "lucide-react";
+import { ArrowLeft, Check, Pencil, BookmarkPlus, Bookmark, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FoodItem } from "@/lib/store/nutrition-store";
+import { FoodItem, FoodTemplate, MealFoodItem, isTemplate, useNutritionStore } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface FoodDetailProps {
   food: FoodItem;
   onBack: () => void;
-  onAddFood: (food: FoodItem, quantity: number, mealType: string) => void;
+  onAddFood: (food: MealFoodItem, quantity: number, mealType: string) => void;
+  onEdit?: (food: FoodItem) => void;
 }
 
-const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
+const FoodDetail = ({ food, onBack, onAddFood, onEdit }: FoodDetailProps) => {
   // ผู้ใช้สามารถปรับปริมาณได้เป็นทศนิยม
   const [quantity, setQuantity] = useState(1);
   const [mealType, setMealType] = useState("breakfast");
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
+  const { foodTemplates, addFoodTemplate, createMealFoodFromScratch, removeFoodTemplate } = useNutritionStore();
   
   // เพิ่ม state สำหรับหน่วย
   const [quantityUnit, setQuantityUnit] = useState("serving");
+  
+  // Add state for saving to custom foods
+  const [saveAsCustomFood, setSaveAsCustomFood] = useState(false);
+  // Check if food already exists in custom foods
+  const [existsInCustomFoods, setExistsInCustomFoods] = useState(false);
+  const [matchingCustomFood, setMatchingCustomFood] = useState<FoodTemplate | null>(null);
   
   // รายการหน่วยที่ใช้บ่อย
   const commonUnits = [
@@ -42,13 +51,37 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableFood, setEditableFood] = useState<FoodItem>({...food});
   
+  // Check if this food exists in custom foods on component mount
+  useEffect(() => {
+    // Check if this food is already saved as a custom food
+    // We can compare by name since barcode foods have unique names
+    const customFood = foodTemplates.find(
+      t => t.name.toLowerCase() === food.name.toLowerCase()
+    );
+    
+    if (customFood) {
+      setExistsInCustomFoods(true);
+      setMatchingCustomFood(customFood);
+      // If found, use the custom food data instead
+      setEditableFood({...customFood});
+    } else {
+      setExistsInCustomFoods(false);
+      setMatchingCustomFood(null);
+      setEditableFood({...food});
+    }
+  }, [food, foodTemplates]);
+  
   // อัปเดต editableFood เมื่อ food prop เปลี่ยน
   useEffect(() => {
-    setEditableFood({...food});
+    // Only update if no matching custom food was found
+    if (!matchingCustomFood) {
+      setEditableFood({...food});
+    }
     
     // แยกปริมาณและหน่วยจาก serving size
     try {
-      const servingSizeParts = food.servingSize.split(' ');
+      const currentFood = matchingCustomFood || food;
+      const servingSizeParts = currentFood.servingSize.split(' ');
       if (servingSizeParts.length >= 2) {
         const amount = parseFloat(servingSizeParts[0]);
         if (!isNaN(amount)) {
@@ -65,7 +98,49 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
     } catch (e) {
       console.error("Error parsing serving size:", e);
     }
-  }, [food]);
+  }, [food, matchingCustomFood]);
+
+  // Handle saving food as custom food
+  const handleSaveAsCustomFood = () => {
+    // Create a FoodTemplate from the current food data
+    const template: FoodTemplate = {
+      id: crypto.randomUUID(),
+      name: editableFood.name,
+      calories: typeof editableFood.calories === 'number' ? editableFood.calories : parseFloat(editableFood.calories as any) || 0,
+      protein: typeof editableFood.protein === 'number' ? editableFood.protein : parseFloat(editableFood.protein as any) || 0,
+      carbs: typeof editableFood.carbs === 'number' ? editableFood.carbs : parseFloat(editableFood.carbs as any) || 0,
+      fat: typeof editableFood.fat === 'number' ? editableFood.fat : parseFloat(editableFood.fat as any) || 0,
+      servingSize: editableFood.servingSize,
+      category: editableFood.category,
+      favorite: true,
+      createdAt: new Date(),
+      isTemplate: true,
+      // Copy additional properties if they exist
+      usdaId: 'usdaId' in editableFood ? editableFood.usdaId : undefined,
+      brandName: 'brandName' in editableFood ? editableFood.brandName : undefined,
+      ingredients: 'ingredients' in editableFood ? editableFood.ingredients : undefined,
+      dataType: 'dataType' in editableFood ? editableFood.dataType : undefined,
+      mealCategory: 'mealCategory' in editableFood ? editableFood.mealCategory : undefined,
+    };
+    
+    addFoodTemplate(template);
+    setExistsInCustomFoods(true);
+    setMatchingCustomFood(template);
+    setSaveAsCustomFood(false);
+  };
+
+  // Handle edit button click
+  const handleEditClick = () => {
+    if (isEditing) {
+      applyEdits();
+    } else if (onEdit) {
+      // Navigate to edit screen
+      onEdit(matchingCustomFood || editableFood);
+    } else {
+      // If no onEdit handler, use inline editing
+      setIsEditing(true);
+    }
+  };
 
   // นำการแก้ไขไปใช้กับอาหารที่แสดง
   const applyEdits = () => {
@@ -73,12 +148,27 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
     const updatedFood: FoodItem = {
       ...editableFood,
       id: food.id,
-      createdAt: food.createdAt,
-      favorite: food.favorite
+      createdAt: 'createdAt' in food ? food.createdAt : new Date(),
+      favorite: 'favorite' in food ? food.favorite : false,
     };
     
+    // สร้าง MealFoodItem สำหรับส่งไปยัง parent
+    const mealFood = createMealFoodFromScratch({
+      name: updatedFood.name,
+      calories: typeof updatedFood.calories === 'number' ? updatedFood.calories : parseFloat(updatedFood.calories as any) || 0,
+      protein: typeof updatedFood.protein === 'number' ? updatedFood.protein : parseFloat(updatedFood.protein as any) || 0,
+      carbs: typeof updatedFood.carbs === 'number' ? updatedFood.carbs : parseFloat(updatedFood.carbs as any) || 0,
+      fat: typeof updatedFood.fat === 'number' ? updatedFood.fat : parseFloat(updatedFood.fat as any) || 0,
+      servingSize: updatedFood.servingSize,
+      category: updatedFood.category,
+      // Copy additional properties if they exist
+      usdaId: 'usdaId' in updatedFood ? updatedFood.usdaId : undefined,
+      brandName: 'brandName' in updatedFood ? updatedFood.brandName : undefined,
+      ingredients: 'ingredients' in updatedFood ? updatedFood.ingredients : undefined,
+    });
+    
     // ส่งอาหารที่แก้ไขกลับไปที่ parent component
-    onAddFood(updatedFood, quantity, mealType);
+    onAddFood(mealFood, quantity, mealType);
     
     // ออกจากโหมดแก้ไข
     setIsEditing(false);
@@ -90,7 +180,7 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
   };
 
   // ข้อมูลอาหารที่จะแสดง (ต้นฉบับหรือที่แก้ไข)
-  const displayFood = isEditing ? editableFood : food;
+  const displayFood = isEditing ? editableFood : (matchingCustomFood || editableFood);
   
   // คำนวณแคลอรี่ตามปริมาณที่เลือก
   const calculateCalories = () => {
@@ -112,18 +202,52 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
     // สร้าง serving size ใหม่โดยรวมปริมาณและหน่วย
     const newServingSize = `${quantity} ${quantityUnit}`;
     
-    // คำนวณปริมาณอาหารตามสัดส่วน
-    const servingSizeRatio = quantity / parseFloat(food.servingSize.split(' ')[0] || "1");
+    // สร้าง MealFoodItem สำหรับการบันทึก
+    let mealFood: MealFoodItem;
     
-    // สร้างอาหารใหม่ที่มีสัดส่วนตามที่เลือก
-    const adjustedFood: FoodItem = {
-      ...displayFood,
-      servingSize: newServingSize,
-      // ไม่ต้องปรับค่าโภชนาการเพราะจะคำนวณในฟังก์ชัน onAddFood จาก quantity ที่ส่งไป
-    };
+    // หากมี template ที่ตรงกัน ให้ใช้ template เป็นฐาน
+    if (matchingCustomFood) {
+      mealFood = createMealFoodFromScratch({
+        name: matchingCustomFood.name,
+        calories: matchingCustomFood.calories,
+        protein: matchingCustomFood.protein,
+        carbs: matchingCustomFood.carbs,
+        fat: matchingCustomFood.fat,
+        servingSize: newServingSize,
+        category: matchingCustomFood.category,
+        usdaId: matchingCustomFood.usdaId,
+        brandName: matchingCustomFood.brandName,
+        ingredients: matchingCustomFood.ingredients,
+        templateId: matchingCustomFood.id // อ้างอิงถึง template ต้นฉบับ
+      });
+    } else {
+      // ถ้าไม่มี template สร้างจากข้อมูลอาหารโดยตรง
+      mealFood = createMealFoodFromScratch({
+        name: displayFood.name,
+        calories: displayFood.calories,
+        protein: displayFood.protein,
+        carbs: displayFood.carbs,
+        fat: displayFood.fat,
+        servingSize: newServingSize,
+        category: displayFood.category,
+        usdaId: 'usdaId' in displayFood ? displayFood.usdaId : undefined,
+        brandName: 'brandName' in displayFood ? displayFood.brandName : undefined,
+        ingredients: 'ingredients' in displayFood ? displayFood.ingredients : undefined,
+      });
+    }
     
     // ส่งอาหารและปริมาณไปยัง parent
-    onAddFood(adjustedFood, 1, mealType); // ส่ง quantity=1 เพราะเราได้ปรับ serving size แล้ว
+    onAddFood(mealFood, 1, mealType); // ส่ง quantity=1 เพราะเราได้ปรับ serving size ในตัว MealFoodItem แล้ว
+  };
+
+  // Handle delete button click
+  const handleDeleteFood = () => {
+    if (existsInCustomFoods && matchingCustomFood) {
+      // ส่ง ID ของ template ไปให้ฟังก์ชัน removeFoodTemplate
+      removeFoodTemplate(matchingCustomFood.id);
+      // กลับไปที่หน้าก่อนหน้า
+      onBack();
+    }
   };
 
   return (
@@ -138,25 +262,70 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
           <span>{t.mobileNav.foodDetail.back}</span>
         </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => isEditing ? applyEdits() : setIsEditing(true)}
-          className="flex items-center gap-1"
-        >
-          {isEditing ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Save</span>
-            </>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4" />
-              <span>Edit</span>
-            </>
+        <div className="flex gap-2">
+          {/* Show Delete button next to Edit button if food exists in custom foods */}
+          {existsInCustomFoods && matchingCustomFood && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeleteFood}
+              className="flex items-center gap-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Delete</span>
+            </Button>
           )}
-        </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEditClick}
+            className="flex items-center gap-1"
+          >
+            {isEditing ? (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Save</span>
+              </>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4" />
+                <span>Edit</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+      
+      {/* Custom Food Saving Option - Only show if not already saved and not USDA food */}
+      {!existsInCustomFoods && !(food as any).usdaId && !isEditing && (
+        <div className="flex items-start space-x-2 p-3 rounded-lg bg-[hsl(var(--muted))]/50">
+          <Checkbox 
+            id="save-custom" 
+            checked={saveAsCustomFood}
+            onCheckedChange={(checked) => setSaveAsCustomFood(checked === true)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="save-custom"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {t.mobileNav.foodDetail.saveCustomFood || "Add to My Custom Foods"}
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {t.mobileNav.foodDetail.saveCustomFoodDesc || "Save this food for easier access in the future"}
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Show note when using a custom food version */}
+      {existsInCustomFoods && !isEditing && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-[hsl(var(--accent))]/10 text-sm">
+          <Bookmark className="h-4 w-4 text-[hsl(var(--primary))]" />
+          <span>{t.mobileNav.foodDetail.usingCustomFood || "Using your saved custom food data"}</span>
+        </div>
+      )}
       
       {isEditing ? (
         <div className="space-y-4">
@@ -329,11 +498,24 @@ const FoodDetail = ({ food, onBack, onAddFood }: FoodDetailProps) => {
         </div>
       </div>
       
-      <Button 
-        className="w-full" 
+      {/* Add button for saving as custom food */}
+      {saveAsCustomFood && !existsInCustomFoods && (
+        <Button 
+          className="w-full"
+          onClick={handleSaveAsCustomFood}
+        >
+          <BookmarkPlus className="h-4 w-4 mr-2" />
+          {t.mobileNav.foodDetail.saveButton || "Save to My Custom Foods"}
+        </Button>
+      )}
+      
+      {/* Regular add food button */}
+      <Button
+        className="w-full"
         onClick={handleAddFood}
       >
-        {t.mobileNav.foodDetail.addToMealButton}
+        <Plus className="h-4 w-4 mr-2" />
+        {t.mobileNav.foodDetail.addToMeal}
       </Button>
     </div>
   );

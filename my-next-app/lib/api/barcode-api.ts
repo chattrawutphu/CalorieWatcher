@@ -230,7 +230,8 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
           servingSize: servingSize,
           favorite: false,
           createdAt: new Date(),
-          category: category
+          category: category,
+          isTemplate: true
         };
       }
     }
@@ -258,6 +259,7 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
         id: crypto.randomUUID(),
         favorite: false,
         createdAt: new Date(),
+        isTemplate: true,
         ...foodData
       };
     }
@@ -289,6 +291,7 @@ export async function getFoodByBarcode(barcode: string): Promise<FoodItem | null
         id: crypto.randomUUID(),
         favorite: false,
         createdAt: new Date(),
+        isTemplate: true,
         ...foodData
       };
     }

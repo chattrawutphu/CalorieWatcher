@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { FoodDatabase } from "@/lib/food-database";
-import { useNutritionStore, MealEntry } from "@/lib/store/nutrition-store";
+import { useNutritionStore, MealEntry, MealFoodItem, FoodTemplate } from "@/lib/store/nutrition-store";
 import { v4 as uuidv4 } from "uuid";
 import { useLanguage } from "@/components/providers/language-provider";
 import { Search, ArrowLeft, ChevronRight, Plus, Utensils, History } from "lucide-react";
@@ -101,15 +101,39 @@ export default function AddFoodPage() {
   const handleAddMeal = () => {
     if (!selectedFood) return;
     
+    // สร้าง template ก่อน
+    const foodTemplate: FoodTemplate = {
+      id: crypto.randomUUID(),
+      name: selectedFood.name,
+      calories: selectedFood.calories,
+      protein: selectedFood.protein,
+      carbs: selectedFood.carbs,
+      fat: selectedFood.fat,
+      servingSize: selectedFood.servingSize,
+      favorite: false,
+      createdAt: new Date(),
+      category: selectedFood.category,
+      isTemplate: true
+    };
+    
+    // สร้าง MealFoodItem จาก template
+    const mealFoodItem: MealFoodItem = {
+      id: crypto.randomUUID(),
+      name: foodTemplate.name,
+      calories: foodTemplate.calories,
+      protein: foodTemplate.protein,
+      carbs: foodTemplate.carbs,
+      fat: foodTemplate.fat,
+      servingSize: foodTemplate.servingSize,
+      category: foodTemplate.category,
+      templateId: foodTemplate.id,
+      recordedAt: new Date()
+    };
+    
     const meal: MealEntry = {
       id: crypto.randomUUID(),
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
-      foodItem: {
-        ...selectedFood,
-        favorite: false,
-        createdAt: new Date(),
-        category: selectedFood.category
-      },
+      foodItem: mealFoodItem,
       quantity: quantity,
       date: dateParam || new Date().toISOString().split('T')[0],
     };
@@ -129,7 +153,8 @@ export default function AddFoodPage() {
   const handleAddCustomFood = () => {
     if (!customFood.name || !customFood.calories) return;
     
-    const newFood = {
+    // สร้าง template ก่อน
+    const foodTemplate: FoodTemplate = {
       id: crypto.randomUUID(),
       name: customFood.name,
       calories: Number(customFood.calories),
@@ -139,13 +164,28 @@ export default function AddFoodPage() {
       servingSize: customFood.servingSize || "1 serving",
       favorite: false,
       createdAt: new Date(),
-      category: customFood.category
+      category: customFood.category,
+      isTemplate: true
+    };
+    
+    // สร้าง MealFoodItem จาก template
+    const mealFoodItem: MealFoodItem = {
+      id: crypto.randomUUID(),
+      name: foodTemplate.name,
+      calories: foodTemplate.calories,
+      protein: foodTemplate.protein,
+      carbs: foodTemplate.carbs,
+      fat: foodTemplate.fat,
+      servingSize: foodTemplate.servingSize,
+      category: foodTemplate.category,
+      templateId: foodTemplate.id,
+      recordedAt: new Date()
     };
     
     const meal: MealEntry = {
       id: crypto.randomUUID(),
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
-      foodItem: newFood,
+      foodItem: mealFoodItem,
       quantity: quantity,
       date: dateParam || new Date().toISOString().split('T')[0],
     };

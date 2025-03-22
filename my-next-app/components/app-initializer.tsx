@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, Suspense, memo } from "react";
 import { useSession } from "next-auth/react";
 import { LoadingSplash } from "@/components/ui/loading-splash";
+import { useNutritionStore } from "@/lib/store/nutrition-store";
 
 // Mémoiser l'App Initializer pour éviter des rendus inutiles
 const AppInitializer = memo(function AppInitializer({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,14 @@ const AppInitializer = memo(function AppInitializer({ children }: { children: Re
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   const { status } = useSession();
+  const { setCurrentDate } = useNutritionStore();
+  
+  // ตั้งค่าวันที่ปัจจุบันทุกครั้งที่เปิดแอพ
+  useEffect(() => {
+    // กำหนดวันที่ปัจจุบันให้กับ nutrition store
+    const todayDate = new Date().toISOString().split('T')[0];
+    setCurrentDate(todayDate);
+  }, [setCurrentDate]);
   
   // Précharger les ressources essentielles
   useEffect(() => {

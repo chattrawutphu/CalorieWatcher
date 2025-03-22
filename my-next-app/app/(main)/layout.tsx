@@ -5,6 +5,9 @@ import { MobileNav } from "@/components/ui/mobile-nav";
 import { useSession } from "next-auth/react";
 import { redirect, useRouter, usePathname } from "next/navigation";
 import PageTransition from "@/components/page-transition";
+import { useNutritionStore } from "@/lib/store/nutrition-store";
+import { useLanguage } from "@/components/providers/language-provider";
+import { format, isToday } from "date-fns";
 
 export default function MainLayout({
   children,
@@ -16,6 +19,41 @@ export default function MainLayout({
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [mainContentReady, setMainContentReady] = useState(false);
+  
+  const { locale } = useLanguage();
+  
+  const { 
+    initializeData, 
+    syncData
+  } = useNutritionStore();
+
+  // เมื่อเริ่มต้นแอพ ให้โหลดข้อมูลจาก localStorage และซิงค์ข้อมูลจาก API
+  useEffect(() => {
+    if (status === "authenticated") {
+      const initializeAndSync = async () => {
+        await initializeData();
+        
+        // ตรวจสอบว่าเคยซิงค์ข้อมูลในเซสชั่นนี้แล้วหรือไม่
+        const hasSessionSync = sessionStorage.getItem('has-synced-this-session');
+        
+        // ถ้ายังไม่เคยซิงค์ในเซสชั่นนี้ ให้ซิงค์ข้อมูล
+        if (!hasSessionSync) {
+          // ทำการซิงค์เงียบๆ ในพื้นหลังโดยไม่แจ้งเตือนผู้ใช้
+          setTimeout(async () => {
+            await syncData();
+            
+            // บันทึกเวลาซิงค์ล่าสุดใน localStorage
+            localStorage.setItem('last-sync-time', new Date().toISOString());
+            // บันทึกว่าได้ซิงค์ในเซสชั่นนี้แล้ว
+            sessionStorage.setItem('has-synced-this-session', 'true');
+            console.log(`[Synced] Automatic sync on app first start: ${new Date().toISOString()}`);
+          }, 1000);
+        }
+      };
+      
+      initializeAndSync();
+    }
+  }, [status, initializeData, syncData]);
 
   // แสดงสถานะการโหลดตามเวลาจริง
   useEffect(() => {

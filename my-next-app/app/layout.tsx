@@ -134,6 +134,11 @@ export default function RootLayout({
               (function() {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.classList.add(savedTheme);
+                
+                // ตั้งค่า lang attribute ตาม language ที่บันทึกไว้
+                const savedLanguage = localStorage.getItem('language') || 'en';
+                document.documentElement.lang = savedLanguage;
+                
                 document.documentElement.style.visibility = 'visible';
               })();
             `

@@ -28,13 +28,17 @@ export const LanguageProvider = ({
   children, 
   defaultLocale = "en" 
 }: LanguageProviderProps) => {
-  const [locale, setLocale] = useState<Locale>(defaultLocale);
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window !== "undefined") {
+      const savedLocale = localStorage.getItem("language") as Locale;
+      return savedLocale || defaultLocale;
+    }
+    return defaultLocale;
+  });
 
   useEffect(() => {
-    // Set the HTML lang attribute
     document.documentElement.lang = locale;
     
-    // You could also store the preference in localStorage
     localStorage.setItem("language", locale);
   }, [locale]);
 

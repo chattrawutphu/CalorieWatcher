@@ -21,7 +21,8 @@ export const homeTranslations = {
     sweet: "スイートテーマ",
     broccoli: "ブロッコリーテーマ",
     watermelon: "スイカ",
-    honey: "ハニー"
+    honey: "ハニー",
+    blueberry: "ブルーベリー"
   },
   apps: {
     sectionTitle: "アプリとツール",

@@ -16,6 +16,23 @@ export enum FoodCategory {
   EXPERIMENTAL = 'Experimental',
 }
 
+// อินเตอร์เฟซสำหรับผลลัพธ์การค้นหาที่ใช้ใน search-food.tsx
+export interface SearchFoodResult {
+  fdcId: number;
+  description: string;
+  dataType?: string;
+  foodCategory?: string;
+  servingSize?: number;
+  servingSizeUnit?: string;
+  brandName?: string;
+  ingredients?: string;
+  foodNutrients: Array<{
+    nutrientId: number;
+    nutrientName?: string;
+    value: number;
+  }>;
+}
+
 // อินเตอร์เฟซสำหรับการค้นหา
 export interface FoodSearchCriteria {
   query: string;
@@ -118,35 +135,35 @@ export function convertToAppFoodItem(usdaFood: USDAFoodItem): FoodItem {
     usdaId: usdaFood.fdcId,
     brandName: usdaFood.brandName,
     ingredients: usdaFood.ingredients,
-    dataType: usdaFood.dataType
+    dataType: usdaFood.dataType,
+    isTemplate: true
   };
 }
 
-// ฟังก์ชันสำหรับค้นหาอาหาร
-export async function searchFoods(criteria: FoodSearchCriteria): Promise<USDAFoodItem[]> {
+// ฟังก์ชันสำหรับค้นหาอาหาร โดยรับพารามิเตอร์เป็น string, page และ pageSize
+export async function searchFoods(query: string, pageNumber: number = 1, pageSize: number = 25): Promise<{foods: SearchFoodResult[], totalHits: number}> {
   try {
     // กำหนด dataType เพื่อการค้นหาที่เหมาะสม ให้เน้นวัตถุดิบพื้นฐานก่อน
     const defaultDataTypes = ['Foundation', 'SR Legacy', 'Experimental', 'Survey (FNDDS)', 'Branded'];
     
     // เพิ่มการตรวจสอบว่าต้องการค้นหาวัตถุดิบพื้นฐานหรือไม่
-    let sortBy = criteria.sortBy;
-    let dataType = criteria.dataType || defaultDataTypes;
+    let dataType = defaultDataTypes;
     
     // เพิ่มพารามิเตอร์ให้ API
     const apiParams = {
-      ...criteria,
-      pageSize: criteria.pageSize || 25,
-      pageNumber: criteria.pageNumber || 1,
+      query,
+      pageSize: pageSize,
+      pageNumber: pageNumber,
       // ร้องขอค่าโภชนาการที่สำคัญเฉพาะ
       nutrients: [208, 203, 204, 205],
       dataType: dataType,
-      sortBy: sortBy || 'dataType.keyword',  // เรียงตามประเภทข้อมูล เพื่อให้ Foundation มาก่อน
-      sortOrder: criteria.sortOrder || 'asc'
+      sortBy: 'dataType.keyword',  // เรียงตามประเภทข้อมูล เพื่อให้ Foundation มาก่อน
+      sortOrder: 'asc'
     };
     
     // ถ้ากำลังค้นหาด้วยชื่อวัตถุดิบทั่วไป (เช่น broccoli, apple) ให้ปรับพารามิเตอร์
-    if (criteria.query && /^[a-zA-Z]+$/.test(criteria.query.trim())) {
-      const simpleIngredientSearch = criteria.query.trim().toLowerCase();
+    if (query && /^[a-zA-Z]+$/.test(query.trim())) {
+      const simpleIngredientSearch = query.trim().toLowerCase();
       const commonIngredients = ['broccoli', 'apple', 'banana', 'rice', 'potato', 'carrot', 'onion', 'beef', 'chicken', 'fish'];
       
       if (commonIngredients.includes(simpleIngredientSearch) || 
@@ -157,7 +174,7 @@ export async function searchFoods(criteria: FoodSearchCriteria): Promise<USDAFoo
     }
     
     console.log('Search params:', { 
-      query: criteria.query,
+      query: query,
       dataType: apiParams.dataType,
       sortBy: apiParams.sortBy
     });
@@ -186,11 +203,9 @@ export async function searchFoods(criteria: FoodSearchCriteria): Promise<USDAFoo
       } : null
     });
     
-    // ปรับปรุงข้อมูลในรูปแบบที่เหมาะกับแอพ
+    // แปลงผลลัพธ์ให้อยู่ในรูปแบบ SearchFoodResult
     const foods = data.foods || [];
-    
-    // แปลงฟิลด์ foodNutrients เป็น nutrients ที่เราใช้ในแอพ
-    const mappedFoods = foods.map((food: any) => ({
+    const searchResults: SearchFoodResult[] = foods.map((food: any) => ({
       fdcId: food.fdcId,
       description: food.description,
       dataType: food.dataType,
@@ -199,17 +214,15 @@ export async function searchFoods(criteria: FoodSearchCriteria): Promise<USDAFoo
       ingredients: food.ingredients,
       servingSize: food.servingSize,
       servingSizeUnit: food.servingSizeUnit,
-      // แปลง foodNutrients เป็นรูปแบบ nutrients ที่เราใช้
-      nutrients: food.foodNutrients?.map((n: any) => ({
+      foodNutrients: food.foodNutrients?.map((n: any) => ({
         nutrientId: n.nutrientId || n.nutrient?.id,
         nutrientName: n.nutrientName || n.nutrient?.name,
-        unitName: n.unitName || n.nutrient?.unitName,
         value: n.value || 0
       })) || []
     }));
     
     // เรียงลำดับให้วัตถุดิบมาก่อนเสมอ (Foundation และ SR Legacy)
-    const sortedFoods = [...mappedFoods].sort((a, b) => {
+    const sortedFoods = [...searchResults].sort((a, b) => {
       // ให้ Foundation และ SR Legacy มาก่อน
       if (a.dataType === 'Foundation' && b.dataType !== 'Foundation') return -1;
       if (a.dataType !== 'Foundation' && b.dataType === 'Foundation') return 1;
@@ -220,10 +233,16 @@ export async function searchFoods(criteria: FoodSearchCriteria): Promise<USDAFoo
       return a.description.localeCompare(b.description);
     });
     
-    return sortedFoods;
+    return {
+      foods: sortedFoods,
+      totalHits: data.totalHits || 0
+    };
   } catch (error) {
     console.error('Error searching USDA foods:', error);
-    return [];
+    return {
+      foods: [],
+      totalHits: 0
+    };
   }
 }
 
@@ -277,108 +296,91 @@ export async function getFoodDetails(fdcId: number): Promise<USDAFoodItem | null
 
 // รายการหมวดหมู่อาหารหลัก
 export const FOOD_CATEGORIES = [
-  { id: 'vegetables', name: 'Vegetables', emoji: '🥦' },
-  { id: 'fruits', name: 'Fruits', emoji: '🍎' },
-  { id: 'grains', name: 'Grains', emoji: '🌾' },
-  { id: 'protein_foods', name: 'Protein Foods', emoji: '🥩' },
+  { id: 'protein', name: 'Protein', emoji: '🥩' },
+  { id: 'vegetable', name: 'Vegetable', emoji: '🥦' },
+  { id: 'fruit', name: 'Fruit', emoji: '🍎' },
+  { id: 'grain', name: 'Grain', emoji: '🌾' },
   { id: 'dairy', name: 'Dairy', emoji: '🧀' },
-  { id: 'beverages', name: 'Beverages', emoji: '🍹' },
-  { id: 'snacks', name: 'Snacks', emoji: '🍿' },
-  { id: 'condiments', name: 'Condiments', emoji: '🧂' },
-  { id: 'mixed_dishes', name: 'Mixed Dishes', emoji: '🍲' },
-  { id: 'bakery', name: 'Bakery', emoji: '🍞' },
+  { id: 'snack', name: 'Snack', emoji: '🍿' }, 
+  { id: 'beverage', name: 'Beverage', emoji: '🍹' },
+  { id: 'other', name: 'Other', emoji: '📋' },
 ];
 
 // แมปจาก USDA Categories เป็นหมวดหมู่ของเรา
 export const USDA_CATEGORY_MAPPING: Record<string, string> = {
-  'Vegetables and Vegetable Products': 'vegetables',
-  'Fruits and Fruit Juices': 'fruits',
-  'Grain Products': 'grains',
-  'Cereal Grains and Pasta': 'grains',
-  'Breakfast Cereals': 'grains',
-  'Baked Products': 'bakery',
-  'Meat, Poultry, Fish and Seafood': 'protein_foods',
-  'Legumes and Legume Products': 'protein_foods',
-  'Nut and Seed Products': 'protein_foods',
-  'Beef Products': 'protein_foods',
-  'Pork Products': 'protein_foods',
-  'Poultry Products': 'protein_foods',
-  'Lamb, Veal, and Game Products': 'protein_foods',
-  'Sausages and Luncheon Meats': 'protein_foods',
-  'Fish and Seafood Products': 'protein_foods',
+  'Vegetables and Vegetable Products': 'vegetable',
+  'Fruits and Fruit Juices': 'fruit',
+  'Grain Products': 'grain',
+  'Cereal Grains and Pasta': 'grain',
+  'Breakfast Cereals': 'grain',
+  'Baked Products': 'grain',
+  'Meat, Poultry, Fish and Seafood': 'protein',
+  'Legumes and Legume Products': 'protein',
+  'Nut and Seed Products': 'protein',
+  'Beef Products': 'protein',
+  'Pork Products': 'protein',
+  'Poultry Products': 'protein',
+  'Lamb, Veal, and Game Products': 'protein',
+  'Sausages and Luncheon Meats': 'protein',
+  'Fish and Seafood Products': 'protein',
   'Dairy and Egg Products': 'dairy',
   'Milk and Dairy Products': 'dairy',
   'Cheese Products': 'dairy',
-  'Beverages': 'beverages',
-  'Alcoholic Beverages': 'beverages',
-  'Coffee and Tea': 'beverages',
-  'Fats and Oils': 'condiments',
-  'Soups, Sauces, and Gravies': 'condiments',
-  'Spices and Herbs': 'condiments',
-  'Snacks': 'snacks',
-  'Fast Foods': 'mixed_dishes',
-  'Mixed Dishes': 'mixed_dishes',
-  'Restaurant Foods': 'mixed_dishes',
+  'Beverages': 'beverage',
+  'Alcoholic Beverages': 'beverage',
+  'Coffee and Tea': 'beverage',
+  'Fats and Oils': 'other',
+  'Soups, Sauces, and Gravies': 'other',
+  'Spices and Herbs': 'other',
+  'Snacks': 'snack',
+  'Fast Foods': 'other',
+  'Mixed Dishes': 'other',
+  'Restaurant Foods': 'other',
 };
 
-// ฟังก์ชันค้นหาอาหารในหมวดหมู่
-export async function searchFoodsByCategory(category: string, pageNumber: number = 1, pageSize: number = 20): Promise<USDAFoodItem[]> {
+// ฟังก์ชันค้นหาอาหารตามหมวดหมู่
+export async function searchFoodsByCategory(category: string, pageNumber: number = 1, pageSize: number = 20): Promise<SearchFoodResult[]> {
   try {
-    let searchTerms: string[] = [];
+    console.log(`Searching for foods in category: ${category}, page: ${pageNumber}, pageSize: ${pageSize}`);
     
-    // แมปหมวดหมู่ของเราเป็นคำค้นหาที่เกี่ยวข้อง
-    switch (category) {
+    // ปรับแต่งคำค้นหาตามหมวดหมู่
+    let query = "";
+    
+    switch (category.toLowerCase()) {
       case 'vegetables':
-        searchTerms = ['vegetable', 'vegetables'];
+        query = "vegetable";
         break;
       case 'fruits':
-        searchTerms = ['fruit', 'fruits'];
+        query = "fruit";
         break;
-      case 'grains':
-        searchTerms = ['grain', 'cereal', 'pasta', 'rice', 'bread'];
-        break;
-      case 'protein_foods':
-        searchTerms = ['meat', 'poultry', 'fish', 'seafood', 'beef', 'pork', 'chicken'];
+      case 'meats':
+        query = "meat";
         break;
       case 'dairy':
-        searchTerms = ['dairy', 'milk', 'cheese', 'yogurt'];
+        query = "dairy milk cheese";
+        break;
+      case 'grains':
+        query = "grain rice bread pasta";
         break;
       case 'beverages':
-        searchTerms = ['beverage', 'drink', 'juice', 'water', 'coffee', 'tea'];
+        query = "drink beverage coffee tea";
         break;
-      case 'snacks':
-        searchTerms = ['snack', 'chips', 'crackers', 'popcorn'];
+      case 'alcohol':
+        query = "alcohol beer wine";
         break;
-      case 'condiments':
-        searchTerms = ['condiment', 'sauce', 'spice', 'herb', 'oil'];
-        break;
-      case 'mixed_dishes':
-        searchTerms = ['dish', 'meal', 'casserole', 'pizza', 'sandwich', 'soup'];
-        break;
-      case 'bakery':
-        searchTerms = ['bread', 'bakery', 'cake', 'pastry', 'cookie'];
+      case 'fastfood':
+        query = "fast food burger pizza";
         break;
       default:
-        searchTerms = [category];
+        query = category;
     }
     
-    // สร้างคำค้นหารวม
-    const query = searchTerms.join(' OR ');
-    
     // ค้นหาด้วย API - เน้นเรียงลำดับให้วัตถุดิบมาก่อน
-    const foods = await searchFoods({
-      query,
-      pageNumber,
-      pageSize,
-      requireAllWords: false,
-      dataType: ['Foundation', 'SR Legacy', 'Experimental', 'Survey (FNDDS)', 'Branded'],
-      sortBy: 'dataType.keyword', // เรียงตามประเภทข้อมูล ให้ Foundation และ SR Legacy มาก่อน
-      sortOrder: 'asc'
-    });
+    const result = await searchFoods(query, pageNumber, pageSize);
     
-    return foods;
+    return result.foods;
   } catch (error) {
     console.error(`Error searching foods for category ${category}:`, error);
     return [];
   }
-} 
+}

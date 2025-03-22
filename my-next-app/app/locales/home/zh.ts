@@ -21,7 +21,8 @@ export const homeTranslations = {
     sweet: "甜心主题",
     broccoli: "西兰花主题",
     watermelon: "西瓜",
-    honey: "蜂蜜"
+    honey: "蜂蜜",
+    blueberry: "蓝莓"
   },
   apps: {
     sectionTitle: "应用和工具",

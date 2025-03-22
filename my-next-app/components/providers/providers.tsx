@@ -12,7 +12,10 @@ interface ProvidersProps {
 
 export const Providers = ({ children }: ProvidersProps) => {
   return (
-    <SessionProvider>
+    <SessionProvider 
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
       <LanguageProvider>
         <NutritionProvider>{children}</NutritionProvider>
       </LanguageProvider>

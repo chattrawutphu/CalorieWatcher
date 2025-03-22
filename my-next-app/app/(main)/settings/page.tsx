@@ -11,8 +11,10 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle } from "lucide-react";
+import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatDistanceToNow } from 'date-fns';
+import { th, ja, zhCN, Locale } from 'date-fns/locale';
 
 // Animation variants
 const container = {
@@ -56,6 +58,12 @@ const translations = {
     liters: "liters",
     recommendedWater: "Recommended: 2000-3000 ml per day",
     glass: "glass",
+    syncData: "Data Synchronization",
+    lastSync: "Last synchronized",
+    neverSynced: "Never synced",
+    syncNow: "Sync Now",
+    syncing: "Syncing...",
+    syncComplete: "Sync Complete",
   },
   th: {
     settings: "ตั้งค่า",
@@ -81,6 +89,12 @@ const translations = {
     liters: "ลิตร",
     recommendedWater: "แนะนำ: 2000-3000 มล. ต่อวัน",
     glass: "แก้ว",
+    syncData: "การซิงค์ข้อมูล",
+    lastSync: "ซิงค์ล่าสุดเมื่อ",
+    neverSynced: "ไม่เคยซิงค์",
+    syncNow: "ซิงค์ตอนนี้",
+    syncing: "กำลังซิงค์...",
+    syncComplete: "ซิงค์เสร็จสิ้น",
   },
   ja: {
     settings: "設定",
@@ -106,6 +120,12 @@ const translations = {
     liters: "リットル",
     recommendedWater: "おすすめ：1日2000-3000ml",
     glass: "グラス",
+    syncData: "データ同期",
+    lastSync: "最終同期",
+    neverSynced: "同期履歴なし",
+    syncNow: "今すぐ同期",
+    syncing: "同期中...",
+    syncComplete: "同期完了",
   },
   zh: {
     settings: "设置",
@@ -131,6 +151,12 @@ const translations = {
     liters: "升",
     recommendedWater: "建议：每日2000-3000ml",
     glass: "杯",
+    syncData: "数据同步",
+    lastSync: "最后同步时间",
+    neverSynced: "从未同步",
+    syncNow: "立即同步",
+    syncing: "同步中...",
+    syncComplete: "同步完成",
   },
 };
 
@@ -139,7 +165,7 @@ export default function SettingsPage() {
   const { locale } = useLanguage();
   const t = translations[locale as keyof typeof translations] || translations.en;
   
-  const { goals, updateGoals } = useNutritionStore();
+  const { goals, updateGoals, syncData, isLoading: isSyncingFromStore } = useNutritionStore();
   
   // Local state for the form
   const [dailyCalories, setDailyCalories] = useState(goals.calories);
@@ -148,6 +174,54 @@ export default function SettingsPage() {
   const [carbsGrams, setCarbsGrams] = useState(goals.carbs);
   const [waterGoal, setWaterGoal] = useState(goals.water);
   const [isSaved, setIsSaved] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [syncAnimating, setSyncAnimating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // โหลดเวลาซิงค์ล่าสุด
+  useEffect(() => {
+    // เนื่องจาก getLastSyncTime ไม่มีใน API ของ store จึงใช้ localStorage แทน
+    const storedSyncTime = localStorage.getItem('last-sync-time');
+    setLastSyncTime(storedSyncTime);
+  }, []);
+
+  // ฟังก์ชันสำหรับฟอร์แมตเวลา
+  const formatLastSyncTime = () => {
+    if (!lastSyncTime) return t.neverSynced;
+    
+    // เลือกภาษาตาม locale
+    const localeOptions: Record<string, Locale> = {
+      th: th,
+      ja: ja,
+      zh: zhCN
+    };
+    
+    const localeOption = localeOptions[locale as keyof typeof localeOptions];
+    
+    return formatDistanceToNow(new Date(lastSyncTime), { 
+      addSuffix: true,
+      locale: localeOption
+    });
+  };
+  
+  // ฟังก์ชันสำหรับซิงค์ข้อมูลแบบ manual
+  const handleSyncData = async () => {
+    setSyncAnimating(true);
+    setIsSyncing(true);
+    
+    await syncData();
+    
+    // บันทึกเวลาซิงค์ล่าสุดใน localStorage
+    const now = new Date().toISOString();
+    localStorage.setItem('last-sync-time', now);
+    setLastSyncTime(now);
+    
+    // หลังจาก sync เสร็จ ให้แสดง "sync complete" เป็นเวลาสั้นๆ
+    setTimeout(() => {
+      setSyncAnimating(false);
+      setIsSyncing(false);
+    }, 1500);
+  };
   
   // Calculate percentages based on grams
   const totalCaloriesFromMacros = 
@@ -241,30 +315,78 @@ export default function SettingsPage() {
         {t.settings}
       </motion.h1>
       
+      {/* Data Sync Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.syncData}</h2>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Cloud className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  <span>{t.lastSync}:</span>
+                </div>
+                <span className="text-[hsl(var(--muted-foreground))]">
+                  {formatLastSyncTime()}
+                </span>
+              </div>
+              <Button 
+                onClick={handleSyncData}
+                disabled={isSyncing || syncAnimating}
+                className="w-full"
+              >
+                {isSyncing || syncAnimating ? (
+                  <div className="flex items-center gap-2">
+                    {syncAnimating ? (
+                      <>
+                        <Check className="h-4 w-4 animate-pulse" />
+                        <span>{t.syncComplete}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{t.syncing}</span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    <span>{t.syncNow}</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
       {/* Account Section */}
       <motion.div variants={item} className="mb-8">
         <h2 className="text-xl font-semibold mb-4">{t.account}</h2>
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
                   <User className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="font-medium">{session?.user?.name || "User"}</p>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{session?.user?.email || ""}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{session?.user?.name || "User"}</p>
+                  <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-[200px] sm:max-w-[250px]">{session?.user?.email || ""}</p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => signOut()}
-                className="text-[hsl(var(--muted-foreground))]"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                {t.signOut}
-              </Button>
+              <div className="mt-2 sm:mt-0 ml-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => signOut()}
+                  className="rounded-full hover:bg-[hsl(var(--destructive))/0.1] hover:text-[hsl(var(--destructive))] transition-colors"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t.signOut}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

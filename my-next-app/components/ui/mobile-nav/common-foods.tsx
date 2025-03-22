@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { FoodItem } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
-import { USDAFoodItem, convertToAppFoodItem, FOOD_CATEGORIES, searchFoods, searchFoodsByCategory } from "@/lib/api/usda-api";
+import { USDAFoodItem, convertToAppFoodItem, FOOD_CATEGORIES, searchFoods, searchFoodsByCategory, SearchFoodResult } from "@/lib/api/usda-api";
 import { cacheService } from "@/lib/utils/cache-service";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { commonFoodTranslations } from "@/lib/translations/common-foods";
 
 interface CommonFoodsProps {
   onSelectFood: (food: FoodItem) => void;
@@ -29,6 +32,8 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
   const [hasMore, setHasMore] = useState(false);
   const [searchMode, setSearchMode] = useState<'category' | 'search'>('category');
   const [dataTypeFilter, setDataTypeFilter] = useState<'ingredients' | 'meals' | 'all'>('all');
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string; brandName?: string }[]>([]);
+  const [loadingAutocomplete, setLoadingAutocomplete] = useState(false);
   
   // สำหรับตัวอย่าง - หมวดหมู่ย่อยของแต่ละหมวดหมู่
   const subcategories = useMemo(() => {
@@ -119,23 +124,32 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         setHasMore(formattedFoods.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
       } else {
         // เรียก API
-        const results = await searchFoods({
-          query,
-          pageNumber: loadPage,
-          pageSize: 20,
-          requireAllWords: false,
-          dataType: dataTypes,
-          sortBy: 'dataType.keyword'  // เรียงตามประเภทข้อมูล
-        });
+        const result = await searchFoods(query, loadPage, 20);
         
         // แคชผลลัพธ์
-        cacheService.cacheFoodSearch(cacheKey, loadPage, results);
+        cacheService.cacheFoodSearch(cacheKey, loadPage, result.foods);
         
         // แปลงเป็นรูปแบบที่แอพใช้
-        const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        const formattedFoods = result.foods.map((food: SearchFoodResult) => {
+          // สร้าง FoodItem จาก SearchFoodResult
+          return {
+            id: food.fdcId.toString(),
+            name: food.description,
+            calories: Math.round(food.foodNutrients.find(n => n.nutrientId === 1008)?.value || 0),
+            protein: Math.round(food.foodNutrients.find(n => n.nutrientId === 1003)?.value || 0),
+            carbs: Math.round(food.foodNutrients.find(n => n.nutrientId === 1005)?.value || 0),
+            fat: Math.round(food.foodNutrients.find(n => n.nutrientId === 1004)?.value || 0),
+            servingSize: food.servingSize ? `${food.servingSize}${food.servingSizeUnit}` : "100g",
+            favorite: false,
+            createdAt: new Date(),
+            category: (food.foodCategory?.toLowerCase() || 'other') as any,
+            usdaId: food.fdcId,
+            isTemplate: false
+          };
+        });
         
         setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
-        setHasMore(results.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
+        setHasMore(result.foods.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
       }
     } catch (err) {
       console.error("Error searching foods:", err);
@@ -261,22 +275,29 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         setHasMore(formattedFoods.length === 20);
       } else {
         // เรียก API
-        const results = await searchFoods({
-          query: searchTerm,
-          pageNumber: loadPage,
-          pageSize: 20,
-          dataType: dataTypes,
-          sortBy: sortBy
-        });
+        const results = await searchFoods(searchTerm, loadPage, 20);
         
         // แคชผลลัพธ์
-        cacheService.cacheFoodCategory(cacheKey, loadPage, results);
+        cacheService.cacheFoodCategory(cacheKey, loadPage, results.foods);
         
         // แปลงเป็นรูปแบบที่แอพใช้
-        const formattedFoods = results.map((food: USDAFoodItem) => convertToAppFoodItem(food));
+        const formattedFoods = results.foods.map((food: SearchFoodResult) => ({
+          id: food.fdcId.toString(),
+          name: food.description,
+          calories: getCalories(food),
+          protein: getNutrient(food, 'Protein'),
+          carbs: getNutrient(food, 'Carbohydrate, by difference'),
+          fat: getNutrient(food, 'Total lipid (fat)'),
+          servingSize: food.servingSize || 100,
+          favorite: false,
+          createdAt: new Date().toISOString(),
+          category: food.foodCategory || 'Uncategorized',
+          usdaId: food.fdcId,
+          isTemplate: true
+        }));
         
         setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
-        setHasMore(results.length === 20);
+        setHasMore(results.foods.length === 20);
       }
     } catch (err) {
       console.error(`Error loading foods for category ${category}:`, err);
@@ -347,6 +368,50 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
     setSelectedCategory(null);
     setSubcategory(null);
     setPage(1);
+  };
+  
+  const handleAutocomplete = useCallback(async (term: string) => {
+    try {
+      if (!term.trim()) {
+        setSuggestions([]);
+        return;
+      }
+      
+      setLoadingAutocomplete(true);
+      
+      // ใช้ searchFoods แบบใหม่ที่รับพารามิเตอร์เป็น string, page, pageSize
+      const result = await searchFoods(term, 1, 5);
+      
+      // แปลงผลลัพธ์เป็นรูปแบบที่ใช้ในแอพ
+      const formattedSuggestions = result.foods.map(food => ({
+        id: food.fdcId.toString(),
+        name: food.description,
+        brandName: food.brandName
+      }));
+      
+      setSuggestions(formattedSuggestions);
+    } catch (error) {
+      console.error("Error fetching autocomplete suggestions:", error);
+      setSuggestions([]);
+    } finally {
+      setLoadingAutocomplete(false);
+    }
+  }, []);
+  
+  // ฟังก์ชันสำหรับดึงค่าแคลอรี่จาก SearchFoodResult
+  const getCalories = (food: SearchFoodResult): number => {
+    const energyNutrient = food.foodNutrients?.find(
+      (nutrient) => nutrient.nutrientName === 'Energy' || nutrient.nutrientId === 1008
+    );
+    return energyNutrient?.value || 0;
+  };
+
+  // ฟังก์ชันสำหรับดึงค่าสารอาหารจาก SearchFoodResult ตามชื่อ
+  const getNutrient = (food: SearchFoodResult, nutrientName: string): number => {
+    const nutrient = food.foodNutrients?.find(
+      (n) => n.nutrientName === nutrientName
+    );
+    return nutrient?.value || 0;
   };
   
   return (

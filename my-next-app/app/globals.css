@@ -309,6 +309,184 @@
   .recharts-tooltip-wrapper .font-medium {
     color: hsl(271, 91%, 55%) !important;
   }
+
+  .blueberry {
+    /* Blueberry theme with pastel pink, purple and blue colors */
+    --background: 330, 100%, 98%;
+    --foreground: 270, 50%, 50%;
+    
+    --card: 0, 0%, 100%;
+    --card-foreground: 270, 50%, 50%;
+    
+    --popover: 0, 0%, 100%;
+    --popover-foreground: 270, 50%, 50%;
+    
+    --primary: 280, 90%, 85%;
+    --primary-foreground: 270, 50%, 45%;
+    
+    --secondary: 270, 90%, 90%;
+    --secondary-foreground: 270, 60%, 40%;
+    
+    --muted: 280, 70%, 92%;
+    --muted-foreground: 270, 40%, 60%;
+    
+    --accent: 200, 90%, 90%;
+    --accent-foreground: 200, 60%, 40%;
+    
+    --destructive: 0, 84.2%, 60.2%;
+    --destructive-foreground: 210, 20%, 98%;
+
+    --border: 280, 70%, 90%;
+    --input: 280, 70%, 90%;
+    --ring: 280, 90%, 85%;
+    
+    --radius: 0.75rem;
+    
+    --chart-1: 280, 90%, 75%;
+    --chart-2: 250, 80%, 75%;
+    --chart-3: 200, 80%, 75%;
+    --chart-4: 300, 80%, 75%;
+    --chart-5: 320, 80%, 75%;
+  }
+  
+  /* Fix text color in Blueberry theme */
+  .blueberry .text-\[hsl\(var\(--primary\)\)\] {
+    color: hsl(280, 100%, 75%) !important;
+  }
+  
+  /* Fix text color in icons for Blueberry theme */
+  .blueberry .font-medium.text-\[hsl\(var\(--primary\)\)\],
+  .blueberry .font-semibold.text-\[hsl\(var\(--primary\)\)\],
+  .blueberry .font-bold.text-\[hsl\(var\(--primary\)\)\] {
+    color: hsl(270, 100%, 70%) !important;
+  }
+  
+  /* Fix tooltip styles for Blueberry theme */
+  .blueberry .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background-color: hsl(280, 100%, 98%) !important;
+    border-color: hsl(280, 70%, 90%) !important;
+    box-shadow: 0px 4px 15px rgba(180, 153, 255, 0.25) !important;
+  }
+  
+  .blueberry .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+  .blueberry .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+    color: hsl(270, 50%, 50%) !important;
+  }
+  
+  .blueberry .recharts-tooltip-wrapper .font-medium {
+    color: hsl(270, 90%, 65%) !important;
+  }
+  
+  /* Animations for Blueberry theme */
+  @keyframes float-blueberry {
+    0% {
+      transform: translateY(0) rotate(0);
+    }
+    50% {
+      transform: translateY(-10px) rotate(5deg);
+    }
+    100% {
+      transform: translateY(0) rotate(0);
+    }
+  }
+  
+  /* Background gradient for Blueberry theme */
+  .blueberry .bg-gradient-to-br {
+    background: linear-gradient(135deg, hsla(280, 100%, 92%, 0.5), hsla(250, 100%, 92%, 0.5), hsla(200, 100%, 92%, 0.5)) !important;
+  }
+  
+  /* Animated blobs for Blueberry theme */
+  .blueberry .animate-blob {
+    animation: blob 7s infinite, float-blueberry 4s ease-in-out infinite !important;
+    background: linear-gradient(135deg, hsla(280, 100%, 89%, 0.7), hsla(250, 100%, 89%, 0.4)) !important;
+  }
+  
+  .blueberry .animate-blob:nth-child(2) {
+    animation-delay: 1s !important;
+    background: linear-gradient(135deg, hsla(250, 100%, 89%, 0.7), hsla(280, 100%, 89%, 0.4)) !important;
+  }
+  
+  .blueberry .animate-blob:nth-child(3) {
+    animation-delay: 2s !important;
+    background: linear-gradient(135deg, hsla(200, 100%, 89%, 0.7), hsla(250, 100%, 89%, 0.4)) !important;
+  }
+  
+  /* Decorative elements for Blueberry theme */
+  .blueberry::before {
+    content: "";
+    position: fixed;
+    top: -100px;
+    right: -50px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, hsla(280, 100%, 89%, 0.4), hsla(250, 100%, 89%, 0.2));
+    z-index: -1;
+    animation: float-blueberry 8s ease-in-out infinite;
+  }
+  
+  .blueberry::after {
+    content: "";
+    position: fixed;
+    bottom: -100px;
+    left: -50px;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, hsla(250, 100%, 89%, 0.4), hsla(200, 100%, 89%, 0.2));
+    z-index: -1;
+    animation: float-blueberry 8s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+  
+  /* Emoji decorations for Blueberry theme */
+  .blueberry .blueberry-emoji-1 {
+    position: fixed;
+    top: 15%;
+    right: 10%;
+    font-size: 2rem;
+    opacity: 0.7;
+    z-index: -1;
+    animation: float-blueberry 6s ease-in-out infinite;
+    content: "🦄";
+  }
+  
+  .blueberry .blueberry-emoji-2 {
+    position: fixed;
+    bottom: 15%;
+    left: 10%;
+    font-size: 2rem;
+    opacity: 0.7;
+    z-index: -1;
+    animation: float-blueberry 7s ease-in-out infinite;
+    animation-delay: 0.5s;
+    content: "✨";
+  }
+  
+  /* Add more decorative elements for Blueberry theme */
+  .blueberry .blueberry-emoji-3 {
+    position: fixed;
+    top: 45%;
+    left: 20%;
+    font-size: 1.8rem;
+    opacity: 0.6;
+    z-index: -1;
+    animation: float-blueberry 5s ease-in-out infinite;
+    animation-delay: 1.5s;
+    content: "⭐";
+  }
+  
+  .blueberry .blueberry-emoji-4 {
+    position: fixed;
+    bottom: 40%;
+    right: 15%;
+    font-size: 1.5rem;
+    opacity: 0.6;
+    z-index: -1;
+    animation: float-blueberry 8s ease-in-out infinite;
+    animation-delay: 2s;
+    content: "🔮";
+  }
 }
 
 @layer base {

@@ -13,6 +13,7 @@ export { default as CustomFood } from "./custom-food";
 export { default as BarcodeScanner } from "./barcode-scanner";
 export { default as CommonFoods } from "./common-foods";
 export { MobileNav } from "./mobile-nav";
+export { default as FoodEdit } from './food-edit';
 
 // More components will be exported here as they're created
 // export { default as CommonFoods } from "./common-foods";

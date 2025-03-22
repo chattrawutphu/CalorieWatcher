@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt" as SessionStrategy,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 365 * 24 * 60 * 60, // 365 days (1 year)
   },
   cookies: {
     sessionToken: {
@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 365 * 24 * 60 * 60, // 365 days (1 year)
       },
     },
   },

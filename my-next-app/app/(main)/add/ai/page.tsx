@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useNutritionStore, FoodItem } from "@/lib/store/nutrition-store";
+import { useNutritionStore, FoodItem, FoodTemplate, MealFoodItem } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
 
@@ -129,7 +129,7 @@ const AIAssistantPage = () => {
   const router = useRouter();
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
-  const { addMeal } = useNutritionStore();
+  const { addMeal, addFoodTemplate } = useNutritionStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -236,24 +236,43 @@ const AIAssistantPage = () => {
   const addFoodToMealLog = () => {
     if (!analysisResult) return;
     
-    const foodItem: FoodItem = {
+    // สร้าง FoodTemplate ก่อน
+    const foodTemplate: FoodTemplate = {
       id: crypto.randomUUID(),
       name: analysisResult.foodName,
       calories: analysisResult.nutritionalInfo.calories,
       protein: analysisResult.nutritionalInfo.protein,
-      fat: analysisResult.nutritionalInfo.fat,
       carbs: analysisResult.nutritionalInfo.carbs,
-      servingSize: analysisResult.nutritionalInfo.servingSize,
+      fat: analysisResult.nutritionalInfo.fat,
+      servingSize: analysisResult.nutritionalInfo.servingSize || "1 serving",
       favorite: false,
       createdAt: new Date(),
-      category: analysisResult.category
+      category: analysisResult.category || "other",
+      isTemplate: true
     };
-    
-    // Add to meal log
+
+    // แปลง FoodTemplate เป็น MealFoodItem
+    const mealFoodItem: MealFoodItem = {
+      id: crypto.randomUUID(),
+      name: foodTemplate.name,
+      calories: foodTemplate.calories,
+      protein: foodTemplate.protein,
+      carbs: foodTemplate.carbs,
+      fat: foodTemplate.fat,
+      servingSize: foodTemplate.servingSize,
+      category: foodTemplate.category,
+      templateId: foodTemplate.id,
+      recordedAt: new Date()
+    };
+
+    // เก็บ FoodTemplate ไว้ใช้ในอนาคต
+    addFoodTemplate(foodTemplate);
+
+    // เพิ่มมื้ออาหาร
     addMeal({
       id: crypto.randomUUID(),
       mealType: mealType,
-      foodItem: foodItem,
+      foodItem: mealFoodItem,
       quantity: quantity,
       date: new Date().toISOString().split('T')[0],
     });

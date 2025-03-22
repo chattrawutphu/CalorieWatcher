@@ -8,11 +8,12 @@ import { Search, Plus, X, Apple, Pencil, Scan, Clock, Bot, Clipboard, ChevronRig
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/providers/language-provider";
 import { aiAssistantTranslations } from "@/lib/translations/ai-assistant";
-import { useNutritionStore, FoodItem, MealEntry } from "@/lib/store/nutrition-store";
+import { useNutritionStore, FoodItem, MealEntry, FoodTemplate, MealFoodItem } from "@/lib/store/nutrition-store";
 import { cn } from "@/lib/utils";
 import CommonFoods from "./common-foods";
 import QuickActionButton from "./quick-action-button";
 import FoodDetail from "./food-detail";
+import FoodEdit from "./food-edit";
 import BarcodeScanner from "./barcode-scanner";
 import RecentFoods from "./recent-foods";
 import CustomFood from "./custom-food";
@@ -23,23 +24,36 @@ import { container, item, jellyItem } from "./animations";
 interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onMealAdded: (food?: FoodItem) => void;
+  onMealAdded: (food?: FoodItem | FoodTemplate) => void;
 }
 
 // Optimisation du BottomSheet pour de meilleures performances
 const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: BottomSheetProps) {
   const router = useRouter();
-  const { addMeal } = useNutritionStore();
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
   
+  // Access nutrition store
+  const { 
+    addMeal, 
+    addFavoriteFood, 
+    removeFavoriteFood,
+    createMealItemFromTemplate,
+    createMealFoodFromScratch,
+    currentDate,
+    updateFoodTemplate
+  } = useNutritionStore();
+  
   // State management for different sections
   const [currentSection, setCurrentSection] = useState<
-    "main" | "common" | "custom" | "barcode" | "recent" | "detail"
+    "main" | "common" | "custom" | "barcode" | "recent" | "detail" | "edit"
   >("main");
   
   // State for selected food
-  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [selectedFood, setSelectedFood] = useState<FoodItem | FoodTemplate | null>(null);
+  
+  // State to store previous section for back navigation
+  const [previousSection, setPreviousSection] = useState<string>("main");
 
   // Prevent scroll when modal is open and reset state on close
   useEffect(() => {
@@ -58,28 +72,114 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     };
   }, [isOpen]);
   
-  // Add a food to the journal with useCallback for better efficiency
-  const handleAddFood = useCallback((food: FoodItem, quantity: number, mealType: string) => {
-    // Check if we're editing or adding to meal log
-    if (selectedFood && food.id === selectedFood.id && currentSection === "detail") {
-      // We're in edit mode, update the selected food
-      setSelectedFood(food);
-      // If we just want to edit without adding to meal, return early
-      if (mealType === "edit") return;
+  // Navigate to a section with history tracking
+  const navigateToSection = useCallback((section: typeof currentSection) => {
+    setPreviousSection(currentSection);
+    setCurrentSection(section);
+  }, [currentSection]);
+
+  // Handle back navigation
+  const handleBackNavigation = useCallback(() => {
+    if (currentSection === "edit" && previousSection === "detail") {
+      // Going back from edit to detail
+      setCurrentSection("detail");
+    } else if (currentSection === "detail" && ["common", "custom", "barcode", "recent"].includes(previousSection)) {
+      // Going back from detail to its source
+      setCurrentSection(previousSection as typeof currentSection);
+    } else {
+      // Default back to main
+      setCurrentSection("main");
+    }
+  }, [currentSection, previousSection]);
+
+  // Handle adding a food
+  const handleAddFood = useCallback((food: MealFoodItem, quantity: number, mealType: string) => {
+    if (!food) return;
+    
+    // Convert to MealFoodItem
+    let mealFoodItem: MealFoodItem;
+    
+    // If it's a template, create meal food from template
+    if ('isTemplate' in food && food.isTemplate) {
+      const templateId = food.id;
+      const createdMealFood = createMealItemFromTemplate(templateId);
+      
+      // If creation failed, create from scratch as fallback
+      if (!createdMealFood) {
+        mealFoodItem = {
+          id: crypto.randomUUID(),
+          name: food.name,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          servingSize: food.servingSize,
+          category: food.category,
+          recordedAt: new Date()
+        };
+      } else {
+        mealFoodItem = createdMealFood;
+      }
+    } else {
+      mealFoodItem = {
+        id: crypto.randomUUID(),
+        name: food.name,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+        servingSize: food.servingSize,
+        category: food.category,
+        recordedAt: new Date()
+      };
     }
     
     const meal: MealEntry = {
       id: crypto.randomUUID(),
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
-      foodItem: food,
+      foodItem: mealFoodItem,
       quantity: quantity,
-      date: new Date().toISOString().split('T')[0],
+      date: currentDate,
     };
     
     addMeal(meal);
     onMealAdded(food);
     onClose();
-  }, [addMeal, onClose, onMealAdded, selectedFood, currentSection]);
+  }, [addMeal, onClose, onMealAdded, currentDate, createMealItemFromTemplate]);
+
+  // Handle food edit request (transition to edit mode)
+  const handleEditFood = useCallback((food: FoodItem | FoodTemplate) => {
+    setSelectedFood(food);
+    navigateToSection("edit");
+  }, [navigateToSection]);
+
+  // Handle food edit save
+  const handleSaveEdit = useCallback((updatedFood: FoodItem) => {
+    setSelectedFood(updatedFood);
+    
+    // ตรวจสอบว่ามี id อยู่แล้วหรือไม่ ถ้ามีให้ใช้ updateFoodTemplate แทน addFavoriteFood
+    if (updatedFood.id) {
+      if ('isTemplate' in updatedFood && updatedFood.isTemplate) {
+        // ถ้าเป็น template อยู่แล้ว ให้อัพเดตตรงๆ
+        updateFoodTemplate(updatedFood.id, updatedFood);
+      } else {
+        // ถ้าไม่ใช่ template ให้แปลงเป็น template ก่อนอัพเดต
+        const template: FoodTemplate = {
+          ...updatedFood,
+          isTemplate: true,
+          favorite: 'favorite' in updatedFood ? updatedFood.favorite : true,
+          createdAt: 'createdAt' in updatedFood ? updatedFood.createdAt : new Date(),
+        };
+        updateFoodTemplate(updatedFood.id, template);
+      }
+    } else {
+      // ถ้ายังไม่มี id ให้สร้างใหม่
+      addFavoriteFood(updatedFood);
+    }
+    
+    // Go back to detail view
+    setCurrentSection("detail");
+  }, [addFavoriteFood, updateFoodTemplate]);
 
   // Return null if closed to save resources
   if (!isOpen) return null;
@@ -89,7 +189,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/40 z-40"
+        className="fixed inset-0 bg-black/40 z-40 max-w-md mx-auto"
       />
       
       {/* Main container with slide animations */}
@@ -106,23 +206,23 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
           <div className="px-6 py-4 flex justify-between items-center">
             {/* Title with icon and back button */}
             <div className="flex items-center gap-2">
-              {currentSection !== "main" && (
-                <button 
-                  onClick={() => setCurrentSection("main")} 
-                  className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-              )}
+              {/* Always show back button for consistent UI */}
+              <button 
+                onClick={currentSection === "main" ? onClose : handleBackNavigation} 
+                className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
               
               {/* Title based on section */}
               <h2 className="text-2xl font-semibold">
-                {currentSection === "main" && "Food"}
+                {currentSection === "main" && "Add Food"}
                 {currentSection === "common" && t.mobileNav.commonFoods.title}
-                {currentSection === "custom" && "Custom Food"}
+                {currentSection === "custom" && t.mobileNav.customFood.title}
                 {currentSection === "barcode" && t.mobileNav.barcodeScanner.title}
                 {currentSection === "recent" && t.mobileNav.recentFoods.title}
                 {currentSection === "detail" && selectedFood?.name}
+                {currentSection === "edit" && (t.mobileNav.foodDetail.editFood || "Edit Food")}
               </h2>
             </div>
             
@@ -139,7 +239,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
           {/* Subtitle for main section only */}
           {currentSection === "main" && (
             <div className="px-6 pb-3">
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t.addFood.subtitle}</p>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">Choose an option to add food</p>
             </div>
           )}
         </div>
@@ -186,8 +286,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
 
                   <QuickActionButton
                     icon={<Pencil className="h-6 w-6" />}
-                    label="Custom Food"
-                    description="View and manage your custom foods"
+                    label={t.mobileNav.customFood.title}
+                    description={t.mobileNav.common.customFoodDesc}
                     onClick={() => setCurrentSection("custom")}
                   />
 
@@ -213,7 +313,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               <CommonFoods 
                 onSelectFood={(food) => {
                   setSelectedFood(food);
-                  setCurrentSection("detail");
+                  navigateToSection("detail");
                 }} 
                 onBack={() => setCurrentSection("main")}
               />
@@ -224,7 +324,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               <CustomFood 
                 onAdd={(food) => {
                   setSelectedFood(food);
-                  setCurrentSection("detail");
+                  navigateToSection("detail");
                 }} 
                 onBack={() => setCurrentSection("main")}
               />
@@ -235,7 +335,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               <BarcodeScanner 
                 onFoodFound={(food) => {
                   setSelectedFood(food);
-                  setCurrentSection("detail");
+                  navigateToSection("detail");
                 }} 
                 onBack={() => setCurrentSection("main")}
               />
@@ -246,7 +346,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               <RecentFoods 
                 onSelectFood={(food) => {
                   setSelectedFood(food);
-                  setCurrentSection("detail");
+                  navigateToSection("detail");
                 }} 
                 onBack={() => setCurrentSection("main")}
               />
@@ -255,12 +355,19 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
             {/* Food Detail */}
             {currentSection === "detail" && selectedFood && (
               <FoodDetail 
-                food={selectedFood} 
-                onBack={() => {
-                  setSelectedFood(null);
-                  setCurrentSection("main");
-                }}
+                food={selectedFood}
                 onAddFood={handleAddFood}
+                onBack={handleBackNavigation}
+                onEdit={handleEditFood}
+              />
+            )}
+            
+            {/* Food Edit */}
+            {currentSection === "edit" && selectedFood && (
+              <FoodEdit
+                food={selectedFood}
+                onSave={handleSaveEdit}
+                onBack={() => setCurrentSection("detail")}
               />
             )}
           </div>

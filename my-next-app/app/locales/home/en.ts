@@ -21,7 +21,8 @@ export const homeTranslations = {
     sweet: "Sweet Theme",
     broccoli: "Broccoli Theme",
     watermelon: "Watermelon",
-    honey: "Honey"
+    honey: "Honey",
+    blueberry: "Blueberry"
   },
   apps: {
     sectionTitle: "Apps & Tools",

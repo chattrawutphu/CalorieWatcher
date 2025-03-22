@@ -214,7 +214,7 @@ export default function MealsPage() {
         >
           <p className="text-gray-500">{t.noMeals}</p>
           <Button
-            onClick={() => router.push("/add")}
+            onClick={() => router.push(`/add?date=${format(selectedDate, 'yyyy-MM-dd')}`)}
             className="mt-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
           >
             <Plus size={16} className="mr-2" />
@@ -280,7 +280,7 @@ export default function MealsPage() {
             className="flex justify-center mt-8"
           >
             <Button
-              onClick={() => router.push("/add")}
+              onClick={() => router.push(`/add?date=${format(selectedDate, 'yyyy-MM-dd')}`)}
               className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md rounded-xl px-6"
             >
               <Plus size={16} className="mr-2" />

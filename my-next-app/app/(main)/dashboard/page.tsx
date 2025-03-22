@@ -16,7 +16,6 @@ import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths,
 import { th, ja, zhCN } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { WaterTracker } from "@/components/ui/water-tracker";
-import { SyncStatus } from '@/components/sync-status';
 
 // Animation variants
 const container = {
@@ -385,6 +384,13 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(currentDate);
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
   
+  // Set current date to today when loading the Dashboard
+  useEffect(() => {
+    const todayDate = new Date().toISOString().split('T')[0];
+    setCurrentDate(todayDate);
+    setSelectedDate(todayDate);
+  }, [setCurrentDate]);
+  
   // State for mood and notes
   const [notes, setNotes] = useState("");
   const [moodRating, setMoodRating] = useState<number | undefined>(undefined);
@@ -718,15 +724,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
                 {t.dashboard}
               </h1>
-              <SyncStatus />
             </div>
-            <motion.div 
-              className="h-10 w-10 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center text-[hsl(var(--foreground))]"
-              variants={item}
-              onClick={() => setIsCalendarOpen(true)}
-            >
-              <CalendarIcon className="h-5 w-5" />
-            </motion.div>
           </div>
           <p className="text-[hsl(var(--muted-foreground))]">
             {t.welcome}
@@ -736,13 +734,42 @@ export default function DashboardPage() {
         {/* Selected Day Stats - Enhanced with Macros Distribution Charts */}
         <motion.div variants={item}>
           <Card className="p-5 shadow-md rounded-2xl overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                {format(selectedDateObj, 'PPPP', { locale: getDateLocale() })}
-              </h2>
+            <div className="flex items-center mb-4">
+              <Button 
+                variant="ghost"
+                size="icon"
+                onClick={() => handleSelectDate(format(subDays(selectedDateObj, 1), 'yyyy-MM-dd'))}
+                className="h-8 w-8 rounded-full mr-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex-1 flex items-center justify-center gap-2 cursor-pointer"
+              onClick={() => setIsCalendarOpen(true)}>
+                <div 
+                  className="h-7 w-7 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center "
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                </div>
+                <h2 className="text-md font-semibold text-[hsl(var(--foreground))]">
+                  {isToday(selectedDateObj) 
+                    ? 'Today'
+                    : format(selectedDateObj, 'EEE, d MMM', { locale: getDateLocale() })
+                  }
+                </h2>
+              </div>
+              
+              <Button 
+                variant="ghost"
+                size="icon"
+                onClick={() => handleSelectDate(format(addDays(selectedDateObj, 1), 'yyyy-MM-dd'))}
+                className="h-8 w-8 rounded-full ml-1"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
             
-            <div className="space-y-5">
+            <div className="space-y-1">
               {/* Calories */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
@@ -935,19 +962,21 @@ export default function DashboardPage() {
           <Card className="p-5 shadow-md rounded-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingMeals(!isEditingMeals)}
-                className="rounded-full h-8 w-8 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95"
-              >
-                {isEditingMeals ? (
-                  <Check className="h-4 w-4 text-[hsl(var(--primary))]" />
-                ) : (
-                  <Pencil className="h-4 w-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
-                )}
-                <span className="sr-only">{isEditingMeals ? translations.done : translations.edit}</span>
-              </Button>
+              {meals.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingMeals(!isEditingMeals)}
+                  className="rounded-full h-8 w-8 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95"
+                >
+                  {isEditingMeals ? (
+                    <Check className="h-4 w-4 text-[hsl(var(--primary))]" />
+                  ) : (
+                    <Pencil className="h-4 w-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
+                  )}
+                  <span className="sr-only">{isEditingMeals ? translations.done : translations.edit}</span>
+                </Button>
+              )}
             </div>
             
             <div className="space-y-3">

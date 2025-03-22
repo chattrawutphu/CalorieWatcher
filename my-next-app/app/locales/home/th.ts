@@ -21,7 +21,8 @@ export const homeTranslations = {
     sweet: "ธีมหวาน",
     broccoli: "ธีมบร็อคโคลี่",
     watermelon: "แตงโม",
-    honey: "น้ำผึ้ง"
+    honey: "น้ำผึ้ง",
+    blueberry: "บลูเบอร์รี่"
   },
   apps: {
     sectionTitle: "แอพและเครื่องมือ",

@@ -118,6 +118,25 @@ export const aiAssistantTranslations = {
           other: "Other"
         }
       },
+      customFood: {
+        title: "Custom Food",
+        addNew: "Add Custom Food",
+        addNewTitle: "Add New Custom Food",
+        yourCustomFoods: "Your Custom Foods",
+        createFirst: "Create Your First Custom Food",
+        noCustomFoods: "No custom foods yet.",
+        foodName: "Food Name",
+        foodNamePlaceholder: "e.g. Homemade Smoothie",
+        foodCategory: "Food Category",
+        selectCategory: "Select a category",
+        calories: "Calories",
+        protein: "Protein (g)",
+        carbs: "Carbs (g)",
+        fat: "Fat (g)",
+        servingSize: "Serving Size",
+        badge: "Custom",
+        caloriesPer: "calories per"
+      },
       recentFoods: {
         title: "Recent Foods",
         noFoods: "No recent foods found"
@@ -133,7 +152,15 @@ export const aiAssistantTranslations = {
         },
         quantity: "Quantity",
         totalCalories: "Total Calories",
-        addToMealButton: "Add to Meal"
+        addToMeal: "Add to Meal",
+        editFood: "Edit Food",
+        save: "Save",
+        saveChanges: "Save Changes",
+        servingSize: "Serving Size",
+        saveCustomFood: "Add to My Custom Foods",
+        saveCustomFoodDesc: "Save this food for easier access in the future",
+        saveButton: "Save to My Custom Foods",
+        usingCustomFood: "Using your saved custom food data"
       },
       barcodeScanner: {
         title: "Scan Barcode",
@@ -293,6 +320,25 @@ export const aiAssistantTranslations = {
           other: "อื่นๆ"
         }
       },
+      customFood: {
+        title: "อาหารกำหนดเอง",
+        addNew: "เพิ่มอาหารกำหนดเอง",
+        addNewTitle: "เพิ่มอาหารกำหนดเองใหม่",
+        yourCustomFoods: "อาหารกำหนดเองของคุณ",
+        createFirst: "สร้างอาหารกำหนดเองแรกของคุณ",
+        noCustomFoods: "ยังไม่มีอาหารกำหนดเอง",
+        foodName: "ชื่ออาหาร",
+        foodNamePlaceholder: "ตัวอย่างเช่น Smoothie ทำเอง",
+        foodCategory: "ประเภทอาหาร",
+        selectCategory: "เลือกประเภท",
+        calories: "แคลอรี่",
+        protein: "โปรตีน (กรัม)",
+        carbs: "คาร์โบไฮเดรต (กรัม)",
+        fat: "ไขมัน (กรัม)",
+        servingSize: "ขนาดบริโภค",
+        badge: "กำหนดเอง",
+        caloriesPer: "แคลอรี่ต่อ"
+      },
       recentFoods: {
         title: "อาหารล่าสุด",
         noFoods: "ไม่พบอาหารล่าสุด"
@@ -308,7 +354,15 @@ export const aiAssistantTranslations = {
         },
         quantity: "จำนวน",
         totalCalories: "แคลอรี่ทั้งหมด",
-        addToMealButton: "เพิ่มในมื้ออาหาร"
+        addToMeal: "เพิ่มลงในมื้ออาหาร",
+        editFood: "แก้ไขอาหาร",
+        save: "บันทึก",
+        saveChanges: "บันทึกการเปลี่ยนแปลง",
+        servingSize: "ขนาดเสิร์ฟ",
+        saveCustomFood: "เพิ่มในอาหารของฉัน",
+        saveCustomFoodDesc: "บันทึกอาหารนี้เพื่อใช้งานได้ง่ายในอนาคต",
+        saveButton: "บันทึกในอาหารของฉัน",
+        usingCustomFood: "กำลังใช้ข้อมูลอาหารที่คุณบันทึกไว้"
       },
       barcodeScanner: {
         title: "สแกนบาร์โค้ด",
@@ -468,6 +522,25 @@ export const aiAssistantTranslations = {
           other: "その他"
         }
       },
+      customFood: {
+        title: "カスタム食品",
+        addNew: "カスタム食品を追加",
+        addNewTitle: "新しいカスタム食品を追加",
+        yourCustomFoods: "カスタム食品",
+        createFirst: "最初のカスタム食品を作成",
+        noCustomFoods: "カスタム食品はまだありません。",
+        foodName: "食品名",
+        foodNamePlaceholder: "例：ホームメイドスムージー",
+        foodCategory: "食品カテゴリー",
+        selectCategory: "カテゴリーを選択",
+        calories: "カロリー",
+        protein: "タンパク質（g）",
+        carbs: "炭水化物（g）",
+        fat: "脂肪（g）",
+        servingSize: "提供サイズ",
+        badge: "カスタム",
+        caloriesPer: "カロリー/100g"
+      },
       recentFoods: {
         title: "最近の食品",
         noFoods: "最近の食品が見つかりません"
@@ -483,7 +556,15 @@ export const aiAssistantTranslations = {
         },
         quantity: "数量",
         totalCalories: "総カロリー",
-        addToMealButton: "食事に追加"
+        addToMeal: "食事に追加",
+        editFood: "食事を編集",
+        save: "保存",
+        saveChanges: "変更を保存",
+        servingSize: "提供サイズ",
+        saveCustomFood: "カスタム食品に追加",
+        saveCustomFoodDesc: "この食品を保存して将来のアクセスを容易にする",
+        saveButton: "カスタム食品に保存",
+        usingCustomFood: "保存したカスタム食品データを使用中"
       },
       barcodeScanner: {
         title: "バーコードをスキャン",
@@ -643,6 +724,25 @@ export const aiAssistantTranslations = {
           other: "其他"
         }
       },
+      customFood: {
+        title: "自定义食品",
+        addNew: "添加自定义食品",
+        addNewTitle: "添加新自定义食品",
+        yourCustomFoods: "您的自定义食品",
+        createFirst: "创建您的第一个自定义食品",
+        noCustomFoods: "还没有自定义食品。",
+        foodName: "食品名称",
+        foodNamePlaceholder: "例如：自制奶昔",
+        foodCategory: "食品类别",
+        selectCategory: "选择类别",
+        calories: "卡路里",
+        protein: "蛋白质（g）",
+        carbs: "碳水化合物（g）",
+        fat: "脂肪（g）",
+        servingSize: "份量",
+        badge: "自定义",
+        caloriesPer: "卡路里/100g"
+      },
       recentFoods: {
         title: "最近的食品",
         noFoods: "未找到最近的食品"
@@ -658,7 +758,15 @@ export const aiAssistantTranslations = {
         },
         quantity: "数量",
         totalCalories: "总卡路里",
-        addToMealButton: "添加到餐点"
+        addToMeal: "添加到餐点",
+        editFood: "编辑食物",
+        save: "保存",
+        saveChanges: "保存更改",
+        servingSize: "份量",
+        saveCustomFood: "添加到我的自定义食品",
+        saveCustomFoodDesc: "保存此食品以方便将来访问",
+        saveButton: "保存到我的自定义食品",
+        usingCustomFood: "正在使用您保存的自定义食品数据"
       },
       barcodeScanner: {
         title: "扫描条形码",

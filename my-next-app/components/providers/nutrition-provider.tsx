@@ -44,8 +44,7 @@ export function NutritionProvider({ children }: { children: React.ReactNode }) {
   const { 
     dailyLogs, 
     goals, 
-    currentDate, 
-    favoriteFoods,
+    currentDate,
     updateDailyMood,
     isLoading,
     isInitialized,
