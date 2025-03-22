@@ -189,7 +189,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/40 z-40 max-w-md mx-auto"
+        className="fixed inset-0 z-40 max-w-md mx-auto"
       />
       
       {/* Main container with slide animations */}
@@ -198,12 +198,12 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 pt-0 pb-16 z-50 flex flex-col bg-[hsl(var(--background))]"
+        className="fixed inset-0 max-w-md mx-auto pb-12 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto overscroll-contain"
       >
         {/* Header - Fixed position to prevent scroll issues */}
         <div className="sticky top-0 z-10 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe">
           {/* Header with title and close button */}
-          <div className="px-6 py-4 flex justify-between items-center">
+          <div className="py-4 flex justify-between items-center">
             {/* Title with icon and back button */}
             <div className="flex items-center gap-2">
               {/* Always show back button for consistent UI */}
@@ -245,8 +245,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         </div>
         
         {/* Scrolling content container - Touch events will be contained within this div */}
-        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="sm:px-6 px-3 py-4 max-w-md mx-auto pb-36">
+        <div className="flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="">
             {/* Content based on current section */}
             {currentSection === "main" && (
               <div className="space-y-6">

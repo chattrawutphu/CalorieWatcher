@@ -394,7 +394,7 @@ export default function ShopPage() {
       variants={container}
       initial="hidden"
       animate="show"
-      className="space-y-6 pb-20"
+      className="space-y-6"
     >
       {/* Pro Animation Overlay */}
       {showProAnimation && (

@@ -711,7 +711,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen pb-24">
+    <div className="">
       <motion.div
         variants={container}
         initial="hidden"
