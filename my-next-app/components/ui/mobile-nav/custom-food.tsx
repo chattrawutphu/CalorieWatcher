@@ -138,36 +138,6 @@ const CustomFood = ({ onAdd, onBack }: CustomFoodProps) => {
 
   return (
     <div>
-      {/* Single unified header that adapts to the current view */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={showAddForm ? () => setShowAddForm(false) : onBack} 
-            className="rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-xl font-semibold">
-            {showAddForm ? t.mobileNav.customFood.addNewTitle : t.mobileNav.customFood.title}
-          </h2>
-        </div>
-        
-        {/* Add Custom Food button, only shows in list view */}
-        {!showAddForm && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowAddForm(true)} 
-            className="rounded-full"
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            {t.mobileNav.customFood.addNew}
-          </Button>
-        )}
-      </div>
-      
       {showAddForm ? (
         <div className="space-y-4">
           <div className="space-y-2">

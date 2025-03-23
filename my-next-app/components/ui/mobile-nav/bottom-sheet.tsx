@@ -245,7 +245,7 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         </div>
         
         {/* Scrolling content container - Touch events will be contained within this div */}
-        <div className="flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="">
             {/* Content based on current section */}
             {currentSection === "main" && (
