@@ -342,7 +342,7 @@ export default function AddFoodPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{selectedFood.name}</h1>
+            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">{selectedFood.name}</h1>
           </motion.div>
           
           <motion.div variants={item}>
@@ -457,7 +457,7 @@ export default function AddFoodPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
+            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
               {t.custom}
             </h1>
           </motion.div>

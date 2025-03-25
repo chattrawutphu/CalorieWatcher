@@ -138,7 +138,7 @@ export default function MainLayout({
         </div>
       </div>
 
-      <main className="flex-1 container px-4 pb-20 pt-safe relative z-10">
+      <main className="flex-1 container px-2 pt-safe relative z-10">
         <div className="max-w-md mx-auto pb-12">
           <PageTransition>
             {children}

@@ -94,18 +94,33 @@ export const MobileNav = memo(function MobileNav() {
         >
           {isAddButton ? (
             <div
-              onClick={() => handleButtonClick(item.href)}
+              onClick={() => {
+                if (isAddOpen) {
+                  // Close the menu if it's already open
+                  setIsAddOpen(false);
+                } else {
+                  // Open the menu if it's closed
+                  handleButtonClick(item.href);
+                }
+              }}
               className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 max-w-[80px]"
             >
               <div className="sm:-mt-6 -mt-5">
                 <motion.div 
-                  animate={animatingButton === item.href ? {
-                    scale: [1, 1.2, 0.9, 1.1, 1],
-                    transition: { duration: 0.4 }
-                  } : {}}
+                  animate={
+                    isAddOpen 
+                      ? { rotate: 135, scale: 1 } 
+                      : animatingButton === item.href 
+                        ? {
+                            scale: [1, 1.2, 0.9, 1.1, 1],
+                            transition: { duration: 0.4 }
+                          } 
+                        : {}
+                  }
+                  transition={{ duration: 0.5 }}
                   className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
                 >
-                  {item.icon}
+                  <Plus className="h-8 w-8" />
                 </motion.div>
               </div>
             </div>
@@ -147,7 +162,7 @@ export const MobileNav = memo(function MobileNav() {
         </motion.div>
       );
     });
-  }, [pathname, animatingButton, t, locale]);
+  }, [pathname, animatingButton, t, locale, isAddOpen]);
   
   // Optimized button click handler
   const handleButtonClick = useCallback((href: string) => {

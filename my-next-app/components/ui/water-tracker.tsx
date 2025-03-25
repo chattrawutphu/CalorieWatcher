@@ -95,8 +95,10 @@ export function WaterTracker({ date }: { date: string }) {
         {/* Header - Elegant design */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Droplet className="h-5 w-5 text-[hsl(var(--primary))] fill-[hsl(var(--primary))/30]" />
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.title}</h2>
+            <div className="h-6 w-6 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center">
+              <Droplet className="h-3.5 w-3.5" />
+            </div>
+            <h2 className="text-base font-medium text-[hsl(var(--foreground))]">{t.title}</h2>
           </div>
           
           <Button 
@@ -104,7 +106,7 @@ export function WaterTracker({ date }: { date: string }) {
             size="sm" 
             onClick={handleResetWater}
             title={t.reset}
-            className="rounded-full h-8 w-8 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95 shadow-sm hover:shadow border border-transparent hover:border-[hsl(var(--primary))/0.3]"
+            className="rounded-full h-7 w-7 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95 shadow-sm hover:shadow border border-transparent hover:border-[hsl(var(--primary))/0.3]"
           >
             <RotateCcw className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
             <span className="sr-only">{t.reset}</span>
@@ -128,7 +130,7 @@ export function WaterTracker({ date }: { date: string }) {
               }}
             />
             <div className="relative z-10 text-center">
-              <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
+              <div className="text-xl font-bold text-[hsl(var(--foreground))]">
                 {Math.round(percentage)}%
               </div>
               <div className="text-sm text-[hsl(var(--muted-foreground))]">

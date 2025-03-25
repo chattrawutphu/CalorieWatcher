@@ -1219,7 +1219,7 @@ export default function SocialClub() {
           className="flex items-center justify-between mb-6"
           variants={item}
         >
-          <h1 className="text-3xl font-bold">{t.social}</h1>
+          <h1 className="text-xl font-bold">{t.social}</h1>
           
           {/* Header right actions */}
           <div className="flex items-center gap-2">

@@ -421,7 +421,7 @@ export default function ShopPage() {
             <Crown 
               className="h-32 w-32 text-yellow-300 drop-shadow-[0_0_15px_rgba(250,204,21,0.7)]" 
             />
-            <span className="text-3xl font-bold mt-3" style={{ color: currentColors.primary }}>
+            <span className="text-xl font-bold mt-3" style={{ color: currentColors.primary }}>
               {t.subscriptionStatus.pro}!
             </span>
             
@@ -468,7 +468,7 @@ export default function ShopPage() {
 
       {/* Apps & Tools Section Header */}
       <motion.div variants={item} className="mb-4">
-        <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t.apps.sectionTitle}</h2>
+        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{t.apps.sectionTitle}</h2>
         <p className="text-[hsl(var(--muted-foreground))] mt-1">{t.apps.sectionSubtitle}</p>
       </motion.div>
 
@@ -769,7 +769,7 @@ export default function ShopPage() {
       {/* Theme Shop Section Header */}
       <motion.div variants={item} className="mt-12 mb-4 flex justify-between items-center">
                   <div>
-          <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t.title}</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{t.title}</h2>
           <p className="text-[hsl(var(--muted-foreground))] mt-1">{t.subtitle}</p>
                   </div>
         

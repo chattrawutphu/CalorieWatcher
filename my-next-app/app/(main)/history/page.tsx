@@ -460,7 +460,7 @@ export default function HistoryPage() {
         className="flex items-center justify-between mb-4"
         variants={item}
       >
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-xl font-bold">
           {t.mobileNav.navigation.history}
         </h1>
         <motion.div 

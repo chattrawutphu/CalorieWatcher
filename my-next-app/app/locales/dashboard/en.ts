@@ -41,5 +41,35 @@ export const dashboardTranslations = {
     add: "Add",
     tip: "Experts recommend drinking at least 2 liters of water daily.",
     goal: "Goal"
+  },
+  weight: {
+    title: "Weight Tracker",
+    current: "Current",
+    goal: "Goal",
+    add: "Add Weight",
+    edit: "Edit",
+    save: "Save",
+    cancel: "Cancel",
+    kg: "kg",
+    lb: "lb",
+    history: "Weight History",
+    noData: "No weight data yet. Add your first entry!",
+    periods: {
+      "30d": "30 Days",
+      "180d": "6 Months",
+      "365d": "1 Year",
+      "all": "All Time"
+    },
+    chartTitle: "Weight Progress",
+    increase: "increase",
+    decrease: "decrease",
+    same: "no change",
+    from: "from",
+    addFirst: "Add your weight",
+    lastUpdated: "Last updated",
+    updateToday: "Update today",
+    note: "Note (optional)",
+    addNote: "Add a note about this weight...",
+    targetWeight: "Target Weight"
   }
 }; 

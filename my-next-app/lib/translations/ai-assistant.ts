@@ -190,7 +190,8 @@ export const aiAssistantTranslations = {
         add: "Add",
         history: "History",
         settings: "Settings",
-        social: "Social Club"
+        social: "Social Club",
+        close: "Close"
       }
     },
     app: {
@@ -390,9 +391,10 @@ export const aiAssistantTranslations = {
         home: "หน้าหลัก",
         dashboard: "แดชบอร์ด",
         add: "เพิ่ม",
-        social: "โซเชียลคลับ",
+        history: "ประวัติ",
         settings: "ตั้งค่า",
-        history: "ประวัติ"
+        social: "โซเชียลคลับ",
+        close: "ปิด"
       }
     },
     app: {
@@ -594,7 +596,8 @@ export const aiAssistantTranslations = {
         add: "追加",
         history: "履歴",
         settings: "設定",
-        social: "ソーシャルクラブ"
+        social: "ソーシャルクラブ",
+        close: "閉じる"
       }
     },
     app: {
@@ -796,7 +799,8 @@ export const aiAssistantTranslations = {
         add: "添加",
         history: "历史",
         settings: "设置",
-        social: "社交俱乐部"
+        social: "社交俱乐部",
+        close: "关闭"
       }
     },
     app: {

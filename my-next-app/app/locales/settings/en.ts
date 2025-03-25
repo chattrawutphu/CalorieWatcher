@@ -22,4 +22,9 @@ export const settingsTranslations = {
   liters: "liters",
   recommendedWater: "Recommended: 2000-3000 ml per day",
   glass: "glass",
+  weightSettings: "Weight Settings",
+  weightGoal: "Target Weight",
+  kg: "kg",
+  weightDescription: "Set your target weight for tracking progress",
+  trackWeightRegularly: "Track your weight regularly for best results",
 }; 

@@ -73,6 +73,7 @@ export interface NutritionGoals {
   carbs: number;
   fat: number;
   water: number;
+  weight?: number; // Target weight in kg
 }
 
 export interface DailyLog {
@@ -85,6 +86,13 @@ export interface DailyLog {
   moodRating?: number; // 1-5 rating (1:worst, 5:best)
   notes?: string;
   waterIntake: number; // มิลลิลิตร (ml)
+  weight?: number; // Weight in kg
+}
+
+export interface WeightEntry {
+  date: string;
+  weight: number; // Weight in kg
+  note?: string; // Optional note about the weight entry
 }
 
 export interface WaterEntry {
@@ -97,6 +105,7 @@ interface NutritionState {
   goals: NutritionGoals;
   foodTemplates: FoodTemplate[]; // Renamed from favoriteFoods to foodTemplates
   dailyLogs: Record<string, DailyLog>; // indexed by date string
+  weightHistory: WeightEntry[]; // Array of weight entries
   
   // Current day tracking
   currentDate: string; // ISO string for the currently selected date
@@ -136,6 +145,13 @@ interface NutritionState {
   resetWaterIntake: (date: string) => Promise<void>;
   getWaterIntake: (date: string) => number;
   getWaterGoal: () => number;
+  
+  // Weight tracking methods
+  addWeightEntry: (entry: WeightEntry) => Promise<void>;
+  updateWeightEntry: (date: string, weight: number, note?: string) => Promise<void>;
+  getWeightEntry: (date: string) => WeightEntry | undefined;
+  getWeightEntries: (limit?: number) => WeightEntry[];
+  getWeightGoal: () => number | undefined;
 }
 
 export const useNutritionStore = create<NutritionState>()(
@@ -147,10 +163,12 @@ export const useNutritionStore = create<NutritionState>()(
         protein: 100,
         carbs: 250,
         fat: 70,
-        water: 2000
+        water: 2000,
+        weight: 70 // Default target weight
       },
       foodTemplates: [], // เปลี่ยนชื่อจาก favoriteFoods เป็น foodTemplates
       dailyLogs: {},
+      weightHistory: [],
       currentDate: new Date().toISOString().split('T')[0],
       isLoading: false,
       isInitialized: false,
@@ -489,8 +507,8 @@ export const useNutritionStore = create<NutritionState>()(
         set((state) => ({
           goals: {
             ...state.goals,
-            ...goals,
-          },
+            ...goals
+          }
         }));
       },
       
@@ -616,6 +634,86 @@ export const useNutritionStore = create<NutritionState>()(
       getWaterGoal: () => {
         const { goals } = get();
         return goals.water;
+      },
+      
+      // Weight tracking methods implementation
+      addWeightEntry: async (entry: WeightEntry) => {
+        const { weightHistory, dailyLogs } = get();
+        
+        // Update weight history
+        const updatedWeightHistory = [...weightHistory];
+        const existingEntryIndex = updatedWeightHistory.findIndex(e => e.date === entry.date);
+        
+        if (existingEntryIndex >= 0) {
+          // Update existing entry
+          updatedWeightHistory[existingEntryIndex] = entry;
+        } else {
+          // Add new entry
+          updatedWeightHistory.push(entry);
+        }
+        
+        // Sort by date (newest first)
+        updatedWeightHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        // Also update the daily log if it exists
+        const updatedDailyLogs = { ...dailyLogs };
+        if (updatedDailyLogs[entry.date]) {
+          updatedDailyLogs[entry.date] = {
+            ...updatedDailyLogs[entry.date],
+            weight: entry.weight
+          };
+        } else {
+          // Create a new daily log entry if one doesn't exist
+          updatedDailyLogs[entry.date] = {
+            date: entry.date,
+            meals: [],
+            totalCalories: 0,
+            totalProtein: 0,
+            totalFat: 0,
+            totalCarbs: 0,
+            waterIntake: 0,
+            weight: entry.weight
+          };
+        }
+        
+        set({ weightHistory: updatedWeightHistory, dailyLogs: updatedDailyLogs });
+      },
+      
+      updateWeightEntry: async (date: string, weight: number, note?: string) => {
+        const entry: WeightEntry = { date, weight, note };
+        return get().addWeightEntry(entry);
+      },
+      
+      getWeightEntry: (date: string) => {
+        const { weightHistory, dailyLogs } = get();
+        
+        // First check in weight history
+        const entry = weightHistory.find(e => e.date === date);
+        if (entry) return entry;
+        
+        // If not found in history but exists in daily log, create entry from daily log
+        if (dailyLogs[date] && dailyLogs[date].weight) {
+          return {
+            date,
+            weight: dailyLogs[date].weight as number
+          };
+        }
+        
+        return undefined;
+      },
+      
+      getWeightEntries: (limit?: number) => {
+        const { weightHistory } = get();
+        // Return all entries sorted by date (newest first), or limit if specified
+        const sortedEntries = [...weightHistory].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        return limit ? sortedEntries.slice(0, limit) : sortedEntries;
+      },
+      
+      getWeightGoal: () => {
+        return get().goals.weight;
       }
     }),
     {

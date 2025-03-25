@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,20 @@ import { Progress } from "@/components/ui/progress";
 import { useNutrition } from "@/components/providers/nutrition-provider";
 import { useLanguage } from "@/components/providers/language-provider";
 import { dashboardTranslations, formatTranslation } from "@/app/locales/dashboard";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine } from "recharts";
-import { ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, Sun, Moon, Check, SmilePlus, Pencil, X, Trash2, Minus, ChevronDown, TrendingUp, BarChart2, Activity } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from "recharts";
+import { 
+  ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, 
+  ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, 
+  Sun, Moon, Check, SmilePlus, Pencil, X, Trash2, Minus, UtensilsCrossed, 
+  LayoutGrid, Eye, EyeOff, Activity, Droplet, Scale
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
-import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths, parse, isSameDay, getMonth, getYear, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
+import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths, parse, isSameDay, getMonth, getYear, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isYesterday, isTomorrow } from "date-fns";
 import { th, ja, zhCN } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { WaterTracker } from "@/components/ui/water-tracker";
+import { WeightTracker } from "@/components/ui/weight-tracker";
 import { AnalyticsWidget } from "@/components/ui/analytics-widget";
 
 // Animation variants
@@ -77,57 +83,6 @@ const overlayVariants = {
   }
 };
 
-// Analytics chart variants
-const chartVariants = {
-  hidden: { opacity: 0, x: 20 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
-  exit: { opacity: 0, x: -20, transition: { duration: 0.3 } }
-};
-
-// Chart container variants for sliding
-const chartContainerVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 200 : -200,
-    opacity: 0
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.3
-    }
-  },
-  exit: (direction: number) => ({
-    x: direction < 0 ? 200 : -200,
-    opacity: 0,
-    transition: {
-      duration: 0.3
-    }
-  })
-};
-
-// Button pill container variants
-const pillContainerVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: {
-      duration: 0.3,
-      staggerChildren: 0.1 
-    }
-  }
-};
-
-const pillItemVariants = {
-  hidden: { opacity: 0, y: -5 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.2 }
-  }
-};
-
 // Define colors - updating with more vibrant, cute theme-compatible colors
 const COLORS = {
   protein: {
@@ -144,16 +99,6 @@ const COLORS = {
     light: "hsl(35, 90%, 60%)",
     dark: "hsl(35, 90%, 65%)",
     gradient: "linear-gradient(135deg, hsl(35, 90%, 60%), hsl(35, 80%, 70%))"
-  },
-  calories: {
-    light: "hsl(200, 80%, 60%)",
-    dark: "hsl(200, 80%, 65%)",
-    gradient: "linear-gradient(135deg, hsl(200, 80%, 60%), hsl(200, 70%, 70%))"
-  },
-  water: {
-    light: "hsl(180, 80%, 50%)",
-    dark: "hsl(180, 80%, 55%)",
-    gradient: "linear-gradient(135deg, hsl(180, 80%, 50%), hsl(180, 70%, 60%))"
   }
 };
 
@@ -168,7 +113,7 @@ const MoodEmoji = ({ rating, selected, onClick }: { rating: number, selected: bo
   return (
     <button 
       onClick={onClick}
-      className={`text-2xl sm:text-3xl transition-all ${selected ? 'transform scale-125' : 'opacity-50'}`}
+      className={`text-2xl sm:text-xl transition-all ${selected ? 'transform scale-125' : 'opacity-50'}`}
       aria-label={`Mood rating ${rating}`}
     >
       {emojis[rating - 1]}
@@ -435,105 +380,6 @@ const CalendarPopup = ({
   );
 };
 
-// Calculate analytics data with some nice animated effects
-const getAnalyticsData = (metric: string, period: string, dailyLogs: any, goals: any, getDateLocale: () => any) => {
-  const today = new Date();
-  let dates: Date[] = [];
-  let labels: string[] = [];
-  
-  // Generate dates based on selected period
-  if (period === "7d") {
-    // Last 7 days
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
-      dates.push(date);
-      labels.push(format(date, 'EEE', { locale: getDateLocale() }));
-    }
-  } else if (period === "4w") {
-    // Last 4 weeks
-    for (let i = 3; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - (i * 7));
-      dates.push(date);
-      labels.push(format(date, 'MMM d', { locale: getDateLocale() }));
-    }
-  } else if (period === "12m") {
-    // Last 12 months
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(today.getMonth() - i);
-      dates.push(date);
-      labels.push(format(date, 'MMM', { locale: getDateLocale() }));
-    }
-  }
-  
-  // Map dates to data values
-  const data = dates.map((date, index) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    // Get the daily log or create an empty one
-    const dayLog = dailyLogs[formattedDate] || {
-      totalCalories: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      meals: []
-    };
-    
-    // Get water data from a separate source if needed
-    const waterData = dailyLogs[formattedDate]?.water || 0;
-    
-    // Get the value based on selected metric
-    let value = 0;
-    switch(metric) {
-      case 'calories':
-        value = dayLog.totalCalories || 0;
-        break;
-      case 'protein':
-        value = dayLog.totalProtein || 0;
-        break;
-      case 'fat':
-        value = dayLog.totalFat || 0;
-        break;
-      case 'carbs':
-        value = dayLog.totalCarbs || 0;
-        break;
-      case 'water':
-        value = waterData;
-        break;
-    }
-    
-    // Calculate goal based on metric
-    let goal = 0;
-    switch(metric) {
-      case 'calories':
-        goal = goals.calories || 2000;
-        break;
-      case 'protein':
-        goal = Math.round(((goals.protein || 30) / 100) * goals.calories / 4);
-        break;
-      case 'fat':
-        goal = Math.round(((goals.fat || 30) / 100) * goals.calories / 9);
-        break;
-      case 'carbs':
-        goal = Math.round(((goals.carbs || 40) / 100) * goals.calories / 4);
-        break;
-      case 'water':
-        goal = goals.water || 2000;
-        break;
-    }
-    
-    return {
-      name: labels[index],
-      value: value,
-      goal: goal,
-      date: formattedDate
-    };
-  });
-  
-  return data;
-};
-
 export default function DashboardPage() {
   const router = useRouter();
   const { locale } = useLanguage();
@@ -544,16 +390,6 @@ export default function DashboardPage() {
   // State for calendar
   const [selectedDate, setSelectedDate] = useState(currentDate);
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
-  
-  // Parse selected date as Date object for date operations
-  const selectedDateObj = parse(selectedDate, 'yyyy-MM-dd', new Date());
-  
-  // Set current date to today when loading the Dashboard
-  useEffect(() => {
-    const todayDate = new Date().toISOString().split('T')[0];
-    setCurrentDate(todayDate);
-    setSelectedDate(todayDate);
-  }, [setCurrentDate]);
   
   // State for mood and notes
   const [notes, setNotes] = useState("");
@@ -569,13 +405,51 @@ export default function DashboardPage() {
   const [mealToEdit, setMealToEdit] = useState<any | null>(null);
   const [editedQuantity, setEditedQuantity] = useState<number>(1);
   
-  // Analytics state
-  const [currentMetric, setCurrentMetric] = useState<string>("calories");
-  const [currentPeriod, setCurrentPeriod] = useState<string>("7d");
-  const [chartDirection, setChartDirection] = useState<number>(0); // For slide animation direction
+  // State for graph type selection
+  const [selectedGraphType, setSelectedGraphType] = useState<"nutrients" | "water" | "weight">("nutrients");
   
-  // For swipe gestures
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  // State for widget visibility
+  const [layoutEditMode, setLayoutEditMode] = useState(false);
+  const [widgetVisibility, setWidgetVisibility] = useState({
+    nutritionSummary: true,
+    analyticsWidget: true,
+    waterTracker: true,
+    weightTracker: true,
+    mealHistory: true,
+    moodNotes: true
+  });
+  
+  // State and ref for sticky date selector
+  const [isDateSelectorSticky, setIsDateSelectorSticky] = useState(false);
+  const dateRef = useRef<HTMLDivElement>(null);
+  const stickyThreshold = useRef<number>(0);
+  
+  // Set current date to today when loading the Dashboard
+  useEffect(() => {
+    const todayDate = new Date().toISOString().split('T')[0];
+    setCurrentDate(todayDate);
+    setSelectedDate(todayDate);
+  }, [setCurrentDate]);
+  
+  // Setup scroll listener for sticky date selector
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!dateRef.current) return;
+      
+      if (stickyThreshold.current === 0) {
+        // Initialize threshold on first scroll
+        stickyThreshold.current = dateRef.current.offsetTop;
+      }
+      
+      const scrollY = window.scrollY;
+      // Make the date selector sticky when scrolled past the threshold
+      // No longer checking for nutritionSummary visibility
+      setIsDateSelectorSticky(scrollY > stickyThreshold.current);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Create additional translations for meal editing feature
   const additionalTranslations = {
@@ -591,8 +465,7 @@ export default function DashboardPage() {
     editMeal: locale === 'th' ? 'แก้ไขอาหาร' : locale === 'ja' ? '食事の編集' : locale === 'zh' ? '编辑餐食' : 'Edit Meal',
     quantity: locale === 'th' ? 'จำนวน' : locale === 'ja' ? '量' : locale === 'zh' ? '数量' : 'Quantity',
     per: locale === 'th' ? 'ต่อ' : locale === 'ja' ? 'あたり' : locale === 'zh' ? '每' : 'per',
-    save: locale === 'th' ? 'บันทึกการเปลี่ยนแปลง' : locale === 'ja' ? '変更を保存' : locale === 'zh' ? '保存更改' : 'Save Changes',
-    goal: locale === 'th' ? 'เป้าหมาย' : locale === 'ja' ? '目標' : locale === 'zh' ? '目标' : 'Goal'
+    save: locale === 'th' ? 'บันทึกการเปลี่ยนแปลง' : locale === 'ja' ? '変更を保存' : locale === 'zh' ? '保存更改' : 'Save Changes'
   };
   
   // Combine translations
@@ -625,16 +498,151 @@ export default function DashboardPage() {
   };
   
   const handleSelectDate = (date: string) => {
+    // Update selected date without scrolling
     setSelectedDate(date);
     setCurrentDate(date);
+    // No need to change scroll position
   };
   
   const goToToday = () => {
-    const today = new Date();
-    setCurrentMonthDate(today);
-    handleSelectDate(format(today, 'yyyy-MM-dd'));
+    const todayDate = new Date().toISOString().split('T')[0];
+    handleSelectDate(todayDate);
   };
   
+  // Get stats for the currently selected date
+  const getStatsForSelectedDate = () => {
+    const dayLog = dailyLogs[selectedDate] || {
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFat: 0,
+      meals: []
+    };
+    
+    return {
+      calories: dayLog.totalCalories,
+      protein: dayLog.totalProtein,
+      carbs: dayLog.totalCarbs,
+      fat: dayLog.totalFat,
+      meals: dayLog.meals
+    };
+  };
+  
+  const selectedDayStats = getStatsForSelectedDate();
+  const { calories = 0, protein = 0, carbs = 0, fat = 0, meals = [] } = selectedDayStats;
+  
+  // Calculate calorie-related values
+  const caloriesRemaining = Math.max(0, goals.calories - calories);
+  const caloriesPercentage = Math.min(100, (calories / goals.calories) * 100);
+
+  // Function to get theme-compatible colors
+  const getCurrentThemeColors = () => {
+    // Default colors for light theme
+    let proteinColor = COLORS.protein.light;
+    let fatColor = COLORS.fat.light;
+    let carbsColor = COLORS.carbs.light;
+    
+    // Adjust colors based on current theme
+    if (typeof window !== 'undefined') {
+      const isDark = document.documentElement.classList.contains('dark');
+      const isChocolate = document.documentElement.classList.contains('chocolate');
+      const isSweet = document.documentElement.classList.contains('sweet');
+      const isBroccoli = document.documentElement.classList.contains('broccoli');
+      const isWatermelon = document.documentElement.classList.contains('watermelon');
+      const isHoney = document.documentElement.classList.contains('honey');
+      
+      if (isDark) {
+        proteinColor = COLORS.protein.dark;
+        fatColor = COLORS.fat.dark;
+        carbsColor = COLORS.carbs.dark;
+      } else if (isChocolate) {
+        proteinColor = "hsl(25, 70%, 40%)";
+        fatColor = "hsl(15, 80%, 50%)";
+        carbsColor = "hsl(35, 90%, 45%)";
+      } else if (isSweet) {
+        proteinColor = "hsl(325, 90%, 80%)";
+        fatColor = "hsl(350, 90%, 85%)";
+        carbsColor = "hsl(35, 95%, 75%)";
+      } else if (isBroccoli) {
+        proteinColor = "hsl(120, 50%, 40%)";
+        fatColor = "hsl(80, 60%, 45%)";
+        carbsColor = "hsl(50, 90%, 55%)";
+      } else if (isWatermelon) {
+        proteinColor = "hsl(350, 80%, 55%)";  // แดงแตงโม
+        fatColor = "hsl(140, 60%, 35%)";      // เขียวแตงโม
+        carbsColor = "hsl(95, 70%, 45%)";     // เขียวอ่อน
+      } else if (isHoney) {
+        proteinColor = "hsl(28, 90%, 55%)";   // ส้มเข้ม
+        fatColor = "hsl(35, 95%, 50%)";       // ส้มอำพัน
+        carbsColor = "hsl(45, 100%, 60%)";    // เหลืองทอง
+      }
+    }
+    
+    return { proteinColor, fatColor, carbsColor };
+  };
+
+  // Prepare data for pie chart with enhanced properties
+  const { proteinColor, fatColor, carbsColor } = getCurrentThemeColors();
+  
+  const data = [
+    { 
+      name: t.protein, 
+      value: protein, 
+      goal: Math.round(((goals.protein || 30) / 100) * goals.calories / 4),
+      color: proteinColor,
+      gradient: COLORS.protein.gradient,
+      icon: "🍗"
+    },
+    { 
+      name: t.fat, 
+      value: fat, 
+      goal: Math.round(((goals.fat || 30) / 100) * goals.calories / 9),
+      color: fatColor,
+      gradient: COLORS.fat.gradient,
+      icon: "🥑"
+    },
+    { 
+      name: t.carbs, 
+      value: carbs, 
+      goal: Math.round(((goals.carbs || 40) / 100) * goals.calories / 4),
+      color: carbsColor,
+      gradient: COLORS.carbs.gradient,
+      icon: "🍚"
+    },
+  ];
+  
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const monthStart = startOfMonth(currentMonthDate);
+    const monthEnd = endOfMonth(currentMonthDate);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = endOfWeek(monthEnd);
+    
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  };
+  
+  const calendarDays = generateCalendarDays();
+  const daysInWeek = getDaysOfWeekLabels();
+  const selectedDateObj = parse(selectedDate, 'yyyy-MM-dd', new Date());
+  
+  // Check if date has entries
+  const hasEntries = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate] && dailyLogs[formattedDate].meals.length > 0;
+  };
+  
+  // Get entry count for a date
+  const getEntryCount = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate]?.meals.length || 0;
+  };
+  
+  // Get total calories for a date
+  const getTotalCalories = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return dailyLogs[formattedDate]?.totalCalories || 0;
+  };
+
   // Update mood and notes when selected date changes
   useEffect(() => {
     const { moodRating: currentMoodRating, notes: currentNotes } = getDailyMood(selectedDate);
@@ -748,246 +756,14 @@ export default function DashboardPage() {
       setMealToEdit(null);
     }
   };
-  
-  // Get stats for the currently selected date
-  const getStatsForSelectedDate = () => {
-    const dayLog = dailyLogs[selectedDate] || {
-      totalCalories: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      meals: []
-    };
-    
-    return {
-      calories: dayLog.totalCalories,
-      protein: dayLog.totalProtein,
-      carbs: dayLog.totalCarbs,
-      fat: dayLog.totalFat,
-      meals: dayLog.meals
-    };
-  };
-  
-  const selectedDayStats = getStatsForSelectedDate();
-  const { calories = 0, protein = 0, carbs = 0, fat = 0, meals = [] } = selectedDayStats;
-  
-  // Calculate calorie-related values
-  const caloriesRemaining = Math.max(0, goals.calories - calories);
-  const caloriesPercentage = Math.min(100, (calories / goals.calories) * 100);
 
-  // Function to get theme-compatible colors
-  const getCurrentThemeColors = () => {
-    // Default colors for light theme
-    let proteinColor = COLORS.protein.light;
-    let fatColor = COLORS.fat.light;
-    let carbsColor = COLORS.carbs.light;
-    
-    // Adjust colors based on current theme
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark');
-      const isChocolate = document.documentElement.classList.contains('chocolate');
-      const isSweet = document.documentElement.classList.contains('sweet');
-      const isBroccoli = document.documentElement.classList.contains('broccoli');
-      const isWatermelon = document.documentElement.classList.contains('watermelon');
-      const isHoney = document.documentElement.classList.contains('honey');
-      
-      if (isDark) {
-        proteinColor = COLORS.protein.dark;
-        fatColor = COLORS.fat.dark;
-        carbsColor = COLORS.carbs.dark;
-      } else if (isChocolate) {
-        proteinColor = "hsl(25, 70%, 40%)";
-        fatColor = "hsl(15, 80%, 50%)";
-        carbsColor = "hsl(35, 90%, 45%)";
-      } else if (isSweet) {
-        proteinColor = "hsl(325, 90%, 80%)";
-        fatColor = "hsl(350, 90%, 85%)";
-        carbsColor = "hsl(35, 95%, 75%)";
-      } else if (isBroccoli) {
-        proteinColor = "hsl(120, 50%, 40%)";
-        fatColor = "hsl(80, 60%, 45%)";
-        carbsColor = "hsl(50, 90%, 55%)";
-      } else if (isWatermelon) {
-        proteinColor = "hsl(350, 80%, 55%)";  // แดงแตงโม
-        fatColor = "hsl(140, 60%, 35%)";      // เขียวแตงโม
-        carbsColor = "hsl(95, 70%, 45%)";     // เขียวอ่อน
-      } else if (isHoney) {
-        proteinColor = "hsl(28, 90%, 55%)";   // ส้มเข้ม
-        fatColor = "hsl(35, 95%, 50%)";       // ส้มอำพัน
-        carbsColor = "hsl(45, 100%, 60%)";    // เหลืองทอง
-      }
-    }
-    
-    return { proteinColor, fatColor, carbsColor };
+  // Toggle widget visibility
+  const toggleWidgetVisibility = (widgetKey: keyof typeof widgetVisibility) => {
+    setWidgetVisibility(prev => ({
+      ...prev,
+      [widgetKey]: !prev[widgetKey]
+    }));
   };
-
-  // Prepare data for pie chart with enhanced properties
-  const { proteinColor, fatColor, carbsColor } = getCurrentThemeColors();
-  
-  const macroData = [
-    { 
-      name: t.protein, 
-      value: protein, 
-      goal: Math.round(((goals.protein || 30) / 100) * goals.calories / 4),
-      color: proteinColor,
-      gradient: COLORS.protein.gradient,
-      icon: "🍗"
-    },
-    { 
-      name: t.fat, 
-      value: fat, 
-      goal: Math.round(((goals.fat || 30) / 100) * goals.calories / 9),
-      color: fatColor,
-      gradient: COLORS.fat.gradient,
-      icon: "🥑"
-    },
-    { 
-      name: t.carbs, 
-      value: carbs, 
-      goal: Math.round(((goals.carbs || 40) / 100) * goals.calories / 4),
-      color: carbsColor,
-      gradient: COLORS.carbs.gradient,
-      icon: "🍚"
-    },
-  ];
-  
-  // Get chart data for current selections - use memoized version to avoid recalculations
-  const chartData = React.useMemo(() => 
-    getAnalyticsData(currentMetric, currentPeriod, dailyLogs, goals, getDateLocale),
-    [currentMetric, currentPeriod, dailyLogs, goals, getDateLocale]
-  );
-  
-  // Get chart colors
-  const getChartColor = (metric: string) => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-    const isDark = typeof window !== 'undefined' && document.documentElement.classList.contains('dark');
-    
-    switch(metric) {
-      case 'calories':
-        return isDark ? COLORS.calories.dark : COLORS.calories.light;
-      case 'protein':
-        return isDark ? COLORS.protein.dark : COLORS.protein.light;
-      case 'fat':
-        return isDark ? COLORS.fat.dark : COLORS.fat.light;
-      case 'carbs':
-        return isDark ? COLORS.carbs.dark : COLORS.carbs.light;
-      case 'water':
-        return isDark ? COLORS.water.dark : COLORS.water.light;
-      default:
-        return isDark ? COLORS.calories.dark : COLORS.calories.light;
-    }
-  };
-  
-  // Get current chart color
-  const currentChartColor = getChartColor(currentMetric);
-  
-  // Get unit for current metric
-  const getMetricUnit = (metric: string) => {
-    switch(metric) {
-      case 'calories':
-        return t.kcal;
-      case 'protein':
-      case 'fat':
-      case 'carbs':
-        return t.g;
-      case 'water':
-        return 'ml';
-      default:
-        return '';
-    }
-  };
-  
-  // Get translations for metrics
-  const getMetricTranslation = (metric: string) => {
-    switch(metric) {
-      case 'calories':
-        return t.calories;
-      case 'protein':
-        return t.protein;
-      case 'fat':
-        return t.fat;
-      case 'carbs':
-        return t.carbs;
-      case 'water':
-        return t.water || "Water";
-      default:
-        return metric;
-    }
-  };
-  
-  // Handle metric change with animation direction
-  const handleMetricChange = (metric: string) => {
-    if (metric === currentMetric) return;
-    
-    // Determine direction for animation
-    const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
-    const currentIndex = metrics.indexOf(currentMetric);
-    const newIndex = metrics.indexOf(metric);
-    const direction = newIndex > currentIndex ? 1 : -1;
-    
-    setChartDirection(direction);
-    setCurrentMetric(metric);
-  };
-  
-  // Handle period change
-  const handlePeriodChange = (period: string) => {
-    if (period === currentPeriod) return;
-    setCurrentPeriod(period);
-  };
-  
-  // Get period translation
-  const getPeriodTranslation = (period: string) => {
-    switch(period) {
-      case '7d':
-        return locale === 'th' ? '7 วัน' : locale === 'ja' ? '7日' : locale === 'zh' ? '7天' : '7 Days';
-      case '4w':
-        return locale === 'th' ? '4 สัปดาห์' : locale === 'ja' ? '4週間' : locale === 'zh' ? '4周' : '4 Weeks';
-      case '12m':
-        return locale === 'th' ? '12 เดือน' : locale === 'ja' ? '12ヶ月' : locale === 'zh' ? '12个月' : '12 Months';
-      default:
-        return period;
-    }
-  };
-
-  // Handle swipe gesture start
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-  
-  // Handle swipe gesture end
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null) return;
-    
-    const touchEndX = e.changedTouches[0].clientX;
-    const diffX = touchEndX - touchStartX;
-    
-    // Determine if it was a significant swipe (more than 50px)
-    if (Math.abs(diffX) > 50) {
-      const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
-      const currentIndex = metrics.indexOf(currentMetric);
-      
-      // Swipe right (go to previous)
-      if (diffX > 0 && currentIndex > 0) {
-        const newMetric = metrics[currentIndex - 1];
-        setChartDirection(-1);
-        setCurrentMetric(newMetric);
-      } 
-      // Swipe left (go to next)
-      else if (diffX < 0 && currentIndex < metrics.length - 1) {
-        const newMetric = metrics[currentIndex + 1];
-        setChartDirection(1);
-        setCurrentMetric(newMetric);
-      }
-    }
-    
-    setTouchStartX(null);
-  };
-  
-  // Get visual indicators for swiping - which metrics are available left/right
-  const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
-  const currentIndex = metrics.indexOf(currentMetric);
-  const hasNext = currentIndex < metrics.length - 1;
-  const hasPrev = currentIndex > 0;
 
   return (
     <div className="max-w-md mx-auto min-h-screen pb-24">
@@ -995,59 +771,270 @@ export default function DashboardPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="space-y-5"
+        className="space-y-3"
       >
-        <motion.div variants={item} className="mb-6">
+        <motion.div variants={item} className="mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
                 {t.dashboard}
               </h1>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLayoutEditMode(!layoutEditMode)}
+              className="h-9 w-9 rounded-full"
+            >
+              <LayoutGrid className="h-5 w-5 text-[hsl(var(--foreground))]" />
+            </Button>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))]">
+          {/*<p className="text-[hsl(var(--muted-foreground))]">
             {t.welcome}
-          </p>
+          </p>*/}
         </motion.div>
 
-        {/* Selected Day Stats - Enhanced with Macros Distribution Charts */}
-        <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl overflow-hidden">
-            <div className="flex items-center mb-4">
+        {/* Layout Edit Mode Panel */}
+        {layoutEditMode && (
+          <motion.div 
+            variants={item}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[hsl(var(--card))] shadow-md rounded-2xl p-4"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-medium">Edit Layout</h3>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 rounded-full"
+                onClick={() => setLayoutEditMode(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Nutrition Summary</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('nutritionSummary')}
+                >
+                  {widgetVisibility.nutritionSummary ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Analytics</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('analyticsWidget')}
+                >
+                  {widgetVisibility.analyticsWidget ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Droplet className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Water Tracker</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('waterTracker')}
+                >
+                  {widgetVisibility.waterTracker ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Scale className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Weight Tracker</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('weightTracker')}
+                >
+                  {widgetVisibility.weightTracker ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <UtensilsCrossed className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Meal History</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('mealHistory')}
+                >
+                  {widgetVisibility.mealHistory ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <SmilePlus className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  <span className="text-sm">Mood & Notes</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => toggleWidgetVisibility('moodNotes')}
+                >
+                  {widgetVisibility.moodNotes ? 
+                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                  }
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button 
+                size="sm"
+                onClick={() => setLayoutEditMode(false)}
+                className="text-xs"
+              >
+                Save Layout
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Sticky Date Selector - Shows when scrolled past the original date selector */}
+        {isDateSelectorSticky && (
+          <div className="fixed -top-2 left-0 pt-6 right-0 z-50 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] shadow-sm">
+            <div className="max-w-md mx-auto flex items-center px-4 py-3">
               <Button 
                 variant="ghost"
                 size="icon"
-                onClick={() => handleSelectDate(format(subDays(selectedDateObj, 1), 'yyyy-MM-dd'))}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectDate(format(subDays(selectedDateObj, 1), 'yyyy-MM-dd'));
+                }}
                 className="h-8 w-8 rounded-full mr-1"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
-              <div className="flex-1 flex items-center justify-center gap-2 cursor-pointer"
-              onClick={() => setIsCalendarOpen(true)}>
+              <div 
+                className="flex-1 flex items-center justify-center gap-2 cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsCalendarOpen(true);
+                }}
+              >
                 <div 
-                  className="h-7 w-7 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center "
+                  className="h-7 w-7 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center"
                 >
                   <CalendarIcon className="h-4 w-4" />
                 </div>
                 <h2 className="text-md font-semibold text-[hsl(var(--foreground))]">
                   {isToday(selectedDateObj) 
-                    ? 'Today'
-                    : format(selectedDateObj, 'EEE, d MMM', { locale: getDateLocale() })
-                  }
+                    ? t.today
+                    : format(selectedDateObj, 'EEE, d MMM', { locale: getDateLocale() })}
                 </h2>
               </div>
               
               <Button 
                 variant="ghost"
                 size="icon"
-                onClick={() => handleSelectDate(format(addDays(selectedDateObj, 1), 'yyyy-MM-dd'))}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectDate(format(addDays(selectedDateObj, 1), 'yyyy-MM-dd'));
+                }}
                 className="h-8 w-8 rounded-full ml-1"
+                disabled={isToday(selectedDateObj)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Date Selector - Now independent from any widget */}
+        <motion.div variants={item} className="mb-2">
+          <div className="flex items-center justify-center" ref={dateRef}>
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSelectDate(format(subDays(selectedDateObj, 1), 'yyyy-MM-dd'));
+              }}
+              className="h-8 w-8 rounded-full mr-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             
+            <div 
+              className="flex-1 flex items-center justify-center gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsCalendarOpen(true);
+              }}
+            >
+              <div 
+                className="h-7 w-7 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center"
+              >
+                <CalendarIcon className="h-4 w-4" />
+              </div>
+              <h2 className="text-md font-semibold text-[hsl(var(--foreground))]">
+                {isToday(selectedDateObj) 
+                  ? t.today
+                  : format(selectedDateObj, 'EEE, d MMM', { locale: getDateLocale() })}
+              </h2>
+            </div>
+            
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSelectDate(format(addDays(selectedDateObj, 1), 'yyyy-MM-dd'));
+              }}
+              className="h-8 w-8 rounded-full ml-1"
+              disabled={isToday(selectedDateObj)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Selected Day Stats - Enhanced with Macros Distribution Charts */}
+        {widgetVisibility.nutritionSummary && (
+          <motion.div variants={item}>
+            <Card className="p-5 shadow-md rounded-2xl overflow-hidden mt-1">
             <div className="space-y-1">
               {/* Calories */}
               <div className="space-y-2">
@@ -1068,7 +1055,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <defs>
-                      {macroData.map((entry, index) => (
+                          {data.map((entry, index) => (
                         <linearGradient key={`gradient-card1-${index}`} id={`gradientFill-card1-${index}`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
                           <stop offset="100%" stopColor={entry.color} stopOpacity={0.5}/>
@@ -1120,7 +1107,7 @@ export default function DashboardPage() {
                       </Pie>
                     ) : (
                       <Pie
-                        data={macroData}
+                            data={data}
                         cx="50%"
                         cy="50%"
                         innerRadius={45}
@@ -1131,7 +1118,7 @@ export default function DashboardPage() {
                         startAngle={90}
                         endAngle={-270}
                       >
-                        {macroData.map((entry, index) => (
+                            {data.map((entry, index) => (
                           <Cell 
                             key={`cell-card1-${index}`} 
                             fill={`url(#gradientFill-card1-${index})`}
@@ -1168,8 +1155,7 @@ export default function DashboardPage() {
                       </Pie>
                     )}
                     <Tooltip 
-                      formatter={(value: number, name: string, props: any) => {
-                        return [
+                          formatter={(value: number, name: string, props: any) => [
                           <span key="tooltip-value" className="flex items-center gap-1">
                             <span className="text-lg">{props.payload.icon}</span>
                             <span>
@@ -1180,8 +1166,7 @@ export default function DashboardPage() {
                             </span>
                           </span>,
                           name
-                        ] as [React.ReactNode, string];
-                      }}
+                          ]}
                       contentStyle={{ 
                         borderRadius: '12px', 
                         border: 'none', 
@@ -1197,7 +1182,7 @@ export default function DashboardPage() {
               
               {/* Cute Macro Bubbles */}
               <div className="grid grid-cols-3 gap-3">
-                {macroData.map((entry, index) => (
+                    {data.map((entry, index) => (
                   <div 
                     key={`macro-${index}`}
                     className="flex flex-col items-center p-2 rounded-xl relative overflow-hidden"
@@ -1231,29 +1216,49 @@ export default function DashboardPage() {
                         /{Math.round(entry.goal)}{t.g}
                       </span>
                     </div>
+                    
+                    {/* Progress bar for each macro nutrient */}
+                    <div className="mt-1 w-full">
+                      <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all" 
+                          style={{
+                            width: `${Math.min(100, (entry.value / entry.goal) * 100)}%`,
+                            backgroundColor: entry.color
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </Card>
         </motion.div>
+        )}
 
         {/* Meals for selected day */}
+        {widgetVisibility.mealHistory && (
         <motion.div variants={item}>
-          <Card className="p-5 shadow-md rounded-2xl">
+          <Card className="p-5 shadow-md rounded-2xl mt-1">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
-              {recentMeals.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center">
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                  </div>
+                  <h2 className="text-base font-medium text-[hsl(var(--foreground))]">{t.mealHistory}</h2>
+                </div>
+                {meals.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsEditingMeals(!isEditingMeals)}
-                  className="rounded-full h-8 w-8 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95"
+                    className="rounded-full h-7 w-7 p-0 flex items-center justify-center group transition-all duration-300 hover:bg-[hsl(var(--primary))/0.15] hover:scale-105 active:scale-95"
                 >
                   {isEditingMeals ? (
-                    <Check className="h-4 w-4 text-[hsl(var(--primary))]" />
+                      <Check className="h-3.5 w-3.5 text-[hsl(var(--primary))]" />
                   ) : (
-                    <Pencil className="h-4 w-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
+                      <Pencil className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                   )}
                   <span className="sr-only">{isEditingMeals ? translations.done : translations.edit}</span>
                 </Button>
@@ -1261,12 +1266,12 @@ export default function DashboardPage() {
             </div>
             
             <div className="space-y-3">
-              {recentMeals.length === 0 ? (
+                {meals.length === 0 ? (
                 <div className="text-center py-6 text-[hsl(var(--muted-foreground))] text-sm">
                   {t.noMealsOnThisDay}
                 </div>
               ) : (
-                recentMeals.map((meal, index) => (
+                  meals.map((meal, index) => (
                   <motion.div 
                     key={meal.id || index}
                     initial={{ opacity: 0, x: -20 }}
@@ -1275,14 +1280,14 @@ export default function DashboardPage() {
                     className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-[hsl(var(--accent))/0.1] transition-colors cursor-pointer"
                   >
                     <div className="flex-1">
-                      <div className="font-medium text-[hsl(var(--foreground))]">{meal.name}</div>
+                        <div className="font-medium text-[hsl(var(--foreground))]">{meal.foodItem.name}</div>
                       <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {meal.portion || meal.type}
+                          {meal.quantity} {meal.foodItem.servingSize}
                       </div>
                     </div>
                     <div className="text-right flex items-center">
                       <div className="font-medium text-[hsl(var(--primary))]">
-                        {Math.round(meal.calories)} {t.kcal}
+                          {Math.round(meal.foodItem.calories * meal.quantity)} {t.kcal}
                       </div>
                       
                       {isEditingMeals && (
@@ -1314,25 +1319,74 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
+        )}
 
         {/* Water Tracker */}
-        <motion.div variants={item}>
+        {widgetVisibility.waterTracker && (
+        <motion.div variants={item} className="mt-1">
           <WaterTracker date={selectedDate} />
         </motion.div>
+        )}
         
-        {/* Analytics Widget */}
-        <motion.div variants={item}>
+        {/* Weight Tracker */}
+        {widgetVisibility.weightTracker && (
+        <motion.div variants={item} className="mt-1">
+          <WeightTracker date={selectedDate} />
+        </motion.div>
+        )}
+        
+        {/* Analytics Section with Graph Type Tabs */}
+        {widgetVisibility.analyticsWidget && (
+          <motion.div variants={item} className="mt-1">
+            <div className="flex space-x-2 mb-2 overflow-x-auto no-scrollbar py-1">
+              <Button
+                variant={selectedGraphType === "nutrients" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGraphType("nutrients")}
+                className="text-xs h-7"
+              >
+                <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                {t.macros}
+              </Button>
+              <Button
+                variant={selectedGraphType === "water" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGraphType("water")}
+                className="text-xs h-7"
+              >
+                <Droplet className="h-3.5 w-3.5 mr-1" />
+                Water
+              </Button>
+              <Button
+                variant={selectedGraphType === "weight" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGraphType("weight")}
+                className="text-xs h-7"
+              >
+                <Scale className="h-3.5 w-3.5 mr-1" />
+                Weight
+              </Button>
+            </div>
+            
           <AnalyticsWidget 
             dailyLogs={dailyLogs} 
             goals={goals} 
+            graphType={selectedGraphType}
           />
         </motion.div>
+        )}
 
         {/* Mood & Notes Section */}
-        <motion.div variants={item}>
+        {widgetVisibility.moodNotes && (
+        <motion.div variants={item} className="mt-1">
           <Card className="p-5 shadow-md rounded-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t.mood}</h2>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center">
+                    <SmilePlus className="h-3.5 w-3.5" />
+                  </div>
+                  <h2 className="text-base font-medium text-[hsl(var(--foreground))]">{t.mood}</h2>
+                </div>
             </div>
             
             <div className="space-y-4">
@@ -1377,6 +1431,7 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
+        )}
 
         {/* Delete Confirmation Dialog */}
         <AnimatePresence>

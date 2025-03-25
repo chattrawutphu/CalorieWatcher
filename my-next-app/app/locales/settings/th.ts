@@ -22,4 +22,9 @@ export const settingsTranslations = {
   liters: "ลิตร",
   recommendedWater: "แนะนำ: 2000-3000 มล. ต่อวัน",
   glass: "แก้ว",
+  weightSettings: "การตั้งค่าน้ำหนัก",
+  weightGoal: "น้ำหนักเป้าหมาย",
+  kg: "กก.",
+  weightDescription: "ตั้งค่าน้ำหนักเป้าหมายสำหรับการติดตามความคืบหน้า",
+  trackWeightRegularly: "ติดตามน้ำหนักของคุณอย่างสม่ำเสมอเพื่อผลลัพธ์ที่ดีที่สุด",
 }; 

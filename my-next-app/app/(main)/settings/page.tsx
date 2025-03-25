@@ -11,9 +11,9 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2 } from "lucide-react";
+import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2, Scale } from "lucide-react";
 import { motion } from "framer-motion";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, formatRelative } from 'date-fns';
 import { th, ja, zhCN, Locale } from 'date-fns/locale';
 
 // Animation variants
@@ -64,6 +64,11 @@ const translations = {
     syncNow: "Sync Now",
     syncing: "Syncing...",
     syncComplete: "Sync Complete",
+    weightSettings: "Weight Goal",
+    weightGoal: "Weight Goal",
+    kg: "kg",
+    weightDescription: "Track weight regularly",
+    trackWeightRegularly: "Track weight regularly",
   },
   th: {
     settings: "ตั้งค่า",
@@ -95,6 +100,11 @@ const translations = {
     syncNow: "ซิงค์ตอนนี้",
     syncing: "กำลังซิงค์...",
     syncComplete: "ซิงค์เสร็จสิ้น",
+    weightSettings: "เป้าหมายน้ำหนัก",
+    weightGoal: "เป้าหมายน้ำหนัก",
+    kg: "กิโลกรัม",
+    weightDescription: "ติดตามน้ำหนักประจำ",
+    trackWeightRegularly: "ติดตามน้ำหนักประจำ",
   },
   ja: {
     settings: "設定",
@@ -126,6 +136,11 @@ const translations = {
     syncNow: "今すぐ同期",
     syncing: "同期中...",
     syncComplete: "同期完了",
+    weightSettings: "体重目標",
+    weightGoal: "体重目標",
+    kg: "kg",
+    weightDescription: "定期的に体重を記録する",
+    trackWeightRegularly: "定期的に体重を記録する",
   },
   zh: {
     settings: "设置",
@@ -157,6 +172,11 @@ const translations = {
     syncNow: "立即同步",
     syncing: "同步中...",
     syncComplete: "同步完成",
+    weightSettings: "体重目标",
+    weightGoal: "体重目标",
+    kg: "公斤",
+    weightDescription: "定期称重",
+    trackWeightRegularly: "定期称重",
   },
 };
 
@@ -173,6 +193,7 @@ export default function SettingsPage() {
   const [fatGrams, setFatGrams] = useState(goals.fat);
   const [carbsGrams, setCarbsGrams] = useState(goals.carbs);
   const [waterGoal, setWaterGoal] = useState(goals.water);
+  const [weightGoal, setWeightGoal] = useState(goals.weight || 70);
   const [isSaved, setIsSaved] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncAnimating, setSyncAnimating] = useState(false);
@@ -290,18 +311,25 @@ export default function SettingsPage() {
   
   // Save changes
   const handleSave = async () => {
-    await updateGoals({
+    // Update the goals in the store
+    const updatedGoals = {
       calories: dailyCalories,
       protein: proteinGrams,
       fat: fatGrams,
       carbs: carbsGrams,
       water: waterGoal,
-    });
+      weight: weightGoal
+    };
     
+    await updateGoals(updatedGoals);
+    
+    // Show saved message
     setIsSaved(true);
+    
+    // Hide the saved message after 2 seconds
     setTimeout(() => {
       setIsSaved(false);
-    }, 3000);
+    }, 2000);
   };
   
   return (
@@ -311,7 +339,7 @@ export default function SettingsPage() {
       initial="hidden"
       animate="show"
     >
-      <motion.h1 variants={item} className="text-3xl font-bold mb-6">
+      <motion.h1 variants={item} className="text-xl font-extrabold mb-6">
         {t.settings}
       </motion.h1>
       
@@ -508,6 +536,40 @@ export default function SettingsPage() {
                 <CupSoda className="h-5 w-5 text-blue-500" />
                 <span className="text-sm text-[hsl(var(--muted-foreground))]">
                   = {Math.round(waterGoal / 250)} {t.glass} ({250} {t.ml})
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* Weight Goal Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.weightSettings}</h2>
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="weight">{t.weightGoal}</Label>
+                <span className="text-sm text-[hsl(var(--primary))]">{weightGoal} {t.kg}</span>
+              </div>
+              <Slider
+                id="weight"
+                value={[weightGoal]}
+                min={30}
+                max={150}
+                step={0.5}
+                onValueChange={(values) => setWeightGoal(values[0])}
+              />
+              <div className="flex items-center text-sm text-[hsl(var(--muted-foreground))]">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                <span>{t.weightDescription}</span>
+              </div>
+              
+              <div className="flex items-center justify-center mt-4 space-x-2">
+                <Scale className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                  {t.trackWeightRegularly}
                 </span>
               </div>
             </div>

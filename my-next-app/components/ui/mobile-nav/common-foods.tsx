@@ -476,7 +476,7 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
                   onClick={() => setSelectedCategory(category.id)}
                   className="p-4 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))/0.1] cursor-pointer transition-colors flex flex-col items-center justify-center text-center aspect-square"
                 >
-                  <span className="text-3xl mb-2">{category.emoji}</span>
+                  <span className="text-xl mb-2">{category.emoji}</span>
                   <span className="font-medium">{category.name}</span>
                 </div>
               ))}

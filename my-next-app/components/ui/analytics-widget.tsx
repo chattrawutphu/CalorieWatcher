@@ -6,9 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/providers/language-provider";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from "recharts";
-import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Calendar, ChevronDown } from "lucide-react";
 import { format, parse } from "date-fns";
 import { th, ja, zhCN } from "date-fns/locale";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNutritionStore } from "@/lib/store/nutrition-store";
 
 // Animation variants
 const chartVariants = {
@@ -87,6 +94,11 @@ const COLORS = {
     light: "hsl(var(--accent))",
     dark: "hsl(var(--accent))",
     gradient: "linear-gradient(180deg, hsl(var(--muted-foreground)), hsl(var(--accent)))"
+  },
+  primary: {
+    light: "hsl(var(--primary))",
+    dark: "hsl(var(--primary))",
+    gradient: "linear-gradient(180deg, hsl(var(--primary-foreground)), hsl(var(--primary)))"
   }
 };
 
@@ -197,16 +209,21 @@ interface AnalyticsWidgetProps {
     fat: number;
     carbs: number;
     water: number;
+    weight?: number;
   };
+  graphType: "nutrients" | "water" | "weight";
 }
 
-export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goals }) => {
+export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goals, graphType }) => {
   const { locale } = useLanguage();
   
   // Analytics state
   const [currentMetric, setCurrentMetric] = useState<string>("calories");
   const [currentPeriod, setCurrentPeriod] = useState<string>("7d");
   const [chartDirection, setChartDirection] = useState<number>(0); // For slide animation direction
+  
+  // For weight data, add specific period state
+  const [weightPeriod, setWeightPeriod] = useState<string>("30d");
   
   // For swipe gestures
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -223,6 +240,17 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     }
   }, [showSwipeInstruction]);
   
+  // Reset metric when graph type changes
+  useEffect(() => {
+    if (graphType === "nutrients") {
+      setCurrentMetric("calories");
+    } else if (graphType === "water") {
+      setCurrentMetric("water");
+    } else if (graphType === "weight") {
+      setCurrentMetric("weight");
+    }
+  }, [graphType]);
+  
   const getDateLocale = () => {
     switch (locale) {
       case 'th': return th;
@@ -232,53 +260,267 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     }
   };
   
+  // Get weight chart data - moved outside memo to fix initialization issue
+  const getWeightData = (period: string, dailyLogs: any, goals: any, getDateLocale: () => any) => {
+    // Get weight history here inside the function
+    const { weightHistory = [] } = useNutritionStore.getState();
+    
+    // If no weight entries, return empty array
+    if (weightHistory.length === 0) return [];
+    
+    const today = new Date();
+    let filteredEntries = [...weightHistory];
+    let dates: Date[] = [];
+    let labels: string[] = [];
+    
+    // Filter entries based on period
+    if (period === "7d") {
+      // Last 7 days
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      filteredEntries = weightHistory.filter(entry => 
+        new Date(entry.date) >= sevenDaysAgo
+      );
+      
+      // Generate dates for the last 7 days
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i);
+        dates.push(date);
+        labels.push(format(date, 'EEE', { locale: getDateLocale() }));
+      }
+    } else if (period === "4w" || period === "30d") {
+      // Last 4 weeks or 30 days
+      const daysAgo = new Date(today);
+      daysAgo.setDate(today.getDate() - (period === "4w" ? 28 : 30));
+      filteredEntries = weightHistory.filter(entry => 
+        new Date(entry.date) >= daysAgo
+      );
+      
+      // Generate dates for the period
+      const days = period === "4w" ? 28 : 30;
+      const step = Math.max(1, Math.floor(days / 7)); // Show around 7 labels
+      
+      for (let i = days - 1; i >= 0; i -= step) {
+        const date = new Date();
+        date.setDate(today.getDate() - i);
+        dates.push(date);
+        labels.push(format(date, 'MMM d', { locale: getDateLocale() }));
+      }
+    } else if (period === "12m" || period === "365d") {
+      // Last 12 months or 365 days
+      const timeAgo = new Date(today);
+      if (period === "12m") {
+        timeAgo.setMonth(today.getMonth() - 11);
+      } else {
+        timeAgo.setDate(today.getDate() - 365);
+      }
+      
+      filteredEntries = weightHistory.filter(entry => 
+        new Date(entry.date) >= timeAgo
+      );
+      
+      // Generate dates for the last 12 months
+      if (period === "12m") {
+        for (let i = 11; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(today.getMonth() - i);
+          dates.push(date);
+          labels.push(format(date, 'MMM', { locale: getDateLocale() }));
+        }
+      } else {
+        // For 365 days, show monthly markers
+        for (let i = 12; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(today.getDate() - (i * 30));
+          dates.push(date);
+          labels.push(format(date, 'MMM', { locale: getDateLocale() }));
+        }
+      }
+    } else if (period === "180d") {
+      // Last 6 months (180 days)
+      const sixMonthsAgo = new Date(today);
+      sixMonthsAgo.setDate(today.getDate() - 180);
+      filteredEntries = weightHistory.filter(entry => 
+        new Date(entry.date) >= sixMonthsAgo
+      );
+      
+      // Generate dates for 6 months with monthly markers
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - (i * 30));
+        dates.push(date);
+        labels.push(format(date, 'MMM d', { locale: getDateLocale() }));
+      }
+    } else if (period === "all") {
+      // All time - use all entries but create reasonable date labels
+      // Sort entries by date
+      filteredEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      if (filteredEntries.length > 0) {
+        const firstEntryDate = new Date(filteredEntries[0].date);
+        const monthDiff = (today.getFullYear() - firstEntryDate.getFullYear()) * 12 + 
+                          today.getMonth() - firstEntryDate.getMonth();
+        
+        if (monthDiff < 12) {
+          // Less than a year of data - show monthly markers
+          const startMonth = firstEntryDate.getMonth();
+          const startYear = firstEntryDate.getFullYear();
+          
+          for (let i = 0; i <= monthDiff; i++) {
+            const date = new Date(startYear, startMonth + i, 1);
+            dates.push(date);
+            labels.push(format(date, 'MMM yy', { locale: getDateLocale() }));
+          }
+        } else {
+          // More than a year - show quarterly markers
+          const startYear = firstEntryDate.getFullYear();
+          const endYear = today.getFullYear();
+          
+          for (let year = startYear; year <= endYear; year++) {
+            for (let quarter = 0; quarter < 4; quarter++) {
+              const month = quarter * 3;
+              const date = new Date(year, month, 1);
+              if (date <= today) {
+                dates.push(date);
+                labels.push(format(date, 'MMM yy', { locale: getDateLocale() }));
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Create the data array for the chart
+    const data = dates.map((date, index) => {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      
+      // Find weight entry closest to this date
+      const closestEntry = filteredEntries.find(entry => entry.date === formattedDate);
+      
+      // Get the weight goal
+      const weightGoal = goals.weight || 70;
+      
+      return {
+        name: labels[index],
+        value: closestEntry ? closestEntry.weight : 0,
+        goal: weightGoal,
+        date: formattedDate
+      };
+    });
+    
+    return data;
+  };
+  
   // Get chart data for current selections - use memoized version to avoid recalculations
-  const chartData = React.useMemo(() => 
-    getAnalyticsData(currentMetric, currentPeriod, dailyLogs, goals, getDateLocale),
-    [currentMetric, currentPeriod, dailyLogs, goals, locale]
-  );
-  
-  // Get chart colors
-  const getChartColor = (metric: string) => {
-    switch(metric) {
-      case 'calories':
-        return COLORS.calories.light;
-      case 'protein':
-        return COLORS.protein.light;
-      case 'fat':
-        return COLORS.fat.light;
-      case 'carbs':
-        return COLORS.carbs.light;
-      case 'water':
-        return COLORS.water.light;
-      default:
-        return COLORS.calories.light;
+  const chartData = React.useMemo(() => {
+    if (graphType === "weight") {
+      // Get weight data - use weightPeriod for weight data
+      return getWeightData(weightPeriod, dailyLogs, goals, getDateLocale);
+    } else {
+      // Get regular analytics data
+      return getAnalyticsData(currentMetric, currentPeriod, dailyLogs, goals, getDateLocale);
     }
+  }, [currentMetric, currentPeriod, weightPeriod, dailyLogs, goals, locale, graphType]);
+  
+  // Get translations for metrics
+  const getMetricTranslation = (key: string) => {
+    const translations: Record<string, Record<string, string>> = {
+      en: {
+        calories: "Calories",
+        protein: "Protein",
+        fat: "Fat",
+        carbs: "Carbs",
+        water: "Water",
+        weight: "Weight",
+        kcal: "kcal",
+        g: "g",
+        kg: "kg",
+        goal: "Goal",
+        average: "Average",
+        "7d": "7 Days",
+        "4w": "4 Weeks",
+        "12m": "12 Months",
+        analytics: "Analytics & Stats",
+        swipeInstruction: "Swipe to change metrics",
+        swipe: "Swipe",
+        nutrients: "Nutrients",
+        selectGraph: "Select Graph",
+        progress: "Progress"
+      },
+      th: {
+        calories: "แคลอรี่",
+        protein: "โปรตีน",
+        fat: "ไขมัน",
+        carbs: "คาร์บ",
+        water: "น้ำ",
+        weight: "น้ำหนัก",
+        kcal: "แคล",
+        g: "ก.",
+        kg: "กก.",
+        goal: "เป้าหมาย",
+        average: "เฉลี่ย",
+        "7d": "7 วัน",
+        "4w": "4 สัปดาห์",
+        "12m": "12 เดือน",
+        analytics: "สถิติและวิเคราะห์",
+        swipeInstruction: "สับพิมพ์เพื่อเปลี่ยนหน่วยวิเคราะห์",
+        swipe: "สับพิมพ์",
+        nutrients: "สารอาหาร",
+        selectGraph: "เลือกกราฟ",
+        progress: "ความคืบหน้า"
+      },
+      ja: {
+        calories: "カロリー",
+        protein: "タンパク質",
+        fat: "脂肪",
+        carbs: "炭水化物",
+        water: "水分",
+        weight: "体重",
+        kcal: "kcal",
+        g: "g",
+        kg: "kg",
+        goal: "目標",
+        average: "平均",
+        "7d": "7日",
+        "4w": "4週間",
+        "12m": "12ヶ月",
+        analytics: "分析と統計",
+        swipeInstruction: "スワイプして分析を変更",
+        swipe: "スワイプ",
+        nutrients: "栄養素",
+        selectGraph: "グラフを選択",
+        progress: "進捗"
+      },
+      zh: {
+        calories: "卡路里",
+        protein: "蛋白质",
+        fat: "脂肪",
+        carbs: "碳水",
+        water: "水分",
+        weight: "体重",
+        kcal: "卡",
+        g: "克",
+        kg: "公斤",
+        goal: "目标",
+        average: "平均",
+        "7d": "7天",
+        "4w": "4周",
+        "12m": "12个月",
+        analytics: "分析和统计",
+        swipeInstruction: "滑动以更改分析",
+        swipe: "滑动",
+        nutrients: "营养素",
+        selectGraph: "选择图表",
+        progress: "进度"
+      }
+    };
+    
+    const currentLocale = locale as keyof typeof translations;
+    const fallbackLocale = "en";
+    
+    return translations[currentLocale]?.[key] || translations[fallbackLocale][key] || key;
   };
-  
-  // Get current chart color
-  const currentChartColor = getChartColor(currentMetric);
-  
-  // Get gradient for bars
-  const getChartGradient = (metric: string) => {
-    switch(metric) {
-      case 'calories':
-        return COLORS.calories.gradient;
-      case 'protein':
-        return COLORS.protein.gradient;
-      case 'fat':
-        return COLORS.fat.gradient;
-      case 'carbs':
-        return COLORS.carbs.gradient;
-      case 'water':
-        return COLORS.water.gradient;
-      default:
-        return COLORS.calories.gradient;
-    }
-  };
-  
-  // Get current chart gradient
-  const currentChartGradient = getChartGradient(currentMetric);
   
   // Get unit for current metric
   const getMetricUnit = (metric: string) => {
@@ -291,88 +533,11 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
         return getMetricTranslation("g");
       case 'water':
         return 'ml';
+      case 'weight':
+        return getMetricTranslation("kg");
       default:
         return '';
     }
-  };
-  
-  // Get translations for metrics
-  const getMetricTranslation = (key: string) => {
-    const translations: Record<string, Record<string, string>> = {
-      en: {
-        calories: "Calories",
-        protein: "Protein",
-        fat: "Fat",
-        carbs: "Carbs",
-        water: "Water",
-        kcal: "kcal",
-        g: "g",
-        goal: "Goal",
-        average: "Average",
-        "7d": "7 Days",
-        "4w": "4 Weeks",
-        "12m": "12 Months",
-        analytics: "Analytics & Stats",
-        swipeInstruction: "Swipe to change metrics",
-        swipe: "Swipe"
-      },
-      th: {
-        calories: "แคลอรี่",
-        protein: "โปรตีน",
-        fat: "ไขมัน",
-        carbs: "คาร์บ",
-        water: "น้ำ",
-        kcal: "แคล",
-        g: "ก.",
-        goal: "เป้าหมาย",
-        average: "เฉลี่ย",
-        "7d": "7 วัน",
-        "4w": "4 สัปดาห์",
-        "12m": "12 เดือน",
-        analytics: "สถิติและวิเคราะห์",
-        swipeInstruction: "สับพิมพ์เพื่อเปลี่ยนหน่วยวิเคราะห์",
-        swipe: "สับพิมพ์"
-      },
-      ja: {
-        calories: "カロリー",
-        protein: "タンパク質",
-        fat: "脂肪",
-        carbs: "炭水化物",
-        water: "水分",
-        kcal: "kcal",
-        g: "g",
-        goal: "目標",
-        average: "平均",
-        "7d": "7日",
-        "4w": "4週間",
-        "12m": "12ヶ月",
-        analytics: "分析と統計",
-        swipeInstruction: "スワイプして分析を変更",
-        swipe: "スワイプ"
-      },
-      zh: {
-        calories: "卡路里",
-        protein: "蛋白质",
-        fat: "脂肪",
-        carbs: "碳水",
-        water: "水分",
-        kcal: "卡",
-        g: "克",
-        goal: "目标",
-        average: "平均",
-        "7d": "7天",
-        "4w": "4周",
-        "12m": "12个月",
-        analytics: "分析和统计",
-        swipeInstruction: "滑动以更改分析",
-        swipe: "滑动"
-      }
-    };
-    
-    const currentLocale = locale as keyof typeof translations;
-    const fallbackLocale = "en";
-    
-    return translations[currentLocale]?.[key] || translations[fallbackLocale][key] || key;
   };
   
   // Handle metric change with animation direction
@@ -380,7 +545,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     if (metric === currentMetric) return;
     
     // Determine direction for animation
-    const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
+    const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
     const currentIndex = metrics.indexOf(currentMetric);
     const newIndex = metrics.indexOf(metric);
     const direction = newIndex > currentIndex ? 1 : -1;
@@ -409,7 +574,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     
     // Determine if it was a significant swipe (more than 50px)
     if (Math.abs(diffX) > 50) {
-      const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
+      const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
       const currentIndex = metrics.indexOf(currentMetric);
       
       // Swipe right (go to previous)
@@ -430,7 +595,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   };
   
   // Get visual indicators for swiping - which metrics are available left/right
-  const metrics = ['calories', 'protein', 'fat', 'carbs', 'water'];
+  const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
   const currentIndex = metrics.indexOf(currentMetric);
   const hasNext = currentIndex < metrics.length - 1;
   const hasPrev = currentIndex > 0;
@@ -444,18 +609,18 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
       </div>
       
       <div className="relative z-10 flex flex-col space-y-4">
-        {/* Title and Period Selector */}
+        {/* Title and Graph Type Selector */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0.5 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
-              className="h-8 w-8 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center shadow-sm"
+              className="h-6 w-6 bg-[hsl(var(--accent))]/10 rounded-full flex items-center justify-center"
             >
-              <Activity className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+              <Activity className="h-3.5 w-3.5" />
             </motion.div>
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+            <h2 className="text-base font-medium text-[hsl(var(--foreground))]">
               {getMetricTranslation("analytics")}
             </h2>
           </div>
@@ -464,40 +629,60 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex bg-[hsl(var(--muted))] p-1 rounded-full text-xs shadow-sm"
           >
-            {['7d', '4w', '12m'].map((period, index) => (
-              <motion.div 
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 px-2 flex items-center gap-1 text-xs">
+                  <Calendar className="h-3.5 w-3.5 mr-1" />
+                  {graphType === "weight" 
+                    ? getWeightPeriodLabel(weightPeriod) 
+                    : getMetricTranslation(currentPeriod)}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                {graphType === "weight" ? (
+                  // Weight-specific periods
+                  <>
+                    <DropdownMenuItem onClick={() => setWeightPeriod("30d")}>
+                      {getMetricTranslation("30d") || "30 Days"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWeightPeriod("180d")}>
+                      {getMetricTranslation("180d") || "6 Months"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWeightPeriod("365d")}>
+                      {getMetricTranslation("365d") || "1 Year"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWeightPeriod("all")}>
+                      {getMetricTranslation("all") || "All Time"}
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  // Standard periods for other metrics
+                  ['7d', '4w', '12m'].map((period) => (
+                    <DropdownMenuItem 
                 key={period}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-              >
-                <Button
-                  variant={currentPeriod === period ? "default" : "ghost"}
-                  size="sm"
                   onClick={() => handlePeriodChange(period)}
-                  className={`px-3 py-1 text-xs h-7 
-                    ${currentPeriod === period 
-                      ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' 
-                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'} 
-                    rounded-full transition-all duration-200 hover:scale-105`}
+                      className={currentPeriod === period ? 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]' : ''}
                 >
                   {getMetricTranslation(period)}
-                </Button>
-              </motion.div>
-            ))}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </motion.div>
         </div>
         
-        {/* Metric Pills */}
+        {/* Metric Pills - Only show for nutrients */}
+        {graphType === "nutrients" && (
         <motion.div 
           className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar"
           variants={pillContainerVariants}
           initial="hidden"
           animate="visible"
         >
-          {metrics.map((metric, index) => (
+            {['calories', 'protein', 'fat', 'carbs'].map((metric, index) => (
             <motion.div 
               key={metric} 
               variants={pillItemVariants}
@@ -520,6 +705,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
             </motion.div>
           ))}
         </motion.div>
+        )}
         
         {/* Chart Area with Swipe Handler */}
         <div 
@@ -621,6 +807,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
                       color: 'hsl(var(--foreground))',
                       padding: '8px 12px'
                     }}
+                    trigger="click"
                   />
                   {/* Reference Line for Goal */}
                   {chartData.length > 0 && chartData[0].goal > 0 && (
@@ -702,7 +889,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
             className="mt-1 px-1"
           >
             <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1 flex justify-between">
-              <span>{getMetricTranslation("progress") || "Progress"}</span>
+              <span>{getMetricTranslation("progress")}</span>
               <span>
                 {Math.min(100, Math.round((chartData[chartData.length-1].value / chartData[0].goal) * 100))}%
               </span>
@@ -721,3 +908,14 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     </Card>
   );
 }; 
+
+// Helper function to get weight period label
+function getWeightPeriodLabel(period: string) {
+  switch (period) {
+    case "30d": return "30 Days";
+    case "180d": return "6 Months";
+    case "365d": return "1 Year";
+    case "all": return "All Time";
+    default: return "30 Days";
+  }
+} 
