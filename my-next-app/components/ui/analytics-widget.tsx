@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/providers/language-provider";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from "recharts";
-import { Activity, ChevronLeft, ChevronRight, Calendar, ChevronDown } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Calendar, ChevronDown, PieChart, Droplets, Weight } from "lucide-react";
 import { format, parse } from "date-fns";
 import { th, ja, zhCN } from "date-fns/locale";
 import {
@@ -65,6 +65,16 @@ const pillItemVariants = {
     opacity: 1, 
     y: 0,
     transition: { duration: 0.2 }
+  }
+};
+
+// Add animation variants for graph type selector
+const graphTypeSelectorVariants = {
+  hidden: { opacity: 0, y: -5 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
   }
 };
 
@@ -212,15 +222,19 @@ interface AnalyticsWidgetProps {
     weight?: number;
   };
   graphType: "nutrients" | "water" | "weight";
+  onGraphTypeChange?: (type: "nutrients" | "water" | "weight") => void;
 }
 
-export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goals, graphType }) => {
+export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goals, graphType, onGraphTypeChange }) => {
   const { locale } = useLanguage();
   
   // Analytics state
   const [currentMetric, setCurrentMetric] = useState<string>("calories");
   const [currentPeriod, setCurrentPeriod] = useState<string>("7d");
   const [chartDirection, setChartDirection] = useState<number>(0); // For slide animation direction
+  
+  // Add state for storing the current graph type locally
+  const [currentGraphType, setCurrentGraphType] = useState<"nutrients" | "water" | "weight">(graphType);
   
   // For weight data, add specific period state
   const [weightPeriod, setWeightPeriod] = useState<string>("30d");
@@ -229,6 +243,11 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   // First time view indicator for swipe instructions
   const [showSwipeInstruction, setShowSwipeInstruction] = useState<boolean>(true);
+  
+  // Update local graph type when prop changes
+  useEffect(() => {
+    setCurrentGraphType(graphType);
+  }, [graphType]);
   
   // Clear swipe instruction after 5 seconds
   useEffect(() => {
@@ -242,14 +261,14 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   
   // Reset metric when graph type changes
   useEffect(() => {
-    if (graphType === "nutrients") {
+    if (currentGraphType === "nutrients") {
       setCurrentMetric("calories");
-    } else if (graphType === "water") {
+    } else if (currentGraphType === "water") {
       setCurrentMetric("water");
-    } else if (graphType === "weight") {
+    } else if (currentGraphType === "weight") {
       setCurrentMetric("weight");
     }
-  }, [graphType]);
+  }, [currentGraphType]);
   
   const getDateLocale = () => {
     switch (locale) {
@@ -414,14 +433,14 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   
   // Get chart data for current selections - use memoized version to avoid recalculations
   const chartData = React.useMemo(() => {
-    if (graphType === "weight") {
+    if (currentGraphType === "weight") {
       // Get weight data - use weightPeriod for weight data
       return getWeightData(weightPeriod, dailyLogs, goals, getDateLocale);
     } else {
       // Get regular analytics data
       return getAnalyticsData(currentMetric, currentPeriod, dailyLogs, goals, getDateLocale);
     }
-  }, [currentMetric, currentPeriod, weightPeriod, dailyLogs, goals, locale, graphType]);
+  }, [currentMetric, currentPeriod, weightPeriod, dailyLogs, goals, locale, currentGraphType]);
   
   // Get translations for metrics
   const getMetricTranslation = (key: string) => {
@@ -600,6 +619,60 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   const hasNext = currentIndex < metrics.length - 1;
   const hasPrev = currentIndex > 0;
 
+  // Get translations for graph types
+  const getGraphTypeTranslation = (type: string) => {
+    const translations: Record<string, Record<string, string>> = {
+      en: {
+        nutrients: "Macros",
+        water: "Water",
+        weight: "Weight"
+      },
+      th: {
+        nutrients: "สารอาหาร",
+        water: "น้ำ",
+        weight: "น้ำหนัก"
+      },
+      ja: {
+        nutrients: "栄養素",
+        water: "水分",
+        weight: "体重"
+      },
+      zh: {
+        nutrients: "营养素",
+        water: "水分",
+        weight: "体重"
+      }
+    };
+    
+    const currentLocale = locale as keyof typeof translations;
+    const fallbackLocale = "en";
+    
+    return translations[currentLocale]?.[type] || translations[fallbackLocale][type] || type;
+  };
+  
+  // Get icon for graph type
+  const getGraphTypeIcon = (type: string) => {
+    switch(type) {
+      case 'nutrients':
+        return <PieChart className="h-3 w-3" />;
+      case 'water':
+        return <Droplets className="h-3 w-3" />;
+      case 'weight':
+        return <Weight className="h-3 w-3" />;
+      default:
+        return <PieChart className="h-3 w-3" />;
+    }
+  };
+
+  // Update handler for graph type changes
+  const handleGraphTypeChange = (type: "nutrients" | "water" | "weight") => {
+    setCurrentGraphType(type);
+    // Notify parent component if callback is provided
+    if (onGraphTypeChange) {
+      onGraphTypeChange(type);
+    }
+  };
+
   return (
     <Card className="relative p-5 shadow-md rounded-2xl overflow-hidden">
       {/* Theme-compatible decorative elements */}
@@ -634,14 +707,14 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 px-2 flex items-center gap-1 text-xs">
                   <Calendar className="h-3.5 w-3.5 mr-1" />
-                  {graphType === "weight" 
+                  {currentGraphType === "weight" 
                     ? getWeightPeriodLabel(weightPeriod) 
                     : getMetricTranslation(currentPeriod)}
                   <ChevronDown className="h-3 w-3 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-32">
-                {graphType === "weight" ? (
+                {currentGraphType === "weight" ? (
                   // Weight-specific periods
                   <>
                     <DropdownMenuItem onClick={() => setWeightPeriod("30d")}>
@@ -674,8 +747,36 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
           </motion.div>
         </div>
         
+        {/* Graph Type Selector - New Component */}
+        <motion.div
+          variants={graphTypeSelectorVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex justify-center"
+        >
+          <div className="inline-flex items-center gap-1 p-1 bg-[hsl(var(--muted))] rounded-full text-xs">
+            {(['nutrients', 'water', 'weight'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => handleGraphTypeChange(type)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition-all duration-200 ${
+                  currentGraphType === type
+                    ? 'bg-[hsl(var(--background))] text-[hsl(var(--foreground))] shadow-sm'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                }`}
+                aria-label={`Show ${type} graph`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {getGraphTypeIcon(type)}
+                  <span>{getGraphTypeTranslation(type)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+        
         {/* Metric Pills - Only show for nutrients */}
-        {graphType === "nutrients" && (
+        {currentGraphType === "nutrients" && (
         <motion.div 
           className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar"
           variants={pillContainerVariants}

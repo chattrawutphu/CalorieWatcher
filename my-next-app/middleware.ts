@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 
-export async function middleware(request: NextRequest) {
+// Simple middleware that skips authentication for now
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Exclude API routes and next-auth routes from middleware processing
@@ -10,48 +10,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  try {
-    // Check if token exists with improved options
-    const token = await getToken({ 
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: false,
-      cookieName: 'next-auth.session-token',
-    });
-    
-    const isAuthenticated = !!token;
-    
-    // Handle homepage route
-    if (pathname === '/') {
-      // If authenticated, redirect to dashboard
-      if (isAuthenticated) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-      // If not authenticated, redirect to login
-      return NextResponse.redirect(new URL('/auth/signin', request.url));
-    }
-    
-    // Public routes that don't require authentication
-    if (pathname.startsWith('/auth/') || pathname.includes('_next') || pathname.includes('favicon.ico')) {
-      // If user is already authenticated and trying to access login page, redirect to dashboard
-      if (isAuthenticated && pathname.startsWith('/auth/')) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-      return NextResponse.next();
-    }
-    
-    // Protect main routes
-    if (!isAuthenticated && !pathname.startsWith('/auth/')) {
-      // Redirect unauthenticated users to sign in page
-      return NextResponse.redirect(new URL('/auth/signin', request.url));
-    }
-    
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware authentication error:', error);
-    // In case of error, allow the request to proceed and let client-side auth handle it
+  // Handle homepage route
+  if (pathname === '/') {
+    // Just redirect to login
+    return NextResponse.redirect(new URL('/auth/signin', request.url));
+  }
+  
+  // Public routes that don't require authentication
+  if (pathname.startsWith('/auth/') || pathname.includes('_next') || pathname.includes('favicon.ico')) {
     return NextResponse.next();
   }
+
+  // Allow requests to proceed for now
+  return NextResponse.next();
 }
 
 // Specify the paths that this middleware will run on

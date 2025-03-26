@@ -1338,42 +1338,13 @@ export default function DashboardPage() {
         {/* Analytics Section with Graph Type Tabs */}
         {widgetVisibility.analyticsWidget && (
           <motion.div variants={item} className="mt-1">
-            <div className="flex space-x-2 mb-2 overflow-x-auto no-scrollbar py-1">
-              <Button
-                variant={selectedGraphType === "nutrients" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedGraphType("nutrients")}
-                className="text-xs h-7"
-              >
-                <BarChart3 className="h-3.5 w-3.5 mr-1" />
-                {t.macros}
-              </Button>
-              <Button
-                variant={selectedGraphType === "water" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedGraphType("water")}
-                className="text-xs h-7"
-              >
-                <Droplet className="h-3.5 w-3.5 mr-1" />
-                Water
-              </Button>
-              <Button
-                variant={selectedGraphType === "weight" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedGraphType("weight")}
-                className="text-xs h-7"
-              >
-                <Scale className="h-3.5 w-3.5 mr-1" />
-                Weight
-              </Button>
-            </div>
-            
-          <AnalyticsWidget 
-            dailyLogs={dailyLogs} 
-            goals={goals} 
-            graphType={selectedGraphType}
-          />
-        </motion.div>
+            <AnalyticsWidget 
+              dailyLogs={dailyLogs} 
+              goals={goals} 
+              graphType={selectedGraphType}
+              onGraphTypeChange={setSelectedGraphType}
+            />
+          </motion.div>
         )}
 
         {/* Mood & Notes Section */}
