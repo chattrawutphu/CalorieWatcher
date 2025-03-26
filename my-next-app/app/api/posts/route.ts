@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
+import auth from 'next-auth/next';
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
@@ -34,7 +34,7 @@ interface Comment {
 export async function GET(request: NextRequest) {
   try {
     // ตรวจสอบการล็อกอิน
-    const session = await getServerSession(authOptions);
+    const session = await auth(authOptions);
     if (!session || !session.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // ตรวจสอบการล็อกอิน
-    const session = await getServerSession(authOptions);
+    const session = await auth(authOptions);
     if (!session || !session.user || !session.user.id) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

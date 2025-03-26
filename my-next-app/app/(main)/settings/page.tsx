@@ -14,7 +14,8 @@ import { Slider } from "@/components/ui/slider";
 import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2, Scale } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatDistanceToNow, formatRelative } from 'date-fns';
-import { th, ja, zhCN, Locale } from 'date-fns/locale';
+import { th, ja, zhCN } from 'date-fns/locale';
+import type { Locale } from 'date-fns';
 
 // Animation variants
 const container = {

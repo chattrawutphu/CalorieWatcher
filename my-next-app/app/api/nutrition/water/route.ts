@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import auth from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { connectToDatabase } from '@/lib/mongoose';
 import NutritionModel from '@/lib/models/nutrition';
@@ -8,7 +8,7 @@ import { IDailyLog } from '@/lib/models/nutrition';
 export async function PUT(request: NextRequest) {
   try {
     // ตรวจสอบว่าผู้ใช้เข้าสู่ระบบแล้ว
-    const session = await getServerSession(authOptions);
+    const session = await auth(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },

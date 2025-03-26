@@ -191,7 +191,7 @@ const CalendarPopup = ({
   
   const goToToday = () => {
     setCurrentMonthDate(new Date());
-    onSelectDate(format(new Date(), 'yyyy-MM-dd'));
+    onSelectDate(format(new Date(), 'yyyy-MM-dd', { locale: getDateLocale() }));
     
     // Add a slight delay before closing to allow tap/click feedback
     setTimeout(() => {

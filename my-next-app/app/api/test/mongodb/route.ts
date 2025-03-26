@@ -1,25 +1,20 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/mongoose";
 
 export async function GET() {
   try {
     // Test MongoDB native client connection
-    const client = await clientPromise;
-    const nativeDb = client.db("test");
-    const nativeTestData = await nativeDb.command({ ping: 1 });
-
+    await connectToDatabase();
+    
     // Test Mongoose connection
-    const mongoose = await connectToDatabase();
     const connectionStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
 
     return NextResponse.json({ 
       success: true, 
       message: "MongoDB connection successful",
-      nativeClient: nativeTestData,
       mongoose: {
-        status: connectionStatus,
-        version: mongoose.version,
+        status: connectionStatus
       }
     });
   } catch (error) {

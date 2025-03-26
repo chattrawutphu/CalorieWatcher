@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import auth from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 // ฟังก์ชันสำหรับลบโพสต์
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
     // ตรวจสอบการล็อกอิน
-    const session = await getServerSession(authOptions);
+    const session = await auth(authOptions);
     if (!session || !session.user || !session.user.id) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

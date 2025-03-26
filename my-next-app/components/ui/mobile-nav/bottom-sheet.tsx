@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, memo, useRef } from "react";
-import { motion, PanInfo, useMotionValue } from "framer-motion";
+import { motion, PanInfo, useMotionValue, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, X, Apple, Pencil, Scan, Clock, Bot, Clipboard, ChevronRight, ArrowLeft } from "lucide-react";
@@ -181,199 +181,207 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     setCurrentSection("detail");
   }, [addFavoriteFood, updateFoodTemplate]);
 
-  // Return null if closed to save resources
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 z-40 max-w-md mx-auto"
-      />
-      
-      {/* Main container with slide animations */}
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ duration: 0.3 }}
-        className="fixed inset-0 max-w-md mx-auto pb-12 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto overscroll-contain"
-      >
-        {/* Header - Fixed position to prevent scroll issues */}
-        <div className="sticky top-0 z-10 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe">
-          {/* Header with title and close button */}
-          <div className="py-4 flex justify-between items-center">
-            {/* Title with icon and back button */}
-            <div className="flex items-center gap-2">
-              {/* Always show back button for consistent UI */}
-              <button 
-                onClick={currentSection === "main" ? onClose : handleBackNavigation} 
-                className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              
-              {/* Title based on section */}
-              <h2 className="text-2xl font-semibold">
-                {currentSection === "main" && "Add Food"}
-                {currentSection === "common" && t.mobileNav.commonFoods.title}
-                {currentSection === "custom" && t.mobileNav.customFood.title}
-                {currentSection === "barcode" && t.mobileNav.barcodeScanner.title}
-                {currentSection === "recent" && t.mobileNav.recentFoods.title}
-                {currentSection === "detail" && selectedFood?.name}
-                {currentSection === "edit" && (t.mobileNav.foodDetail.editFood || "Edit Food")}
-              </h2>
-            </div>
-            
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop with fade animation */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 max-w-md mx-auto bg-black/20"
+          />
           
-          {/* Subtitle for main section only */}
-          {currentSection === "main" && (
-            <div className="px-6 pb-3">
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Choose an option to add food</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Scrolling content container - Touch events will be contained within this div */}
-        <div className="flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="">
-            {/* Content based on current section */}
-            {currentSection === "main" && (
-              <div className="space-y-6">
-                {/* AI Assistant Button */}
-                <div>
-                  <Button
-                    onClick={() => {
-                      router.push("/add/ai");
-                      onClose();
-                    }}
-                    className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+          {/* Main container with slide animations */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 30
+            }}
+            className="fixed inset-0 max-w-md mx-auto pb-12 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto overscroll-contain"
+          >
+            {/* Header - Fixed position to prevent scroll issues */}
+            <div className="sticky top-0 z-10 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe">
+              {/* Header with title and close button */}
+              <div className="py-4 flex justify-between items-center">
+                {/* Title with icon and back button */}
+                <div className="flex items-center gap-2">
+                  {/* Always show back button for consistent UI */}
+                  <button 
+                    onClick={currentSection === "main" ? onClose : handleBackNavigation} 
+                    className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center">
-                        <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
-                      </div>
-                      <div className="flex-grow text-left">
-                        <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
-                        <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
-                      </div>
-                    </div>
-                  </Button>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
-                    {t.mobileNav.common.quickActions}
-                  </h3>
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
                   
-                  <QuickActionButton
-                    icon={<Apple className="h-6 w-6" />}
-                    label={t.mobileNav.commonFoods.title}
-                    description={t.mobileNav.common.commonFoodsDesc}
-                    onClick={() => setCurrentSection("common")}
-                  />
-
-                  <QuickActionButton
-                    icon={<Pencil className="h-6 w-6" />}
-                    label={t.mobileNav.customFood.title}
-                    description={t.mobileNav.common.customFoodDesc}
-                    onClick={() => setCurrentSection("custom")}
-                  />
-
-                  <QuickActionButton
-                    icon={<Scan className="h-6 w-6" />}
-                    label={t.mobileNav.barcodeScanner.title}
-                    description={t.mobileNav.common.barcodeScannerDesc}
-                    onClick={() => setCurrentSection("barcode")}
-                  />
-
-                  <QuickActionButton
-                    icon={<Clock className="h-6 w-6" />}
-                    label={t.mobileNav.recentFoods.title}
-                    description={t.mobileNav.common.recentFoodsDesc}
-                    onClick={() => setCurrentSection("recent")}
-                  />
+                  {/* Title based on section */}
+                  <h2 className="text-2xl font-semibold">
+                    {currentSection === "main" && "Add Food"}
+                    {currentSection === "common" && t.mobileNav.commonFoods.title}
+                    {currentSection === "custom" && t.mobileNav.customFood.title}
+                    {currentSection === "barcode" && t.mobileNav.barcodeScanner.title}
+                    {currentSection === "recent" && t.mobileNav.recentFoods.title}
+                    {currentSection === "detail" && selectedFood?.name}
+                    {currentSection === "edit" && (t.mobileNav.foodDetail.editFood || "Edit Food")}
+                  </h2>
                 </div>
+                
+                {/* Close button */}
+                <button
+                  onClick={onClose}
+                  className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-            )}
+              
+              {/* Subtitle for main section only */}
+              {currentSection === "main" && (
+                <div className="px-6 pb-3">
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">Choose an option to add food</p>
+                </div>
+              )}
+            </div>
             
-            {/* Common Foods Section */}
-            {currentSection === "common" && (
-              <CommonFoods 
-                onSelectFood={(food) => {
-                  setSelectedFood(food);
-                  navigateToSection("detail");
-                }} 
-                onBack={() => setCurrentSection("main")}
-              />
-            )}
-            
-            {/* Custom Foods Form */}
-            {currentSection === "custom" && (
-              <CustomFood 
-                onAdd={(food) => {
-                  setSelectedFood(food);
-                  navigateToSection("detail");
-                }} 
-                onBack={() => setCurrentSection("main")}
-              />
-            )}
-            
-            {/* Barcode Scanner */}
-            {currentSection === "barcode" && (
-              <BarcodeScanner 
-                onFoodFound={(food) => {
-                  setSelectedFood(food);
-                  navigateToSection("detail");
-                }} 
-                onBack={() => setCurrentSection("main")}
-              />
-            )}
-            
-            {/* Recent Foods */}
-            {currentSection === "recent" && (
-              <RecentFoods 
-                onSelectFood={(food) => {
-                  setSelectedFood(food);
-                  navigateToSection("detail");
-                }} 
-                onBack={() => setCurrentSection("main")}
-              />
-            )}
-            
-            {/* Food Detail */}
-            {currentSection === "detail" && selectedFood && (
-              <FoodDetail 
-                food={selectedFood}
-                onAddFood={handleAddFood}
-                onBack={handleBackNavigation}
-                onEdit={handleEditFood}
-              />
-            )}
-            
-            {/* Food Edit */}
-            {currentSection === "edit" && selectedFood && (
-              <FoodEdit
-                food={selectedFood}
-                onSave={handleSaveEdit}
-                onBack={() => setCurrentSection("detail")}
-              />
-            )}
-          </div>
-        </div>
-      </motion.div>
-    </>
+            {/* Scrolling content container - Touch events will be contained within this div */}
+            <div className="flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="">
+                {/* Content based on current section */}
+                {currentSection === "main" && (
+                  <div className="space-y-6">
+                    {/* AI Assistant Button */}
+                    <div>
+                      <Button
+                        onClick={() => {
+                          router.push("/add/ai");
+                          onClose();
+                        }}
+                        className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center">
+                            <Bot className="sm:h-6 sm:w-6 h-5 w-5" />
+                          </div>
+                          <div className="flex-grow text-left">
+                            <div className="font-medium sm:text-base text-sm">{t.mobileNav.aiAssistant.title}</div>
+                            <div className="sm:text-sm text-xs opacity-90">{t.mobileNav.aiAssistant.description}</div>
+                          </div>
+                        </div>
+                      </Button>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
+                        {t.mobileNav.common.quickActions}
+                      </h3>
+                      
+                      <QuickActionButton
+                        icon={<Apple className="h-6 w-6" />}
+                        label={t.mobileNav.commonFoods.title}
+                        description={t.mobileNav.common.commonFoodsDesc}
+                        onClick={() => setCurrentSection("common")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Pencil className="h-6 w-6" />}
+                        label={t.mobileNav.customFood.title}
+                        description={t.mobileNav.common.customFoodDesc}
+                        onClick={() => setCurrentSection("custom")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Scan className="h-6 w-6" />}
+                        label={t.mobileNav.barcodeScanner.title}
+                        description={t.mobileNav.common.barcodeScannerDesc}
+                        onClick={() => setCurrentSection("barcode")}
+                      />
+
+                      <QuickActionButton
+                        icon={<Clock className="h-6 w-6" />}
+                        label={t.mobileNav.recentFoods.title}
+                        description={t.mobileNav.common.recentFoodsDesc}
+                        onClick={() => setCurrentSection("recent")}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Common Foods Section */}
+                {currentSection === "common" && (
+                  <CommonFoods 
+                    onSelectFood={(food) => {
+                      setSelectedFood(food);
+                      navigateToSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {/* Custom Foods Form */}
+                {currentSection === "custom" && (
+                  <CustomFood 
+                    onAdd={(food) => {
+                      setSelectedFood(food);
+                      navigateToSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {/* Barcode Scanner */}
+                {currentSection === "barcode" && (
+                  <BarcodeScanner 
+                    onFoodFound={(food) => {
+                      setSelectedFood(food);
+                      navigateToSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {/* Recent Foods */}
+                {currentSection === "recent" && (
+                  <RecentFoods 
+                    onSelectFood={(food) => {
+                      setSelectedFood(food);
+                      navigateToSection("detail");
+                    }} 
+                    onBack={() => setCurrentSection("main")}
+                  />
+                )}
+                
+                {/* Food Detail */}
+                {currentSection === "detail" && selectedFood && (
+                  <FoodDetail 
+                    food={selectedFood}
+                    onAddFood={handleAddFood}
+                    onBack={handleBackNavigation}
+                    onEdit={handleEditFood}
+                  />
+                )}
+                
+                {/* Food Edit */}
+                {currentSection === "edit" && selectedFood && (
+                  <FoodEdit
+                    food={selectedFood}
+                    onSave={handleSaveEdit}
+                    onBack={() => setCurrentSection("detail")}
+                  />
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 });
 

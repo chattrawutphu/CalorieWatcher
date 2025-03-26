@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import { Schema, model, Document, Model } from 'mongoose';
 
 // กำหนด Interfaces
 export interface IFoodItem {
@@ -117,10 +117,10 @@ let NutritionModel: Model<INutritionData>;
 
 try {
   // ถ้า Model มีอยู่แล้ว
-  NutritionModel = mongoose.model<INutritionData>('Nutrition');
+  NutritionModel = model<INutritionData>('Nutrition');
 } catch (error) {
   // ถ้ายังไม่มี Model
-  NutritionModel = mongoose.model<INutritionData>('Nutrition', NutritionSchema);
+  NutritionModel = model<INutritionData>('Nutrition', NutritionSchema);
 }
 
 export default NutritionModel; 

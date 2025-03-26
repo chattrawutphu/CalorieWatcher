@@ -1,5 +1,6 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { NextRequest } from 'next/server';
+import auth from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
@@ -27,10 +28,10 @@ interface CommentDocument {
 }
 
 // POST function to add a comment to a post
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // ตรวจสอบการล็อกอิน
-    const session = await getServerSession(authOptions);
+    const session = await auth(authOptions);
     if (!session || !session.user || !session.user.id) {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
