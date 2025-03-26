@@ -19,7 +19,7 @@ interface NavItem {
   labelKey: keyof typeof aiAssistantTranslations.en.mobileNav.navigation;
 }
 
-// Navigation items
+// Navigation items - ย้ายออกนอก component เพื่อไม่ให้สร้างใหม่ทุกครั้งที่ render
 const navItems: NavItem[] = [
   {
     icon: <Home className="h-6 w-6" />,
@@ -48,6 +48,12 @@ const navItems: NavItem[] = [
   },
 ];
 
+// ลดเวลาของอนิเมชันให้สั้นลงเพื่อการตอบสนองที่เร็วขึ้น
+const buttonAnimationConfig = {
+  scale: [1, 1.05, 1],
+  transition: { duration: 0.2 } // ลดจาก 0.3 เป็น 0.2 เพื่อให้เร็วขึ้น
+};
+
 // MobileNav component with performance optimizations
 export const MobileNav = memo(function MobileNav() {
   const pathname = usePathname();
@@ -62,29 +68,86 @@ export const MobileNav = memo(function MobileNav() {
   // Track which button is currently animating
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   
+  // Track touch state
+  const [touchStartTime, setTouchStartTime] = useState(0);
+  const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
+  const [isTouching, setIsTouching] = useState(false);
+
   // Check animation status when component loads
   useEffect(() => {
-    // Check if animation has been shown before
     const hasAnimated = sessionStorage.getItem("nav_animated") === "true";
-    
-    // If not shown before, enable animations
     setShouldAnimate(!hasAnimated);
-    
-    // If not shown before, mark as shown after animations complete
     if (!hasAnimated) {
-      const timer = setTimeout(() => {
-        sessionStorage.setItem("nav_animated", "true");
-      }, 800);
-      
-      return () => clearTimeout(timer);
+      sessionStorage.setItem("nav_animated", "true");
     }
   }, []);
-  
-  // Cache navigation elements to avoid recalculations
+
+  // Handle touch events
+  const handleTouchStart = useCallback((e: React.TouchEvent, href: string) => {
+    e.preventDefault();
+    setTouchStartTime(Date.now());
+    setTouchStartPos({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+    setIsTouching(true);
+    setAnimatingButton(href);
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent, href: string) => {
+    e.preventDefault();
+    setIsTouching(false);
+    setAnimatingButton(null);
+
+    // Check if touch duration was less than 300ms and movement was minimal
+    const touchDuration = Date.now() - touchStartTime;
+    const touchEndPos = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY
+    };
+    const movement = Math.sqrt(
+      Math.pow(touchEndPos.x - touchStartPos.x, 2) +
+      Math.pow(touchEndPos.y - touchStartPos.y, 2)
+    );
+
+    if (touchDuration < 300 && movement < 10) {
+      if (href === "#") {
+        setIsAddOpen(prev => !prev);
+      } else if (href !== pathname) {
+        router.push(href);
+      }
+    }
+  }, [touchStartTime, touchStartPos, pathname, router]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (isTouching) {
+      const touchPos = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+      const movement = Math.sqrt(
+        Math.pow(touchPos.x - touchStartPos.x, 2) +
+        Math.pow(touchPos.y - touchStartPos.y, 2)
+      );
+      // If movement is too large, cancel the touch
+      if (movement > 10) {
+        setIsTouching(false);
+        setAnimatingButton(null);
+      }
+    }
+  }, [isTouching, touchStartPos]);
+
+  // Cache navigation elements
   const navElements = useMemo(() => {
-    return navItems.map((item, index) => {
+    return navItems.map((item) => {
       const isAddButton = item.href === "#";
-      const isActive = pathname === item.href;
+      const isActive = item.href !== "#" && pathname.startsWith(item.href);
       
       return (
         <motion.div
@@ -94,16 +157,10 @@ export const MobileNav = memo(function MobileNav() {
         >
           {isAddButton ? (
             <div
-              onClick={() => {
-                if (isAddOpen) {
-                  // Close the menu if it's already open
-                  setIsAddOpen(false);
-                } else {
-                  // Open the menu if it's closed
-                  handleButtonClick(item.href);
-                }
-              }}
-              className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 max-w-[80px]"
+              onTouchStart={(e) => handleTouchStart(e, item.href)}
+              onTouchEnd={(e) => handleTouchEnd(e, item.href)}
+              onTouchMove={handleTouchMove}
+              className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 -my-2 max-w-[80px] touch-manipulation"
             >
               <div className="sm:-mt-6 -mt-5">
                 <motion.div 
@@ -111,13 +168,10 @@ export const MobileNav = memo(function MobileNav() {
                     isAddOpen 
                       ? { rotate: 135, scale: 1 } 
                       : animatingButton === item.href 
-                        ? {
-                            scale: [1, 1.2, 0.9, 1.1, 1],
-                            transition: { duration: 0.4 }
-                          } 
-                        : {}
+                        ? { scale: 0.95 }
+                        : { scale: 1 }
                   }
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.1 }}
                   className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
                 >
                   <Plus className="h-8 w-8" />
@@ -126,19 +180,25 @@ export const MobileNav = memo(function MobileNav() {
             </div>
           ) : (
             <div className="flex-1 flex justify-center">
-              <button
-                onClick={() => handleButtonClick(item.href)}
-                className="flex flex-col items-center w-full h-full px-1 py-1 cursor-pointer max-w-[60px]"
+              <div
+                onTouchStart={(e) => handleTouchStart(e, item.href)}
+                onTouchEnd={(e) => handleTouchEnd(e, item.href)}
+                onTouchMove={handleTouchMove}
+                className="flex flex-col items-center w-full h-full px-1 py-3 -my-2 cursor-pointer max-w-[70px] touch-manipulation"
+                role="button"
+                aria-label={t.mobileNav.navigation[item.labelKey]}
               >
                 <div className="flex flex-col items-center">
                   <motion.div
-                    animate={animatingButton === item.href ? {
-                      scale: [1, 1.2, 0.9, 1.1, 1],
-                      transition: { duration: 0.4 }
-                    } : {}}
+                    animate={
+                      animatingButton === item.href 
+                        ? { scale: 0.95 }
+                        : { scale: 1 }
+                    }
+                    transition={{ duration: 0.1 }}
                     className={cn(
-                      "flex items-center justify-center sm:h-10 sm:w-10 h-8 w-8 rounded-full",
-                      pathname === item.href
+                      "flex items-center justify-center sm:h-12 sm:w-12 h-10 w-10 rounded-full",
+                      isActive
                         ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
                         : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                     )}
@@ -148,7 +208,7 @@ export const MobileNav = memo(function MobileNav() {
                   <span 
                     className={cn(
                       "mt-1 sm:text-xs text-[10px] truncate w-full text-center",
-                      pathname === item.href
+                      isActive
                         ? "text-[hsl(var(--foreground))] font-medium"
                         : "text-[hsl(var(--muted-foreground))]"
                     )}
@@ -156,50 +216,24 @@ export const MobileNav = memo(function MobileNav() {
                     {t.mobileNav.navigation[item.labelKey]}
                   </span>
                 </div>
-              </button>
+              </div>
             </div>
           )}
         </motion.div>
       );
     });
-  }, [pathname, animatingButton, t, locale, isAddOpen]);
+  }, [pathname, animatingButton, t, locale, isAddOpen, handleTouchStart, handleTouchEnd, handleTouchMove]);
   
-  // Optimized button click handler
-  const handleButtonClick = useCallback((href: string) => {
-    setAnimatingButton(href);
-    
-    setTimeout(() => {
-      setAnimatingButton(null);
-    }, 300);
-    
-    if (href === "#") {
-      setIsAddOpen(true);
-    } else {
-      router.push(href);
-      
-      if (isAddOpen) {
-        setIsAddOpen(false);
-      }
-    }
-  }, [router, isAddOpen]);
-  
-  // Detect active tab (optimized)
-  const activeTab = useMemo(() => {
-    if (pathname === '/') return 'dashboard';
-    if (pathname.startsWith('/add')) return 'add';
-    if (pathname.startsWith('/meals')) return 'meals';
-    if (pathname.startsWith('/settings')) return 'settings';
-    if (pathname.startsWith('/history')) return 'history';
-    return 'dashboard';
-  }, [pathname]);
-  
+  // ปรับแต่งให้ component นี้มีประสิทธิภาพมากขึ้น
   return (
     <>
-      <BottomSheet 
-        isOpen={isAddOpen} 
-        onClose={() => setIsAddOpen(false)} 
-        onMealAdded={() => setIsAddOpen(false)}
-      />
+      {isAddOpen && (
+        <BottomSheet 
+          isOpen={isAddOpen} 
+          onClose={() => setIsAddOpen(false)} 
+          onMealAdded={() => setIsAddOpen(false)}
+        />
+      )}
       
       <nav className="fixed bottom-0 left-0 z-50 w-full">
         <div className="mx-auto sm:px-6 px-2">
@@ -207,7 +241,7 @@ export const MobileNav = memo(function MobileNav() {
             variants={navContainer}
             initial={shouldAnimate ? "hidden" : "show"}
             animate="show"
-            className="flex pb-6 pt-1 items-center justify-around bg-[hsl(var(--background))] bg-opacity-50 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
+            className="flex pb-8 pt-3 items-center justify-around bg-[hsl(var(--background))] bg-opacity-90 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
           >
             {navElements}
           </motion.div>

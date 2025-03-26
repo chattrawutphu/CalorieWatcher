@@ -69,11 +69,16 @@ const AppInitializer = memo(function AppInitializer({ children }: { children: Re
     const lastInitTime = localStorage.getItem("last_init_time");
     const now = Date.now();
     
+    // เมื่อเข้าสู่ระบบแล้ว ไม่ควรแสดง splash screen นานเกินไป
+    const hasAuth = localStorage.getItem("next-auth.session-token") || 
+                    localStorage.getItem("__Secure-next-auth.session-token");
+                    
     // Réduire l'intervalle à 1 heure au lieu de 24 heures pour une meilleure expérience
     const isRecentSession = lastInitTime && (now - parseInt(lastInitTime)) < 3600000;
     
-    if (hasLoadedBefore || isRecentSession) {
+    if (hasLoadedBefore || isRecentSession || hasAuth) {
       // Si l'app a déjà été chargée dans cette session ou récemment,
+      // ou que l'utilisateur a déjà une session sauvegardée,
       // on supprime le splash screen immédiatement
       setIsLoading(false);
       setIsFirstLoad(false);
@@ -100,7 +105,11 @@ const AppInitializer = memo(function AppInitializer({ children }: { children: Re
     if (status !== "loading" && !isFirstLoad) {
       setIsLoading(false);
     }
-  }, [status, isFirstLoad]);
+    // ถ้า status เปลี่ยนแปลงเป็น authenticated แล้วยังแสดง loading อยู่ ให้ปิด loading ทันที
+    if (status === "authenticated" && isLoading) {
+      setIsLoading(false);
+    }
+  }, [status, isFirstLoad, isLoading]);
 
   // จัดการอนิเมชั่นเมื่อปิด splash screen
   const handleSplashExitComplete = () => {

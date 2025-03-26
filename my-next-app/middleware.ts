@@ -33,11 +33,15 @@ export async function middleware(request: NextRequest) {
     
     // Public routes that don't require authentication
     if (pathname.startsWith('/auth/') || pathname.includes('_next') || pathname.includes('favicon.ico')) {
+      // If user is already authenticated and trying to access login page, redirect to dashboard
+      if (isAuthenticated && pathname.startsWith('/auth/')) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
       return NextResponse.next();
     }
     
     // Protect main routes
-    if (pathname.startsWith('/(main)') && !isAuthenticated) {
+    if (!isAuthenticated && !pathname.startsWith('/auth/')) {
       // Redirect unauthenticated users to sign in page
       return NextResponse.redirect(new URL('/auth/signin', request.url));
     }

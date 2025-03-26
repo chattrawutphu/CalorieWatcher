@@ -1580,3 +1580,95 @@
 .light .recharts-tooltip-wrapper .font-medium {
   color: hsl(210, 80%, 50%) !important;
 }
+
+/* Improved touch interaction styles */
+/* ปรับปรุงการตอบสนองต่อการสัมผัส */
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ปรับปรุงพื้นที่การสัมผัสและการตอบสนองสำหรับปุ่มทั่วไป */
+button, 
+a, 
+[role="button"],
+input[type="button"],
+input[type="submit"] {
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* เพิ่มการตอบสนองขณะกดสำหรับปุ่มทั่วไป */
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* ใช้ will-change เพื่อเพิ่มประสิทธิภาพการเรนเดอร์การเปลี่ยนแปลง */
+.animate-progressBar,
+.animate-fadeAndSlide,
+.animate-blob,
+.motion-safe\:transition-transform,
+.page-transition {
+  will-change: transform, opacity;
+}
+
+/* ทำให้แน่ใจว่าการพิมพ์บนมือถือมีประสิทธิภาพ */
+input, textarea {
+  touch-action: pan-x pan-y;
+}
+
+/* ปรับปรุงการเลื่อนให้เรียบลื่น */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ปรับแต่ง iOS overscroll behavior */
+body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ปรับปรุงการโต้ตอบกับหน้าจอสัมผัส */
+.user-select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ทำให้การเปลี่ยนแปลงสีสันมีความลื่นไหล */
+html.transition,
+html.transition *,
+html.transition *:before,
+html.transition *:after {
+  transition: all 200ms !important;
+  transition-delay: 0 !important;
+}
+
+/* สร้างลูกเล่นการตอบสนองขณะกดปุ่มให้เป็นธรรมชาติมากขึ้น */
+.clickable {
+  transform: translateZ(0);
+  transition: transform 0.15s ease-out;
+}
+
+.clickable:active {
+  transform: scale(0.95) translateZ(0);
+}
+
+/* ช่วยให้การสัมผัสที่แม่นยำขึ้นโดยเพิ่มพื้นที่กดโดยไม่ต้องเปลี่ยนขนาดที่มองเห็น */
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  z-index: -1;
+}
