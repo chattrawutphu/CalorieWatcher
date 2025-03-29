@@ -8,6 +8,8 @@ import PageTransition from "@/components/page-transition";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { format, isToday } from "date-fns";
+import SessionRefresher from "@/components/providers/session-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 // ใช้ memo เพื่อป้องกันการ re-render ที่ไม่จำเป็น
 export default memo(function MainLayout({
@@ -25,10 +27,11 @@ export default memo(function MainLayout({
   
   const { 
     initializeData, 
-    syncData
+    syncData,
+    canSync
   } = useNutritionStore();
 
-  // เมื่อเริ่มต้นแอพ ให้โหลดข้อมูลจาก localStorage และซิงค์ข้อมูลจาก API (ปรับปรุงประสิทธิภาพ)
+  // เมื่อเริ่มต้นแอพหรือเมื่อรีเฟรช ให้โหลดข้อมูลจาก localStorage และซิงค์ข้อมูลจาก API
   useEffect(() => {
     if (status === "authenticated") {
       // ใช้ Promise.resolve() เพื่อให้เรียกใช้นอก callstack หลัก และไม่บล็อกการเรนเดอร์
@@ -37,28 +40,82 @@ export default memo(function MainLayout({
         setMainContentReady(true);
         await initializeData();
         
-        // ตรวจสอบว่าเคยซิงค์ข้อมูลในเซสชั่นนี้แล้วหรือไม่
-        const hasSessionSync = sessionStorage.getItem('has-synced-this-session');
+        // ตรวจสอบว่าเป็นการโหลดหน้าใหม่หรือการรีเฟรช (ไม่ใช่การเปลี่ยนหน้าภายในแอพ)
+        const isNewPageLoad = !sessionStorage.getItem('app-initialized');
+        sessionStorage.setItem('app-initialized', 'true');
         
-        // ถ้ายังไม่เคยซิงค์ในเซสชั่นนี้ ให้ซิงค์ข้อมูลหลังจากที่แสดงหน้าจอแล้ว 
-        if (!hasSessionSync) {
+        // ซิงค์ข้อมูลเมื่อเป็นการโหลดหน้าใหม่หรือรีเฟรช
+        if (isNewPageLoad && canSync()) {
           // เพิ่มเวลาดีเลย์ให้นานขึ้นเพื่อให้หน้าจอโหลดเสร็จก่อน
           setTimeout(async () => {
             try {
               await syncData();
               // บันทึกเวลาซิงค์ล่าสุดใน localStorage
               localStorage.setItem('last-sync-time', new Date().toISOString());
-              // บันทึกว่าได้ซิงค์ในเซสชั่นนี้แล้ว
-              sessionStorage.setItem('has-synced-this-session', 'true');
-              console.log(`[Synced] Automatic sync on app first start: ${new Date().toISOString()}`);
+              console.log(`[Synced] Automatic sync on app load/refresh: ${new Date().toISOString()}`);
             } catch (error) {
-              console.error('Failed to sync data:', error);
+              console.error('Failed to sync data on app load/refresh:', error);
             }
-          }, 3000); // เพิ่มจาก 1000ms เป็น 3000ms เพื่อให้หน้าจอโหลดเสร็จก่อน
+          }, 2000); // 2 วินาที หลังจากโหลดหน้า
         }
       });
     }
-  }, [status, initializeData, syncData]);
+  }, [status, initializeData, syncData, canSync]);
+
+  // ซิงค์ข้อมูลอัตโนมัติทุก 2 นาที
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+
+    // ทำการซิงค์อัตโนมัติทุก 2 นาที และเมื่อกลับมาออนไลน์อีกครั้ง
+    const intervalId = setInterval(async () => {
+      if (navigator.onLine && canSync()) {
+        console.log('[AutoSync] Running periodic sync...');
+        try {
+          await syncData();
+          localStorage.setItem('last-sync-time', new Date().toISOString());
+        } catch (error) {
+          console.error('[AutoSync] Error during auto sync:', error);
+        }
+      }
+    }, 2 * 60 * 1000); // ทุก 2 นาที
+
+    // ทำการซิงค์เมื่อกลับมาออนไลน์
+    const handleOnline = async () => {
+      if (canSync()) {
+        console.log('[AutoSync] Network is back online, syncing...');
+        try {
+          await syncData();
+          localStorage.setItem('last-sync-time', new Date().toISOString());
+        } catch (error) {
+          console.error('[AutoSync] Error syncing after reconnect:', error);
+        }
+      }
+    };
+
+    // ตรวจจับเหตุการณ์เมื่อกลับมาที่แท็บนี้ เช่น เมื่อสลับแท็บและกลับมา
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && canSync()) {
+        // มีการสลับกลับมาที่แท็บนี้
+        console.log('[AutoSync] Tab is now visible, syncing...');
+        try {
+          await syncData();
+          localStorage.setItem('last-sync-time', new Date().toISOString());
+        } catch (error) {
+          console.error('[AutoSync] Error syncing after tab becomes visible:', error);
+        }
+      }
+    };
+
+    // คอยฟังเหตุการณ์ออนไลน์/ออฟไลน์ และ visibility change
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [status, syncData, canSync]);
 
   // แสดงสถานะการโหลดตามเวลาจริง (ทำให้เร็วขึ้น)
   useEffect(() => {
@@ -114,41 +171,46 @@ export default memo(function MainLayout({
   }
 
   return (
-    <div className="flex h-screen flex-col user-select-none">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Animated blobs */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-[hsl(var(--primary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob" />
-        <div className="absolute top-40 right-10 w-32 h-32 bg-[hsl(var(--secondary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-4 left-20 w-32 h-32 bg-[hsl(var(--accent))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000" />
-        
-        {/* Theme-specific background elements - Optimized (ลดการแสดงผลองค์ประกอบที่ไม่จำเป็น) */}
-        <div className="hidden chocolate:block">
-          <div className="chocolate-emoji-1" />
-          <div className="chocolate-emoji-2" />
-        </div>
-        
-        <div className="hidden sweet:block">
-          <div className="sweet-emoji-1" />
-          <div className="sweet-emoji-2" />
+    <SessionRefresher>
+      <div className="flex h-screen flex-col user-select-none">
+        {/* Animated Background Elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          {/* Animated blobs */}
+          <div className="absolute top-10 left-10 w-32 h-32 bg-[hsl(var(--primary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob" />
+          <div className="absolute top-40 right-10 w-32 h-32 bg-[hsl(var(--secondary))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-4 left-20 w-32 h-32 bg-[hsl(var(--accent))/0.4] rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000" />
+          
+          {/* Theme-specific background elements - Optimized (ลดการแสดงผลองค์ประกอบที่ไม่จำเป็น) */}
+          <div className="hidden chocolate:block">
+            <div className="chocolate-emoji-1" />
+            <div className="chocolate-emoji-2" />
+          </div>
+          
+          <div className="hidden sweet:block">
+            <div className="sweet-emoji-1" />
+            <div className="sweet-emoji-2" />
+          </div>
+
+          <div className="hidden broccoli:block">
+            <div className="broccoli-emoji-1" />
+            <div className="broccoli-emoji-2" />
+          </div>
         </div>
 
-        <div className="hidden broccoli:block">
-          <div className="broccoli-emoji-1" />
-          <div className="broccoli-emoji-2" />
-        </div>
+        <main className="flex-1 container px-2 pt-safe relative z-10">
+          <div className="max-w-md mx-auto pb-12">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </div>
+        </main>
+        
+        {/* รอให้เนื้อหาหลักพร้อมก่อนแสดง MobileNav */}
+        {mainContentReady && <MobileNav />}
+        
+        {/* Toaster for notifications */}
+        <Toaster />
       </div>
-
-      <main className="flex-1 container px-2 pt-safe relative z-10">
-        <div className="max-w-md mx-auto pb-12">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </div>
-      </main>
-      
-      {/* รอให้เนื้อหาหลักพร้อมก่อนแสดง MobileNav */}
-      {mainContentReady && <MobileNav />}
-    </div>
+    </SessionRefresher>
   );
 }); 

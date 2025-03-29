@@ -11,11 +11,13 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2, Scale } from "lucide-react";
+import { Save, LogOut, User, Check, Droplet, CupSoda, AlertCircle, Cloud, RefreshCw, Loader2, Scale, Trash, Trash2, Minus, UtensilsCrossed } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatDistanceToNow, formatRelative } from 'date-fns';
 import { th, ja, zhCN } from 'date-fns/locale';
 import type { Locale } from 'date-fns';
+import { ThemeButton } from "@/components/ui/theme-button";
+import { ComputerIcon, SunIcon, MoonIcon, Cookie, Candy, Leaf, Heart, Disc } from "lucide-react";
 
 // Animation variants
 const container = {
@@ -70,13 +72,36 @@ const translations = {
     kg: "kg",
     weightDescription: "Track weight regularly",
     trackWeightRegularly: "Track weight regularly",
+    resetSync: "Reset Sync History",
+    syncResetConfirm: "This will reset all sync history. Your device will be treated as a new device. Continue?",
+    connectionStatus: "Connection Status",
+    online: "Online",
+    offline: "Offline",
+    syncTip: "Sync regularly to keep your data up to date across all devices.",
+    appVersion: "App Version",
+    checkForUpdates: "Check for updates",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+    chocolate: "Chocolate",
+    sweet: "Sweet",
+    broccoli: "Broccoli",
+    blueberry: "Blueberry",
+    watermelon: "Watermelon",
+    honey: "Honey",
+    dataManagement: "Data Management",
+    clearTodayData: "Clear Today's Food Data",
+    clearTodayDataConfirm: "This will remove all food entries for today. Water intake and other health data will be preserved. Continue?",
+    clearTodayDataSuccess: "Today's food data has been cleared",
+    cancel: "Cancel",
+    confirm: "Confirm"
   },
   th: {
     settings: "ตั้งค่า",
     account: "บัญชี",
     profile: "โปรไฟล์",
     signOut: "ออกจากระบบ",
-    appearance: "การแสดงผล",
+    appearance: "ธีมและการแสดงผล",
     theme: "ธีม",
     language: "ภาษา",
     nutritionGoals: "เป้าหมายโภชนาการ",
@@ -106,6 +131,29 @@ const translations = {
     kg: "กิโลกรัม",
     weightDescription: "ติดตามน้ำหนักประจำ",
     trackWeightRegularly: "ติดตามน้ำหนักประจำ",
+    resetSync: "รีเซ็ตประวัติการซิงค์",
+    syncResetConfirm: "การรีเซ็ตจะล้างประวัติการซิงค์ทั้งหมด อุปกรณ์ของคุณจะถูกถือว่าเป็นอุปกรณ์ใหม่ ดำเนินการต่อ?",
+    connectionStatus: "สถานะการเชื่อมต่อ",
+    online: "ออนไลน์",
+    offline: "ออฟไลน์",
+    syncTip: "ซิงค์ข้อมูลเป็นประจำเพื่อให้ข้อมูลของคุณอัปเดตบนทุกอุปกรณ์",
+    appVersion: "เวอร์ชั่นแอพ",
+    checkForUpdates: "ตรวจสอบการอัพเดท",
+    system: "อัตโนมัติ (ตามระบบ)",
+    light: "โหมดสว่าง",
+    dark: "โหมดมืด",
+    chocolate: "ธีมช็อกโกแลต",
+    sweet: "ธีมหวาน",
+    broccoli: "ธีมบร็อคโคลี่",
+    blueberry: "ธีมบลูเบอร์รี่",
+    watermelon: "ธีมแตงโม",
+    honey: "ธีมน้ำผึ้ง",
+    dataManagement: "จัดการข้อมูล",
+    clearTodayData: "ล้างข้อมูลอาหารของวันนี้",
+    clearTodayDataConfirm: "การดำเนินการนี้จะลบข้อมูลอาหารทั้งหมดของวันนี้ ข้อมูลการดื่มน้ำและข้อมูลสุขภาพอื่นๆ จะยังคงอยู่ ต้องการดำเนินการต่อหรือไม่?",
+    clearTodayDataSuccess: "ล้างข้อมูลอาหารของวันนี้เรียบร้อยแล้ว",
+    cancel: "ยกเลิก",
+    confirm: "ยืนยัน"
   },
   ja: {
     settings: "設定",
@@ -142,6 +190,29 @@ const translations = {
     kg: "kg",
     weightDescription: "定期的に体重を記録する",
     trackWeightRegularly: "定期的に体重を記録する",
+    resetSync: "同期履歴をリセット",
+    syncResetConfirm: "これにより、すべての同期履歴がリセットされます。お使いのデバイスは新しいデバイスとして扱われます。続行しますか？",
+    connectionStatus: "接続状態",
+    online: "オンライン",
+    offline: "オフライン",
+    syncTip: "定期的に同期して、すべてのデバイスでデータを最新の状態に保ちます。",
+    appVersion: "アプリバージョン",
+    checkForUpdates: "アップデートを確認",
+    system: "システム",
+    light: "ライトモード",
+    dark: "ダークモード",
+    chocolate: "チョコレート",
+    sweet: "スイート",
+    broccoli: "ブロッコリー",
+    blueberry: "ブルーベリー",
+    watermelon: "スイカ",
+    honey: "ハニー",
+    dataManagement: "データ管理",
+    clearTodayData: "今日の食事データを消去",
+    clearTodayDataConfirm: "これにより、今日の食事エントリーがすべて削除されます。水分摂取量やその他の健康データは保持されます。続行しますか？",
+    clearTodayDataSuccess: "今日の食事データが消去されました",
+    cancel: "キャンセル",
+    confirm: "確認"
   },
   zh: {
     settings: "设置",
@@ -178,6 +249,29 @@ const translations = {
     kg: "公斤",
     weightDescription: "定期称重",
     trackWeightRegularly: "定期称重",
+    resetSync: "重置同步历史",
+    syncResetConfirm: "这将重置所有同步历史记录。您的设备将被视为新设备。是否继续？",
+    connectionStatus: "连接状态",
+    online: "在线",
+    offline: "离线",
+    syncTip: "定期同步以保持所有设备上的数据更新。",
+    appVersion: "应用版本",
+    checkForUpdates: "检查更新",
+    system: "系统",
+    light: "亮色",
+    dark: "暗色",
+    chocolate: "巧克力",
+    sweet: "甜味",
+    broccoli: "西兰花",
+    blueberry: "蓝莓",
+    watermelon: "西瓜",
+    honey: "蜂蜜",
+    dataManagement: "数据管理",
+    clearTodayData: "清除今天的食物数据",
+    clearTodayDataConfirm: "这将删除今天的所有食物条目。饮水量和其他健康数据将保留。继续吗？",
+    clearTodayDataSuccess: "今天的食物数据已清除",
+    cancel: "取消",
+    confirm: "确认"
   },
 };
 
@@ -186,7 +280,7 @@ export default function SettingsPage() {
   const { locale } = useLanguage();
   const t = translations[locale as keyof typeof translations] || translations.en;
   
-  const { goals, updateGoals, syncData, isLoading: isSyncingFromStore } = useNutritionStore();
+  const { goals, updateGoals, syncData, isLoading: isSyncingFromStore, canSync, isSyncOnCooldown, clearTodayData } = useNutritionStore();
   
   // Local state for the form
   const [dailyCalories, setDailyCalories] = useState(goals.calories);
@@ -199,6 +293,10 @@ export default function SettingsPage() {
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncAnimating, setSyncAnimating] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  
+  // State for confirmation dialog
+  const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
   
   // โหลดเวลาซิงค์ล่าสุด
   useEffect(() => {
@@ -206,6 +304,32 @@ export default function SettingsPage() {
     const storedSyncTime = localStorage.getItem('last-sync-time');
     setLastSyncTime(storedSyncTime);
   }, []);
+
+  // เพิ่ม effect สำหรับติดตามเวลา cooldown ที่เหลือ
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (isSyncOnCooldown()) {
+      // ถ้ากำลังอยู่ใน cooldown ให้อัพเดทเวลาทุกวินาที
+      setCooldownSeconds(5);
+      
+      intervalId = setInterval(() => {
+        setCooldownSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalId);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setCooldownSeconds(0);
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isSyncOnCooldown, isSyncing]);
 
   // ฟังก์ชันสำหรับฟอร์แมตเวลา
   const formatLastSyncTime = () => {
@@ -228,21 +352,53 @@ export default function SettingsPage() {
   
   // ฟังก์ชันสำหรับซิงค์ข้อมูลแบบ manual
   const handleSyncData = async () => {
+    // ตรวจสอบว่าปุ่มกำลังอยู่ใน cooldown หรือไม่
+    if (isSyncOnCooldown() || !canSync()) {
+      console.log('[Manual Sync] Sync is on cooldown');
+      return;
+    }
+    
     setSyncAnimating(true);
     setIsSyncing(true);
     
-    await syncData();
-    
-    // บันทึกเวลาซิงค์ล่าสุดใน localStorage
-    const now = new Date().toISOString();
-    localStorage.setItem('last-sync-time', now);
-    setLastSyncTime(now);
-    
-    // หลังจาก sync เสร็จ ให้แสดง "sync complete" เป็นเวลาสั้นๆ
-    setTimeout(() => {
+    try {
+      await syncData();
+      
+      // อัพเดทเวลาซิงค์ล่าสุด
+      const syncTime = new Date().toISOString();
+      localStorage.setItem('last-sync-time', syncTime);
+      setLastSyncTime(syncTime);
+      
+      // คงสถานะ "Complete" ไว้สักครู่
+      setTimeout(() => {
+        setSyncAnimating(false);
+        setIsSyncing(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Sync failed:', error);
       setSyncAnimating(false);
       setIsSyncing(false);
-    }, 1500);
+    }
+  };
+  
+  // ฟังก์ชันสำหรับรีเซ็ตประวัติการซิงค์
+  const handleResetSync = () => {
+    if (confirm(t.syncResetConfirm)) {
+      localStorage.removeItem('last-sync-time');
+      setLastSyncTime(null);
+    }
+  };
+  
+  // ฟังก์ชันสำหรับล้างข้อมูลอาหารของวันนี้
+  const handleClearTodayData = () => {
+    // แสดง dialog ยืนยัน
+    setShowClearDataConfirm(true);
+  };
+  
+  // ฟังก์ชันที่ทำงานเมื่อยืนยันการล้างข้อมูล
+  const confirmClearTodayData = () => {
+    clearTodayData(); // เรียกใช้ฟังก์ชันล้างข้อมูลจาก store
+    setShowClearDataConfirm(false); // ปิด dialog
   };
   
   // Calculate percentages based on grams
@@ -359,9 +515,24 @@ export default function SettingsPage() {
                   {formatLastSyncTime()}
                 </span>
               </div>
+              
+              {/* แสดงสถานะการเชื่อมต่อ */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  <span>{t.connectionStatus}:</span>
+                </div>
+                <span 
+                  className={navigator.onLine ? "text-green-500" : "text-red-500"}
+                >
+                  {navigator.onLine ? t.online : t.offline}
+                </span>
+              </div>
+              
+              {/* แสดงปุ่มซิงค์ข้อมูล */}
               <Button 
                 onClick={handleSyncData}
-                disabled={isSyncing || syncAnimating}
+                disabled={isSyncing || syncAnimating || !navigator.onLine || isSyncOnCooldown() || !canSync()}
                 className="w-full"
               >
                 {isSyncing || syncAnimating ? (
@@ -378,6 +549,11 @@ export default function SettingsPage() {
                       </>
                     )}
                   </div>
+                ) : cooldownSeconds > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{t.syncing} ({cooldownSeconds}s)</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4" />
@@ -385,6 +561,23 @@ export default function SettingsPage() {
                   </div>
                 )}
               </Button>
+              
+              {/* เพิ่มปุ่มรีเซ็ตการซิงค์ */}
+              <Button 
+                onClick={handleResetSync}
+                variant="outline"
+                className="w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{t.resetSync}</span>
+                </div>
+              </Button>
+              
+              {/* คำแนะนำเพิ่มเติม */}
+              <div className="text-sm text-[hsl(var(--muted-foreground))] mt-2">
+                <p>{t.syncTip}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -426,9 +619,11 @@ export default function SettingsPage() {
         <h2 className="text-xl font-semibold mb-4">{t.appearance}</h2>
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <Label>{t.theme}</Label>
-              <ThemeToggle />
+            <div className="space-y-3">
+              <Label className="block mb-2">{t.theme}</Label>
+              <div className="flex justify-center mb-2">
+                <ThemeToggle />
+              </div>
             </div>
             <div className="flex justify-between items-center">
               <Label>{t.language}</Label>
@@ -595,6 +790,106 @@ export default function SettingsPage() {
           )}
         </Button>
       </motion.div>
+      
+      {/* Data Management Section */}
+      <motion.div variants={item} className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">{t.dataManagement}</h2>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex flex-col space-y-4">
+              {/* ปุ่มล้างข้อมูลอาหารของวันนี้ */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 20
+                }}
+              >
+                <Button 
+                  onClick={handleClearTodayData}
+                  variant="outline"
+                  className="w-full border-red-400/20 bg-red-400/10 hover:bg-red-400/20 text-red-500 relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:shadow-red-300/20"
+                >
+                  <div className="absolute inset-0 w-0 bg-red-500/10 transition-all duration-300 group-hover:w-full" />
+                  <div className="flex items-center gap-2 relative z-10">
+                    <motion.div
+                      animate={{ rotate: [0, 15, -15, 0] }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        repeatType: "mirror",
+                        duration: 2,
+                        ease: "easeInOut",
+                        repeatDelay: 1
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </motion.div>
+                    <span>{t.clearTodayData}</span>
+                  </div>
+                </Button>
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* Confirmation Dialog for Clearing Today's Data */}
+      {showClearDataConfirm && (
+        <motion.div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="bg-[hsl(var(--background))] rounded-lg p-6 max-w-[320px] shadow-lg border border-red-500/20"
+            initial={{ scale: 0.8, y: 50, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.8, y: 50, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <motion.div
+                animate={{ 
+                  rotate: [0, -10, 10, -10, 10, 0], 
+                  scale: [1, 1.1, 1.1, 1.1, 1.1, 1]
+                }}
+                transition={{ duration: 1.5, delay: 0.2 }}
+              >
+                <Trash2 className="h-5 w-5 text-red-500" />
+              </motion.div>
+              <h3 className="text-lg font-semibold">{t.clearTodayData}</h3>
+            </div>
+            
+            <p className="text-[hsl(var(--muted-foreground))] mb-4">
+              {t.clearTodayDataConfirm}
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="ghost" onClick={() => setShowClearDataConfirm(false)}>
+                  {t.cancel}
+                </Button>
+              </motion.div>
+              
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmClearTodayData} 
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  {t.confirm}
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 } 

@@ -460,7 +460,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
         "7d": "7 Days",
         "4w": "4 Weeks",
         "12m": "12 Months",
-        analytics: "Analytics & Stats",
+        analytics: "Analytics",
         swipeInstruction: "Swipe to change metrics",
         swipe: "Swipe",
         nutrients: "Nutrients",
@@ -775,38 +775,7 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
           </div>
         </motion.div>
         
-        {/* Metric Pills - Only show for nutrients */}
-        {currentGraphType === "nutrients" && (
-        <motion.div 
-          className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar"
-          variants={pillContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-            {['calories', 'protein', 'fat', 'carbs'].map((metric, index) => (
-            <motion.div 
-              key={metric} 
-              variants={pillItemVariants}
-              custom={index}
-              transition={{ delay: 0.1 * index }}
-            >
-              <Button
-                variant={currentMetric === metric ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleMetricChange(metric)}
-                className={`px-3 py-1 text-xs h-8 whitespace-nowrap rounded-full transition-all duration-200 
-                  ${currentMetric === metric 
-                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))]' 
-                    : 'hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]'}`}
-              >
-                <span className="flex items-center gap-1">
-                  {getMetricTranslation(metric)}
-                </span>
-              </Button>
-            </motion.div>
-          ))}
-        </motion.div>
-        )}
+
         
         {/* Chart Area with Swipe Handler */}
         <div 
@@ -954,6 +923,39 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Metric Pills - Only show for nutrients */}
+        {currentGraphType === "nutrients" && (
+        <motion.div 
+          className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar"
+          variants={pillContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+            {['calories', 'protein', 'fat', 'carbs'].map((metric, index) => (
+            <motion.div 
+              key={metric} 
+              variants={pillItemVariants}
+              custom={index}
+              transition={{ delay: 0.1 * index }}
+            >
+              <Button
+                variant={currentMetric === metric ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleMetricChange(metric)}
+                className={`px-3 py-1 text-xs h-8 whitespace-nowrap rounded-full transition-all duration-200 
+                  ${currentMetric === metric 
+                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))]' 
+                    : 'hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]'}`}
+              >
+                <span className="flex items-center gap-1">
+                  {getMetricTranslation(metric)}
+                </span>
+              </Button>
+            </motion.div>
+          ))}
+        </motion.div>
+        )}
         
         {/* Stat Summary */}
         <motion.div 

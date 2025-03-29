@@ -15,6 +15,7 @@ export interface IFoodItem {
   ingredients?: string;
   dataType?: string;
   mealCategory?: string;
+  lastModified?: string;
 }
 
 export interface IMealEntry {
@@ -23,6 +24,7 @@ export interface IMealEntry {
   foodItem: IFoodItem;
   quantity: number;
   date: string;
+  lastModified?: string;
 }
 
 export interface IDailyLog {
@@ -35,6 +37,8 @@ export interface IDailyLog {
   waterIntake: number;
   moodRating?: number;
   notes?: string;
+  weight?: number;
+  lastModified?: string;
 }
 
 export interface INutritionData {
@@ -46,12 +50,31 @@ export interface INutritionData {
     carbs: number;
     fat: number;
     water: number;
+    weight?: number;
+    lastModified?: string;
   };
   favoriteFoods: IFoodItem[];
+  updatedAt?: string;
 }
 
-// Export a dummy model - this will be replaced at runtime
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const NutritionModel: any = {};
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
+
+// ตรวจสอบว่ามี model นี้ถูกสร้างไว้แล้วหรือไม่
+const NutritionModel = mongoose.models.Nutrition || mongoose.model('Nutrition', new Schema({
+  userId: { type: String, required: true },
+  dailyLogs: { type: Schema.Types.Mixed, default: {} },
+  goals: {
+    calories: { type: Number, default: 2000 },
+    protein: { type: Number, default: 120 },
+    carbs: { type: Number, default: 250 },
+    fat: { type: Number, default: 65 },
+    water: { type: Number, default: 2000 },
+    weight: { type: Number },
+    lastModified: { type: String }
+  },
+  favoriteFoods: { type: [Schema.Types.Mixed], default: [] },
+  updatedAt: { type: String, default: () => new Date().toISOString() }
+}, { timestamps: true }));
 
 export default NutritionModel; 

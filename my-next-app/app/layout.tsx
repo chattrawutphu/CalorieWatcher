@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   minimumScale: 1,
   userScalable: false,
-  themeColor: "#9333EA",
+  themeColor: "#3B82F6",
   viewportFit: "cover",
 };
 
@@ -162,6 +162,10 @@ export default function RootLayout({
                 <div className="light-emoji-2"></div>
                 <div className="light-emoji-3"></div>
                 <div className="light-emoji-4"></div>
+                <div className="light-sparkle-1"></div>
+                <div className="light-sparkle-2"></div>
+                <div className="light-sparkle-3"></div>
+                <div className="light-sparkle-4"></div>
                 <div className="blueberry-emoji-1"></div>
                 <div className="blueberry-emoji-2"></div>
                 <div className="blueberry-emoji-3"></div>
@@ -198,6 +202,13 @@ export default function RootLayout({
                 <div className="honey-emoji-2"></div>
                 <div className="honey-small-1"></div>
                 <div className="honey-small-2"></div>
+                {/* Dark theme decorative elements */}
+                <div className="dark-glow-1"></div>
+                <div className="dark-glow-2"></div>
+                <div className="dark-star-1"></div>
+                <div className="dark-star-2"></div>
+                <div className="dark-star-3"></div>
+                <div className="dark-star-4"></div>
                 <AppInitializer>
                   {children}
                 </AppInitializer>

@@ -52,84 +52,80 @@
 
 @layer base {
   :root {
-    --background: 210, 20%, 98%;
-    --foreground: 210, 40%, 20%;
+    --background: 0, 0%, 100%;
+    --foreground: 222.2, 84%, 4.9%;
 
     --card: 0, 0%, 100%;
-    --card-foreground: 210, 40%, 20%;
+    --card-foreground: 222.2, 84%, 4.9%;
 
     --popover: 0, 0%, 100%;
-    --popover-foreground: 210, 40%, 20%;
+    --popover-foreground: 222.2, 84%, 4.9%;
 
-    --primary: 210, 80%, 60%;
-    --primary-foreground: 0, 0%, 100%;
+    --primary: 221.2, 83.2%, 53.3%;
+    --primary-foreground: 210, 40%, 98%;
 
-    --secondary: 210, 40%, 96%;
-    --secondary-foreground: 210, 40%, 20%;
+    --secondary: 210, 40%, 96.1%;
+    --secondary-foreground: 222.2, 47.4%, 11.2%;
 
-    --muted: 210, 20%, 92%;
-    --muted-foreground: 215, 16%, 47%;
+    --muted: 210, 40%, 96.1%;
+    --muted-foreground: 215.4, 16.3%, 46.9%;
 
-    --accent: 210, 80%, 96%;
-    --accent-foreground: 210, 80%, 30%;
+    --accent: 210, 40%, 96.1%;
+    --accent-foreground: 222.2, 47.4%, 11.2%;
 
     --destructive: 0, 84.2%, 60.2%;
-    --destructive-foreground: 0, 0%, 98%;
+    --destructive-foreground: 210, 40%, 98%;
 
-    --border: 210, 20%, 86%;
-    --input: 210, 20%, 86%;
-    --ring: 210, 80%, 60%;
+    --border: 214.3, 31.8%, 91.4%;
+    --input: 214.3, 31.8%, 91.4%;
+    --ring: 221.2, 83.2%, 53.3%;
 
     --radius: 0.5rem;
 
-    --chart-1: 210, 80%, 60%;
-    --chart-2: 190, 80%, 60%;
-    --chart-3: 230, 80%, 60%;
-    --chart-4: 170, 80%, 60%;
-    --chart-5: 250, 80%, 60%;
+    --chart-1: 221.2, 83.2%, 53.3%;
+    --chart-2: 240, 60%, 60%;
+    --chart-3: 200, 70%, 50%;
+    --chart-4: 180, 70%, 50%;
+    --chart-5: 160, 70%, 50%;
   }
  
   .dark {
-    /* Dark theme */
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Updated Dark theme with blue/navy rather than purple */
+    --background: 220, 25%, 10%;
+    --foreground: 210, 20%, 98%;
     
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 220, 25%, 13%;
+    --card-foreground: 210, 20%, 98%;
     
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220, 25%, 13%;
+    --popover-foreground: 210, 20%, 98%;
     
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --primary: 217, 80%, 60%;
+    --primary-foreground: 210, 20%, 98%;
     
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 215, 25%, 20%;
+    --secondary-foreground: 210, 20%, 98%;
     
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 215, 25%, 18%;
+    --muted-foreground: 210, 20%, 70%;
     
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 217, 80%, 25%;
+    --accent-foreground: 210, 20%, 98%;
     
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0, 70%, 45%;
+    --destructive-foreground: 210, 20%, 98%;
     
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 215, 25%, 20%;
+    --input: 215, 25%, 20%;
+    --ring: 217, 80%, 60%;
 
     --radius: 0.75rem;
 
-    --chart-1: 220 70% 50%;
-
-    --chart-2: 160 60% 45%;
-
-    --chart-3: 30 80% 55%;
-
-    --chart-4: 280 65% 60%;
-
-    --chart-5: 340 75% 55%;
+    --chart-1: 217, 80%, 60%;
+    --chart-2: 230, 70%, 55%;
+    --chart-3: 200, 70%, 60%;
+    --chart-4: 180, 65%, 55%;
+    --chart-5: 160, 65%, 50%;
   }
 
   .chocolate {
@@ -396,7 +392,7 @@
     animation: blob 7s infinite, float-blueberry 4s ease-in-out infinite !important;
     background: linear-gradient(135deg, hsla(280, 100%, 89%, 0.7), hsla(250, 100%, 89%, 0.4)) !important;
   }
-  
+
   .blueberry .animate-blob:nth-child(2) {
     animation-delay: 1s !important;
     background: linear-gradient(135deg, hsla(250, 100%, 89%, 0.7), hsla(280, 100%, 89%, 0.4)) !important;
@@ -409,54 +405,61 @@
   
   /* Decorative elements for Blueberry theme */
   .blueberry::before {
-    content: "";
+    content: "🍇";
     position: fixed;
     top: -100px;
     right: -50px;
     width: 300px;
     height: 300px;
     border-radius: 50%;
-    background: linear-gradient(135deg, hsla(280, 100%, 89%, 0.4), hsla(250, 100%, 89%, 0.2));
+    background: radial-gradient(circle, rgba(130, 80, 220, 0.15), rgba(130, 80, 220, 0) 70%);
     z-index: -1;
-    animation: float-blueberry 8s ease-in-out infinite;
+    animation: float-purple 20s ease-in-out infinite;
+    pointer-events: none;
+    font-size: 6rem;
+    opacity: 0.2;
   }
   
   .blueberry::after {
-    content: "";
+    content: "🫐";
     position: fixed;
     bottom: -100px;
     left: -50px;
     width: 250px;
     height: 250px;
     border-radius: 50%;
-    background: linear-gradient(135deg, hsla(250, 100%, 89%, 0.4), hsla(200, 100%, 89%, 0.2));
+    background: radial-gradient(circle, rgba(180, 120, 250, 0.1), rgba(180, 120, 250, 0) 70%);
     z-index: -1;
-    animation: float-blueberry 8s ease-in-out infinite;
-    animation-delay: 1s;
+    animation: float-purple 18s ease-in-out 2s infinite;
+    pointer-events: none;
+    font-size: 5rem;
+    opacity: 0.2;
   }
   
-  /* Emoji decorations for Blueberry theme */
+  /* Emoji decorations for Blueberry theme with grapes */
   .blueberry .blueberry-emoji-1 {
     position: fixed;
     top: 15%;
     right: 10%;
-    font-size: 2rem;
-    opacity: 0.7;
+    font-size: 3rem;
+    opacity: 0.5;
     z-index: -1;
     animation: float-blueberry 6s ease-in-out infinite;
-    content: "🦄";
+    content: "🍇";
+    pointer-events: none;
   }
   
   .blueberry .blueberry-emoji-2 {
     position: fixed;
     bottom: 15%;
     left: 10%;
-    font-size: 2rem;
-    opacity: 0.7;
+    font-size: 2.5rem;
+    opacity: 0.5;
     z-index: -1;
     animation: float-blueberry 7s ease-in-out infinite;
     animation-delay: 0.5s;
-    content: "✨";
+    content: "🫐";
+    pointer-events: none;
   }
   
   /* Add more decorative elements for Blueberry theme */
@@ -464,24 +467,26 @@
     position: fixed;
     top: 45%;
     left: 20%;
-    font-size: 1.8rem;
-    opacity: 0.6;
+    font-size: 2.2rem;
+    opacity: 0.4;
     z-index: -1;
     animation: float-blueberry 5s ease-in-out infinite;
     animation-delay: 1.5s;
-    content: "⭐";
+    content: "🍇";
+    pointer-events: none;
   }
   
   .blueberry .blueberry-emoji-4 {
     position: fixed;
     bottom: 40%;
     right: 15%;
-    font-size: 1.5rem;
-    opacity: 0.6;
+    font-size: 2rem;
+    opacity: 0.4;
     z-index: -1;
     animation: float-blueberry 8s ease-in-out infinite;
     animation-delay: 2s;
-    content: "🔮";
+    content: "🫐";
+    pointer-events: none;
   }
 }
 
@@ -944,7 +949,7 @@
 }
 
 .broccoli .broccoli-emoji-1 {
-  content: "🥦";
+  content: "🥒";
   position: fixed;
   top: 40%;
   right: 30%;
@@ -958,7 +963,7 @@
 }
 
 .broccoli .broccoli-emoji-2 {
-  content: "🥬";
+  content: "🥕";
   position: fixed;
   bottom: 35%;
   left: 25%;
@@ -982,6 +987,7 @@
   z-index: 0;
   animation: float-broccoli 12s infinite;
   animation-delay: 1s;
+  content: "🍅";
 }
 
 .broccoli .broccoli-small-2 {
@@ -994,6 +1000,7 @@
   z-index: 0;
   animation: float-broccoli 12s infinite;
   animation-delay: 3s;
+  content: "🧅";
 }
 
 .broccoli .broccoli-small-3 {
@@ -1006,6 +1013,7 @@
   z-index: 0;
   animation: float-broccoli 12s infinite;
   animation-delay: 5s;
+  content: "🌽";
 }
 
 .broccoli .broccoli-small-4 {
@@ -1018,6 +1026,33 @@
   z-index: 0;
   animation: float-broccoli 12s infinite;
   animation-delay: 7s;
+  content: "🥗";
+}
+
+.broccoli .broccoli-small-5 {
+  position: fixed;
+  top: 35%;
+  left: 25%;
+  font-size: 2rem;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 2s;
+  content: "🫑";
+}
+
+.broccoli .broccoli-small-6 {
+  position: fixed;
+  bottom: 60%;
+  right: 30%;
+  font-size: 1.5rem;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-broccoli 12s infinite;
+  animation-delay: 6s;
+  content: "🧄";
 }
 
 /* Theme-specific background gradients */
@@ -1069,18 +1104,18 @@
 
 /* แก้ไขสีใน tooltip ของ recharts ในธีม Dark */
 .dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: hsl(240, 10%, 8%) !important;
-  border-color: hsl(240, 10%, 16%) !important;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4) !important;
+  background-color: hsl(270, 15%, 13%) !important;
+  border-color: hsl(270, 15%, 20%) !important;
+  box-shadow: 0px 4px 15px rgba(150, 100, 255, 0.2) !important;
 }
 
 .dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
 .dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
-  color: hsl(210, 20%, 98%) !important;
+  color: hsl(260, 20%, 98%) !important;
 }
 
 .dark .recharts-tooltip-wrapper .font-medium {
-  color: hsl(271, 91%, 75%) !important;
+  color: hsl(260, 90%, 75%) !important;
 }
 
 .watermelon {
@@ -1454,41 +1489,74 @@
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Light theme animations and decorations */
-@keyframes float-light {
+/* Light theme animations and decorations - Update to pink theme */
+@keyframes float-pink {
   0% {
-    transform: translateY(0) rotate(0);
+    transform: translateY(0) rotate(0) scale(1);
   }
   50% {
-    transform: translateY(-10px) rotate(3deg);
+    transform: translateY(-10px) rotate(5deg) scale(1.05);
   }
   100% {
-    transform: translateY(0) rotate(0);
+    transform: translateY(0) rotate(0) scale(1);
   }
 }
 
-/* Light theme specific classes and decorative elements */
-.light .bg-gradient-to-br {
-  background: linear-gradient(135deg, hsla(210, 100%, 97%, 0.8), hsla(230, 100%, 97%, 0.8), hsla(190, 100%, 97%, 0.8)) !important;
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
-/* Animated blobs for Light theme */
+@keyframes heart-beat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(1.15);
+  }
+  20%, 40% {
+    transform: scale(0.9);
+  }
+  50%, 70% {
+    transform: scale(1.1);
+  }
+  60%, 80% {
+    transform: scale(0.95);
+  }
+}
+
+/* Light theme (Pink) specific classes and decorative elements */
+.light .bg-gradient-to-br {
+  background: linear-gradient(135deg, hsla(340, 100%, 97%, 0.8), hsla(330, 100%, 96%, 0.8), hsla(350, 100%, 96%, 0.8)) !important;
+}
+
+/* Animated blobs for Light theme (Pink) */
 .light .animate-blob {
-  animation: blob 7s infinite, float-light 4s ease-in-out infinite !important;
-  background: linear-gradient(135deg, hsla(210, 100%, 85%, 0.4), hsla(230, 100%, 85%, 0.2)) !important;
+  animation: blob 7s infinite, float-pink 4s ease-in-out infinite !important;
+  background: radial-gradient(circle at 50% 50%, hsla(335, 100%, 90%, 0.5), hsla(340, 100%, 85%, 0.3), transparent 70%) !important;
+  mix-blend-mode: soft-light;
+  border-radius: 50%;
 }
 
 .light .animate-blob:nth-child(2) {
   animation-delay: 1s !important;
-  background: linear-gradient(135deg, hsla(190, 100%, 85%, 0.4), hsla(210, 100%, 85%, 0.2)) !important;
+  background: radial-gradient(circle at 50% 50%, hsla(355, 100%, 90%, 0.5), hsla(345, 100%, 85%, 0.3), transparent 70%) !important;
+  mix-blend-mode: soft-light;
 }
 
 .light .animate-blob:nth-child(3) {
   animation-delay: 2s !important;
-  background: linear-gradient(135deg, hsla(230, 100%, 85%, 0.4), hsla(250, 100%, 85%, 0.2)) !important;
+  background: radial-gradient(circle at 50% 50%, hsla(310, 100%, 90%, 0.5), hsla(320, 100%, 85%, 0.3), transparent 70%) !important;
+  mix-blend-mode: soft-light;
 }
 
-/* Decorative elements for Light theme */
+/* Decorative elements for Light theme (Pink) */
 .light::before {
   content: "";
   position: fixed;
@@ -1497,9 +1565,11 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: linear-gradient(135deg, hsla(210, 100%, 85%, 0.3), hsla(230, 100%, 85%, 0.1));
+  background: radial-gradient(circle at center, hsla(335, 100%, 90%, 0.5), hsla(335, 100%, 90%, 0.2), transparent 70%);
   z-index: -1;
-  animation: float-light 8s ease-in-out infinite;
+  animation: float-pink 12s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
 }
 
 .light::after {
@@ -1510,75 +1580,136 @@
   width: 250px;
   height: 250px;
   border-radius: 50%;
-  background: linear-gradient(135deg, hsla(190, 100%, 85%, 0.3), hsla(210, 100%, 85%, 0.1));
+  background: radial-gradient(circle at center, hsla(355, 100%, 90%, 0.5), hsla(355, 100%, 90%, 0.2), transparent 70%);
   z-index: -1;
-  animation: float-light 8s ease-in-out infinite;
+  animation: float-pink 15s ease-in-out infinite;
   animation-delay: 1s;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
 }
 
-/* Emoji decorations for Light theme */
+/* Emoji decorations for Light theme (Pink) */
 .light .light-emoji-1 {
   position: fixed;
   top: 15%;
   right: 10%;
-  font-size: 2rem;
-  opacity: 0.5;
+  font-size: 2.5rem;
+  opacity: 0.6;
   z-index: -1;
-  animation: float-light 6s ease-in-out infinite;
-  content: "☀️";
+  animation: float-pink 6s ease-in-out infinite;
+  content: "🌸";
+  pointer-events: none;
+  filter: drop-shadow(0 0 10px rgba(255, 150, 200, 0.7));
 }
 
 .light .light-emoji-2 {
   position: fixed;
   bottom: 15%;
   left: 10%;
-  font-size: 2rem;
-  opacity: 0.5;
+  font-size: 2.2rem;
+  opacity: 0.6;
   z-index: -1;
-  animation: float-light 7s ease-in-out infinite;
-  animation-delay: 0.5s;
-  content: "✨";
+  animation: heart-beat 3s ease-in-out infinite;
+  content: "💖";
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(255, 100, 150, 0.7));
 }
 
-/* Add more decorative elements for Light theme */
+/* Add more decorative elements for Light theme (Pink) */
 .light .light-emoji-3 {
   position: fixed;
   top: 45%;
   left: 20%;
-  font-size: 1.8rem;
-  opacity: 0.4;
+  font-size: 2rem;
+  opacity: 0.5;
   z-index: -1;
-  animation: float-light 5s ease-in-out infinite;
+  animation: float-pink 5s ease-in-out infinite;
   animation-delay: 1.5s;
-  content: "⭐";
+  content: "🍰";
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(255, 180, 220, 0.6));
 }
 
 .light .light-emoji-4 {
   position: fixed;
   bottom: 40%;
   right: 15%;
-  font-size: 1.5rem;
-  opacity: 0.4;
+  font-size: 1.8rem;
+  opacity: 0.5;
   z-index: -1;
-  animation: float-light 8s ease-in-out infinite;
+  animation: float-pink 8s ease-in-out infinite;
   animation-delay: 2s;
-  content: "☁️";
+  content: "🍧";
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px rgba(255, 200, 230, 0.6));
 }
 
-/* Fix tooltip styles for Light theme */
+/* Add more cute elements */
+.light .light-sparkle-1 {
+  position: fixed;
+  top: 30%;
+  right: 30%;
+  font-size: 1rem;
+  opacity: 0.6;
+  z-index: -1;
+  animation: sparkle 3s ease-in-out infinite;
+  content: "✨";
+  pointer-events: none;
+}
+
+.light .light-sparkle-2 {
+  position: fixed;
+  bottom: 25%;
+  left: 35%;
+  font-size: 1.2rem;
+  opacity: 0.6;
+  z-index: -1;
+  animation: sparkle 2.5s ease-in-out infinite;
+  animation-delay: 0.5s;
+  content: "✨";
+  pointer-events: none;
+}
+
+.light .light-sparkle-3 {
+  position: fixed;
+  top: 60%;
+  left: 15%;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  z-index: -1;
+  animation: sparkle 4s ease-in-out infinite;
+  animation-delay: 1s;
+  content: "✨";
+  pointer-events: none;
+}
+
+.light .light-sparkle-4 {
+  position: fixed;
+  bottom: 55%;
+  right: 25%;
+  font-size: 1rem;
+  opacity: 0.6;
+  z-index: -1;
+  animation: sparkle 3.5s ease-in-out infinite;
+  animation-delay: 1.5s;
+  content: "✨";
+  pointer-events: none;
+}
+
+/* Tooltip styles for Light (Pink) theme */
 .light .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: hsl(210, 100%, 98%) !important;
-  border-color: hsl(210, 50%, 86%) !important;
-  box-shadow: 0px 4px 15px rgba(160, 200, 250, 0.25) !important;
+  background-color: hsl(340, 100%, 99%) !important;
+  border-color: hsl(340, 75%, 90%) !important;
+  box-shadow: 0px 4px 15px rgba(255, 100, 150, 0.2) !important;
 }
 
 .light .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
 .light .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
-  color: hsl(210, 40%, 20%) !important;
+  color: hsl(320, 50%, 35%) !important;
 }
 
 .light .recharts-tooltip-wrapper .font-medium {
-  color: hsl(210, 80%, 50%) !important;
+  color: hsl(335, 95%, 60%) !important;
 }
 
 /* Improved touch interaction styles */
@@ -1671,4 +1802,166 @@ html.transition *:after {
   right: -10px;
   bottom: -10px;
   z-index: -1;
+}
+
+/* Purple theme decorative elements for dark mode */
+@keyframes float-purple {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(10px, -15px) rotate(5deg) scale(1.05);
+  }
+  66% {
+    transform: translate(-10px, 8px) rotate(-3deg) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+}
+
+.dark::before {
+  content: "";
+  position: fixed;
+  top: -20vh;
+  left: -10vw;
+  width: 45vw;
+  height: 45vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(80, 130, 220, 0.15), rgba(80, 130, 220, 0) 70%);
+  z-index: -1;
+  animation: float-purple 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dark::after {
+  content: "";
+  position: fixed;
+  bottom: -20vh;
+  right: -10vw;
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120, 180, 250, 0.1), rgba(120, 180, 250, 0) 70%);
+  z-index: -1;
+  animation: float-purple 18s ease-in-out 2s infinite;
+  pointer-events: none;
+}
+
+.dark .dark-glow-1 {
+  position: fixed;
+  top: 30vh;
+  right: 20vw;
+  width: 25vw;
+  height: 25vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100, 150, 250, 0.08), rgba(100, 150, 250, 0) 70%);
+  z-index: -1;
+  animation: float-purple 15s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+
+.dark .dark-glow-2 {
+  position: fixed;
+  bottom: 35vh;
+  left: 15vw;
+  width: 30vw;
+  height: 30vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(90, 150, 235, 0.07), rgba(90, 150, 235, 0) 70%);
+  z-index: -1;
+  animation: float-purple 17s ease-in-out 3s infinite;
+  pointer-events: none;
+}
+
+/* Stars and sparkles for dark theme */
+.dark .dark-star-1 {
+  position: fixed;
+  top: 15vh;
+  right: 25vw;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 10px 2px rgba(150, 200, 255, 0.8);
+  z-index: -1;
+  animation: twinkle 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dark .dark-star-2 {
+  position: fixed;
+  top: 35vh;
+  left: 20vw;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 12px 3px rgba(120, 180, 255, 0.8);
+  z-index: -1;
+  animation: twinkle 5s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+
+.dark .dark-star-3 {
+  position: fixed;
+  bottom: 25vh;
+  right: 15vw;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 8px 2px rgba(100, 160, 230, 0.8);
+  z-index: -1;
+  animation: twinkle 3s ease-in-out 0.5s infinite;
+  pointer-events: none;
+}
+
+.dark .dark-star-4 {
+  position: fixed;
+  bottom: 40vh;
+  left: 30vw;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 12px 3px rgba(130, 200, 255, 0.8);
+  z-index: -1;
+  animation: twinkle 4.5s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+
+.dark .bg-gradient-to-br {
+  background: linear-gradient(135deg, hsl(220, 25%, 10%), hsl(220, 30%, 7%)) !important;
+}
+
+.dark .animate-blob {
+  background: radial-gradient(circle, rgba(100, 160, 240, 0.6) 0%, rgba(100, 160, 240, 0) 70%);
+  animation: blob 10s infinite ease;
+}
+
+.dark .animate-blob:nth-child(2) {
+  background: radial-gradient(circle, rgba(120, 200, 255, 0.5) 0%, rgba(120, 200, 255, 0) 70%);
+  animation-delay: 2s;
+}
+
+.dark .animate-blob:nth-child(3) {
+  background: radial-gradient(circle, rgba(80, 140, 220, 0.5) 0%, rgba(80, 140, 220, 0) 70%);
+  animation-delay: 4s;
+}
+
+/* แก้ไขสีใน tooltip ของ recharts ในธีม Dark */
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(220, 25%, 13%) !important;
+  border-color: hsl(215, 25%, 20%) !important;
+  box-shadow: 0px 4px 15px rgba(100, 150, 255, 0.2) !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name,
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+  color: hsl(210, 20%, 98%) !important;
+}
+
+.dark .recharts-tooltip-wrapper .font-medium {
+  color: hsl(217, 90%, 75%) !important;
 }
