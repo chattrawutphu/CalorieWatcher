@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { updateStoreLocale } from "@/lib/store/nutrition-store";
 
 type Locale = "en" | "th" | "ja" | "zh";
 
@@ -40,6 +41,9 @@ export const LanguageProvider = ({
     document.documentElement.lang = locale;
     
     localStorage.setItem("language", locale);
+    
+    // Update nutrition-store locale
+    updateStoreLocale(locale);
   }, [locale]);
 
   return (

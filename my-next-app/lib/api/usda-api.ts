@@ -99,21 +99,22 @@ export function convertToAppFoodItem(usdaFood: USDAFoodItem): FoodItem {
 
   // ค้นหาค่าโภชนาการหลักด้วยชื่อที่หลากหลายและ ID ที่ถูกต้อง
   // USDA nutrient IDs: 
-  // 208 = Energy (kcal)
-  // 203 = Protein (g)
-  // 205 = Carbohydrate (g)
-  // 204 = Total fat (g)
-  const calories = findNutrient(['energy', 'calorie', 'calories', 'kcal'], [208]);
-  const protein = findNutrient(['protein'], [203]);
-  const carbs = findNutrient(['carbohydrate', 'carbs', 'carbohydrates', 'total carbohydrate'], [205]);
-  const fat = findNutrient(['fat', 'total fat', 'lipid'], [204]);
+  // 1008 = Energy (kcal)
+  // 1003 = Protein (g)
+  // 1005 = Carbohydrate (g)
+  // 1004 = Total fat (g)
+  const calories = findNutrient(['energy', 'calorie', 'calories', 'kcal', 'energy (kcal)', 'energy (atwater general factors)'], [1008]);
+  const protein = findNutrient(['protein', 'protein (g)', 'crude protein'], [1003]);
+  const carbs = findNutrient(['carbohydrate', 'carbs', 'carbohydrates', 'total carbohydrate', 'carbohydrate, by difference', 'carbohydrate, total'], [1005]);
+  const fat = findNutrient(['fat', 'total fat', 'lipid', 'fat (g)', 'total lipid (fat)', 'fat, total'], [1004]);
   
   // Log values for debugging
   console.log('Nutrient values found:', { 
     name: usdaFood.description,
     calories, protein, carbs, fat,
     hasNutrients: !!usdaFood.nutrients,
-    nutrientCount: usdaFood.nutrients?.length || 0
+    nutrientCount: usdaFood.nutrients?.length || 0,
+    nutrients: usdaFood.nutrients
   });
   
   // กำหนดขนาดเสิร์ฟ
@@ -155,7 +156,7 @@ export async function searchFoods(query: string, pageNumber: number = 1, pageSiz
       pageSize: pageSize,
       pageNumber: pageNumber,
       // ร้องขอค่าโภชนาการที่สำคัญเฉพาะ
-      nutrients: [208, 203, 204, 205],
+      nutrients: [1008, 1003, 1004, 1005],
       dataType: dataType,
       sortBy: 'dataType.keyword',  // เรียงตามประเภทข้อมูล เพื่อให้ Foundation มาก่อน
       sortOrder: 'asc'

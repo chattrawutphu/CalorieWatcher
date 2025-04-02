@@ -66,19 +66,6 @@ export default memo(function MainLayout({
   useEffect(() => {
     if (status !== 'authenticated') return;
 
-    // ทำการซิงค์อัตโนมัติทุก 2 นาที และเมื่อกลับมาออนไลน์อีกครั้ง
-    const intervalId = setInterval(async () => {
-      if (navigator.onLine && canSync()) {
-        console.log('[AutoSync] Running periodic sync...');
-        try {
-          await syncData();
-          localStorage.setItem('last-sync-time', new Date().toISOString());
-        } catch (error) {
-          console.error('[AutoSync] Error during auto sync:', error);
-        }
-      }
-    }, 2 * 60 * 1000); // ทุก 2 นาที
-
     // ทำการซิงค์เมื่อกลับมาออนไลน์
     const handleOnline = async () => {
       if (canSync()) {
@@ -92,28 +79,11 @@ export default memo(function MainLayout({
       }
     };
 
-    // ตรวจจับเหตุการณ์เมื่อกลับมาที่แท็บนี้ เช่น เมื่อสลับแท็บและกลับมา
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && canSync()) {
-        // มีการสลับกลับมาที่แท็บนี้
-        console.log('[AutoSync] Tab is now visible, syncing...');
-        try {
-          await syncData();
-          localStorage.setItem('last-sync-time', new Date().toISOString());
-        } catch (error) {
-          console.error('[AutoSync] Error syncing after tab becomes visible:', error);
-        }
-      }
-    };
-
-    // คอยฟังเหตุการณ์ออนไลน์/ออฟไลน์ และ visibility change
+    // คอยฟังเหตุการณ์ออนไลน์/ออฟไลน์
     window.addEventListener('online', handleOnline);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(intervalId);
       window.removeEventListener('online', handleOnline);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [status, syncData, canSync]);
 
@@ -198,11 +168,9 @@ export default memo(function MainLayout({
         </div>
 
         <main className="flex-1 container px-2 pt-safe relative z-10">
-          <div className="max-w-md mx-auto pb-12">
             <PageTransition>
               {children}
             </PageTransition>
-          </div>
         </main>
         
         {/* รอให้เนื้อหาหลักพร้อมก่อนแสดง MobileNav */}

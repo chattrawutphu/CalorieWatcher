@@ -491,7 +491,7 @@ export default function SettingsPage() {
   
   return (
     <motion.div
-      className="max-w-md mx-auto min-h-screen pb-24"
+      className="max-w-md mx-auto min-h-screen pb-32"
       variants={container}
       initial="hidden"
       animate="show"

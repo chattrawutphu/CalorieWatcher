@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, memo, useRef } from "react";
-import { motion, PanInfo, useMotionValue, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, X, Apple, Pencil, Scan, Clock, Bot, Clipboard, ChevronRight, ArrowLeft } from "lucide-react";
@@ -18,8 +18,48 @@ import BarcodeScanner from "./barcode-scanner";
 import RecentFoods from "./recent-foods";
 import CustomFood from "./custom-food";
 
-// Animations
-import { container, item, jellyItem } from "./animations";
+// Animation variants
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.2 }
+  },
+  exit: { 
+    opacity: 0,
+    transition: { duration: 0.2 }
+  }
+};
+
+const bottomSheetVariants = {
+  hidden: { 
+    y: "100%",
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 300,
+      mass: 0.8
+    }
+  },
+  visible: { 
+    y: 0,
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 300,
+      mass: 0.8
+    }
+  },
+  exit: { 
+    y: "100%",
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 300,
+      mass: 0.8
+    }
+  }
+};
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -27,11 +67,11 @@ interface BottomSheetProps {
   onMealAdded: (food?: FoodItem | FoodTemplate) => void;
 }
 
-// Optimisation du BottomSheet pour de meilleures performances
 const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: BottomSheetProps) {
   const router = useRouter();
   const { locale } = useLanguage();
   const t = aiAssistantTranslations[locale];
+  const dragControls = useDragControls();
   
   // Access nutrition store
   const { 
@@ -44,67 +84,69 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     updateFoodTemplate
   } = useNutritionStore();
   
-  // State management for different sections
+  // State management
   const [currentSection, setCurrentSection] = useState<
     "main" | "common" | "custom" | "barcode" | "recent" | "detail" | "edit"
   >("main");
   
-  // State for selected food
   const [selectedFood, setSelectedFood] = useState<FoodItem | FoodTemplate | null>(null);
-  
-  // State to store previous section for back navigation
   const [previousSection, setPreviousSection] = useState<string>("main");
+  const [isVisible, setIsVisible] = useState(false);
+  const bottomSheetRef = useRef<HTMLDivElement>(null);
 
-  // Prevent scroll when modal is open and reset state on close
+  // Handle visibility state
   useEffect(() => {
     if (isOpen) {
-      // ลบการใช้ overflow-hidden เพื่อป้องกันพื้นที่ด้านล่างเพิ่ม
-      document.body.classList.add('overflow-hidden');
+      setIsVisible(true);
+      document.body.style.overflow = 'hidden';
+      document.documentElement.classList.add('overflow-hidden');
     } else {
-      document.body.classList.remove('overflow-hidden');
-      // Reset state on close
-      setCurrentSection("main");
-      setSelectedFood(null);
+      document.body.style.overflow = '';
+      document.documentElement.classList.remove('overflow-hidden');
     }
     
     return () => {
-      document.body.classList.remove('overflow-hidden');
+      document.body.style.overflow = '';
+      document.documentElement.classList.remove('overflow-hidden');
     };
   }, [isOpen]);
-  
-  // Navigate to a section with history tracking
+
+  // Handle close with animation
+  const handleClose = useCallback(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => {
+      onClose();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  // Handle back navigation
+  const handleBackNavigation = useCallback(() => {
+    if (currentSection === "edit" && previousSection === "detail") {
+      setCurrentSection("detail");
+    } else if (currentSection === "detail" && ["common", "custom", "barcode", "recent"].includes(previousSection)) {
+      setCurrentSection(previousSection as typeof currentSection);
+    } else {
+      setCurrentSection("main");
+    }
+  }, [currentSection, previousSection]);
+
+  // Navigate to a section
   const navigateToSection = useCallback((section: typeof currentSection) => {
     setPreviousSection(currentSection);
     setCurrentSection(section);
   }, [currentSection]);
 
-  // Handle back navigation
-  const handleBackNavigation = useCallback(() => {
-    if (currentSection === "edit" && previousSection === "detail") {
-      // Going back from edit to detail
-      setCurrentSection("detail");
-    } else if (currentSection === "detail" && ["common", "custom", "barcode", "recent"].includes(previousSection)) {
-      // Going back from detail to its source
-      setCurrentSection(previousSection as typeof currentSection);
-    } else {
-      // Default back to main
-      setCurrentSection("main");
-    }
-  }, [currentSection, previousSection]);
-
   // Handle adding a food
   const handleAddFood = useCallback((food: MealFoodItem, quantity: number, mealType: string) => {
     if (!food) return;
     
-    // Convert to MealFoodItem
     let mealFoodItem: MealFoodItem;
     
-    // If it's a template, create meal food from template
     if ('isTemplate' in food && food.isTemplate) {
       const templateId = food.id;
       const createdMealFood = createMealItemFromTemplate(templateId);
       
-      // If creation failed, create from scratch as fallback
       if (!createdMealFood) {
         mealFoodItem = {
           id: crypto.randomUUID(),
@@ -144,10 +186,10 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
     
     addMeal(meal);
     onMealAdded(food);
-    onClose();
-  }, [addMeal, onClose, onMealAdded, currentDate, createMealItemFromTemplate]);
+    handleClose();
+  }, [addMeal, handleClose, onMealAdded, currentDate, createMealItemFromTemplate]);
 
-  // Handle food edit request (transition to edit mode)
+  // Handle food edit
   const handleEditFood = useCallback((food: FoodItem | FoodTemplate) => {
     setSelectedFood(food);
     navigateToSection("edit");
@@ -157,13 +199,10 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
   const handleSaveEdit = useCallback((updatedFood: FoodItem) => {
     setSelectedFood(updatedFood);
     
-    // ตรวจสอบว่ามี id อยู่แล้วหรือไม่ ถ้ามีให้ใช้ updateFoodTemplate แทน addFavoriteFood
     if (updatedFood.id) {
       if ('isTemplate' in updatedFood && updatedFood.isTemplate) {
-        // ถ้าเป็น template อยู่แล้ว ให้อัพเดตตรงๆ
         updateFoodTemplate(updatedFood.id, updatedFood);
       } else {
-        // ถ้าไม่ใช่ template ให้แปลงเป็น template ก่อนอัพเดต
         const template: FoodTemplate = {
           ...updatedFood,
           isTemplate: true,
@@ -173,55 +212,74 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
         updateFoodTemplate(updatedFood.id, template);
       }
     } else {
-      // ถ้ายังไม่มี id ให้สร้างใหม่
       addFavoriteFood(updatedFood);
     }
     
-    // Go back to detail view
     setCurrentSection("detail");
   }, [addFavoriteFood, updateFoodTemplate]);
 
+  // Add drag gesture handling with snap back
+  const handleDragEnd = useCallback((event: any, info: any) => {
+    const shouldClose = info.velocity.y > 300 || info.offset.y > 200;
+    if (shouldClose) {
+      handleClose();
+    }
+  }, [handleClose]);
+
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <AnimatePresence mode="wait">
+      {isVisible && (
         <>
-          {/* Backdrop with fade animation */}
+          {/* Backdrop with blur effect */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 max-w-md mx-auto bg-black/20"
+            key="backdrop"
+            variants={overlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={handleClose}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm touch-none"
           />
           
-          {/* Main container with slide animations */}
+          {/* Bottom Sheet Container */}
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ 
-              type: "spring",
-              stiffness: 300,
-              damping: 30
-            }}
-            className="fixed inset-0 max-w-md mx-auto pb-12 z-50 flex flex-col bg-[hsl(var(--background))] overflow-y-auto overscroll-contain"
+            key="bottom-sheet"
+            ref={bottomSheetRef}
+            className="fixed inset-0 max-w-md mx-auto z-50 flex flex-col bg-[hsl(var(--background))] rounded-t-2xl h-full border-t border-[hsl(var(--border))] shadow-xl"
+            variants={bottomSheetVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            drag="y"
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.4}
+            dragMomentum={false}
+            onDragEnd={handleDragEnd}
+            dragListener={false}
           >
-            {/* Header - Fixed position to prevent scroll issues */}
-            <div className="sticky top-0 z-10 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe">
-              {/* Header with title and close button */}
-              <div className="py-4 flex justify-between items-center">
-                {/* Title with icon and back button */}
+            {/* Header - Draggable Area */}
+            <div
+              className="bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] pt-safe touch-none"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="flex justify-center py-2">
+                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
+              </div>
+              <div className="py-4 flex items-center px-4">
                 <div className="flex items-center gap-2">
-                  {/* Always show back button for consistent UI */}
-                  <button 
-                    onClick={currentSection === "main" ? onClose : handleBackNavigation} 
-                    className="p-1 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </button>
+                  {currentSection !== "main" && (
+                    <motion.button 
+                      onClick={handleBackNavigation} 
+                      className="p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors touch-manipulation"
+                      whileTap={{ scale: 0.95 }}
+                      disabled={!isVisible}
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </motion.button>
+                  )}
                   
-                  {/* Title based on section */}
-                  <h2 className="text-2xl font-semibold">
+                  <h2 className="text-xl font-semibold">
                     {currentSection === "main" && "Add Food"}
                     {currentSection === "common" && t.mobileNav.commonFoods.title}
                     {currentSection === "custom" && t.mobileNav.customFood.title}
@@ -231,18 +289,8 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                     {currentSection === "edit" && (t.mobileNav.foodDetail.editFood || "Edit Food")}
                   </h2>
                 </div>
-                
-                {/* Close button */}
-                <button
-                  onClick={onClose}
-                  className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-[hsl(var(--muted))/0.15] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))/0.3] hover:text-[hsl(var(--foreground))] transition-all"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
               </div>
               
-              {/* Subtitle for main section only */}
               {currentSection === "main" && (
                 <div className="px-6 pb-3">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">Choose an option to add food</p>
@@ -250,20 +298,25 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
               )}
             </div>
             
-            {/* Scrolling content container - Touch events will be contained within this div */}
-            <div className="flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <div className="">
-                {/* Content based on current section */}
+            {/* Content */}
+            <div 
+              className="flex-1 overflow-y-auto overscroll-none touch-auto" 
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain'
+              }}
+            >
+              <div className="px-4 pb-24">
                 {currentSection === "main" && (
                   <div className="space-y-6">
-                    {/* AI Assistant Button */}
+                    {/* AI Assistant Button with enhanced styling */}
                     <div>
                       <Button
                         onClick={() => {
                           router.push("/add/ai");
-                          onClose();
+                          handleClose();
                         }}
-                        className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg"
+                        className="w-full h-auto sm:p-4 p-3 sm:mb-6 mb-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] hover:opacity-90 transition-opacity sm:rounded-xl rounded-lg shadow-lg"
                       >
                         <div className="flex items-center gap-4">
                           <div className="sm:w-12 sm:h-12 w-10 h-10 sm:rounded-2xl rounded-xl bg-white/20 flex items-center justify-center">
@@ -277,44 +330,41 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                       </Button>
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Quick Actions with enhanced styling */}
                     <div className="space-y-3">
                       <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] sm:mb-3 mb-2">
-                        {t.mobileNav.common.quickActions}
+                        {t.mobileNav.common.quickActions || "Quick Actions"}
                       </h3>
-                      
-                      <QuickActionButton
-                        icon={<Apple className="h-6 w-6" />}
-                        label={t.mobileNav.commonFoods.title}
-                        description={t.mobileNav.common.commonFoodsDesc}
-                        onClick={() => setCurrentSection("common")}
-                      />
-
-                      <QuickActionButton
-                        icon={<Pencil className="h-6 w-6" />}
-                        label={t.mobileNav.customFood.title}
-                        description={t.mobileNav.common.customFoodDesc}
-                        onClick={() => setCurrentSection("custom")}
-                      />
-
-                      <QuickActionButton
-                        icon={<Scan className="h-6 w-6" />}
-                        label={t.mobileNav.barcodeScanner.title}
-                        description={t.mobileNav.common.barcodeScannerDesc}
-                        onClick={() => setCurrentSection("barcode")}
-                      />
-
-                      <QuickActionButton
-                        icon={<Clock className="h-6 w-6" />}
-                        label={t.mobileNav.recentFoods.title}
-                        description={t.mobileNav.common.recentFoodsDesc}
-                        onClick={() => setCurrentSection("recent")}
-                      />
+                      <div className="space-y-3">
+                        <QuickActionButton
+                          icon={<Apple className="h-6 w-6" />}
+                          label={t.mobileNav.commonFoods.title || "Common Foods"}
+                          description={t.mobileNav.common.commonFoodsDesc || "Choose from frequently used items"}
+                          onClick={() => setCurrentSection("common")}
+                        />
+                        <QuickActionButton
+                          icon={<Pencil className="h-6 w-6" />}
+                          label={t.mobileNav.customFood.title || "Custom Food"}
+                          description={t.mobileNav.common.customFoodDesc || "Create your own food entry"}
+                          onClick={() => setCurrentSection("custom")}
+                        />
+                        <QuickActionButton
+                          icon={<Scan className="h-6 w-6" />}
+                          label={t.mobileNav.barcodeScanner.title || "Barcode Scanner"}
+                          description={t.mobileNav.common.barcodeScannerDesc || "Get nutrition info from barcode"}
+                          onClick={() => setCurrentSection("barcode")}
+                        />
+                        <QuickActionButton
+                          icon={<Clock className="h-6 w-6" />}
+                          label={t.mobileNav.recentFoods.title || "Recent Foods"}
+                          description={t.mobileNav.common.recentFoodsDesc || "View your recently added foods"}
+                          onClick={() => setCurrentSection("recent")}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
                 
-                {/* Common Foods Section */}
                 {currentSection === "common" && (
                   <CommonFoods 
                     onSelectFood={(food) => {
@@ -325,7 +375,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                   />
                 )}
                 
-                {/* Custom Foods Form */}
                 {currentSection === "custom" && (
                   <CustomFood 
                     onAdd={(food) => {
@@ -336,7 +385,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                   />
                 )}
                 
-                {/* Barcode Scanner */}
                 {currentSection === "barcode" && (
                   <BarcodeScanner 
                     onFoodFound={(food) => {
@@ -347,7 +395,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                   />
                 )}
                 
-                {/* Recent Foods */}
                 {currentSection === "recent" && (
                   <RecentFoods 
                     onSelectFood={(food) => {
@@ -358,7 +405,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                   />
                 )}
                 
-                {/* Food Detail */}
                 {currentSection === "detail" && selectedFood && (
                   <FoodDetail 
                     food={selectedFood}
@@ -368,7 +414,6 @@ const BottomSheet = memo(function BottomSheet({ isOpen, onClose, onMealAdded }: 
                   />
                 )}
                 
-                {/* Food Edit */}
                 {currentSection === "edit" && selectedFood && (
                   <FoodEdit
                     food={selectedFood}

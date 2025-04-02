@@ -2,9 +2,70 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
+import { nutritionStoreTranslations } from '@/lib/translations/nutrition-store';
+import { useLanguage } from '@/components/providers/language-provider';
+
+// Add type definition for translations
+type TranslationSection = {
+  [key: string]: string;
+};
+
+type TranslationType = {
+  [key: string]: TranslationSection;
+};
+
+// Global language accessor
+let currentLocale = 'en';
+try {
+  // Try to get language from localStorage first
+  if (typeof window !== 'undefined') {
+    currentLocale = localStorage.getItem('language') || 'en';
+  }
+} catch (error) {
+  console.error('Failed to access localStorage for language setting:', error);
+}
+
+// Helper function to update locale whenever it changes
+export const updateStoreLocale = (locale: string) => {
+  currentLocale = locale;
+};
+
+// Get translations based on current locale
+const getT = () => {
+  return nutritionStoreTranslations[currentLocale as keyof typeof nutritionStoreTranslations] || nutritionStoreTranslations.en;
+};
+
+// Format string with placeholders
+const formatString = (str: string, params: Record<string, string | number>) => {
+  return str.replace(/\{(\w+)\}/g, (_, key) => params[key]?.toString() || '');
+};
 
 // Helper function to show toast notifications
-const showToast = (title: string, description?: string, variant: 'default' | 'destructive' = 'default') => {
+const showToast = (
+  titleKey: string, 
+  descriptionKey?: string, 
+  params: Record<string, string | number> = {},
+  variant: 'default' | 'destructive' = 'default'
+) => {
+  const t = getT() as TranslationType;
+  
+  // Navigate the nested structure to find the translation
+  const [section, key] = titleKey.split('.');
+  if (!section || !key || !t[section] || !t[section][key]) {
+    console.error(`Translation key not found: ${titleKey}`);
+    return toast({ title: titleKey, variant, duration: 3000 });
+  }
+  
+  const title = formatString(t[section][key], params);
+  
+  let description;
+  if (descriptionKey) {
+    const [descSection, descKey] = descriptionKey.split('.');
+    if (descSection && descKey && t[descSection] && t[descSection][descKey]) {
+      description = formatString(t[descSection][descKey], params);
+    }
+  }
+  
   toast({
     title,
     description,
@@ -284,8 +345,9 @@ export const useNutritionStore = create<NutritionState>()(
             
             // แสดง Toast แจ้งเตือนว่าไม่มีการเชื่อมต่ออินเทอร์เน็ต
             showToast(
-              'ไม่สามารถซิงค์ข้อมูลได้',
-              'ไม่พบการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง',
+              'sync.noInternet',
+              'sync.noInternetDesc',
+              {},
               'destructive'
             );
             
@@ -330,8 +392,9 @@ export const useNutritionStore = create<NutritionState>()(
               
               // แสดง Toast แจ้งเตือนว่าต้องล็อกอินใหม่
               showToast(
-                'กรุณาล็อกอินใหม่',
-                'เซสชันของคุณหมดอายุ กรุณาล็อกอินเพื่อซิงค์ข้อมูล',
+                'sync.authError',
+                'sync.authErrorDesc',
+                {},
                 'destructive'
               );
               
@@ -343,8 +406,9 @@ export const useNutritionStore = create<NutritionState>()(
               
               // แสดง Toast แจ้งเตือนว่าเกิดข้อผิดพลาดในการซิงค์
               showToast(
-                'ซิงค์ข้อมูลไม่สำเร็จ',
-                'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์',
+                'sync.syncFailed',
+                'sync.syncFailedDesc',
+                {},
                 'destructive'
               );
               
@@ -356,8 +420,9 @@ export const useNutritionStore = create<NutritionState>()(
             // ตรวจสอบว่าข้อมูลมี data หรือไม่
             if (!result.success) {
               showToast(
-                'ซิงค์ข้อมูลไม่สำเร็จ',
-                result.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ',
+                'sync.syncFailed',
+                'sync.syncFailedDesc',
+                {},
                 'destructive'
               );
               
@@ -410,8 +475,10 @@ export const useNutritionStore = create<NutritionState>()(
               
               // แสดง Toast แจ้งเตือนว่าได้รับข้อมูลใหม่จากเซิร์ฟเวอร์
               showToast(
-                'อัพเดทข้อมูลสำเร็จ',
-                'รับข้อมูลใหม่จากเซิร์ฟเวอร์เรียบร้อยแล้ว'
+                'sync.syncSuccess',
+                'sync.syncSuccessDesc',
+                {},
+                'default'
               );
             }
             
@@ -447,8 +514,9 @@ export const useNutritionStore = create<NutritionState>()(
                 
                 // แสดง Toast แจ้งเตือนว่าต้องล็อกอินใหม่
                 showToast(
-                  'กรุณาล็อกอินใหม่',
-                  'เซสชันของคุณหมดอายุ กรุณาล็อกอินเพื่อซิงค์ข้อมูล',
+                  'sync.authError',
+                  'sync.authErrorDesc',
+                  {},
                   'destructive'
                 );
                 
@@ -460,8 +528,9 @@ export const useNutritionStore = create<NutritionState>()(
                 
                 // แสดง Toast แจ้งเตือนว่าเกิดข้อผิดพลาดในการอัพเดทเซิร์ฟเวอร์
                 showToast(
-                  'อัพเดทเซิร์ฟเวอร์ไม่สำเร็จ',
-                  'ไม่สามารถอัพเดทข้อมูลไปยังเซิร์ฟเวอร์ได้',
+                  'sync.updateFailed',
+                  'sync.updateFailedDesc',
+                  {},
                   'destructive'
                 );
                 
@@ -477,8 +546,10 @@ export const useNutritionStore = create<NutritionState>()(
               
               // แสดง Toast แจ้งเตือนว่าอัพเดทเซิร์ฟเวอร์สำเร็จ
               showToast(
-                'อัพเดทข้อมูลสำเร็จ',
-                'บันทึกข้อมูลไปยังเซิร์ฟเวอร์เรียบร้อยแล้ว'
+                'sync.uploadSuccess',
+                'sync.uploadSuccessDesc',
+                {},
+                'default'
               );
             }
             
@@ -492,8 +563,10 @@ export const useNutritionStore = create<NutritionState>()(
             if (!needsLocalUpdate && !needsServerUpdate) {
               // แสดง Toast แจ้งเตือนว่าข้อมูลเป็นปัจจุบันแล้ว
               showToast(
-                'ข้อมูลเป็นปัจจุบัน',
-                'ข้อมูลของคุณเป็นปัจจุบันแล้ว'
+                'sync.upToDate',
+                'sync.upToDateDesc',
+                {},
+                'default'
               );
             }
           } catch (fetchError) {
@@ -505,8 +578,9 @@ export const useNutritionStore = create<NutritionState>()(
               
               // แสดง Toast แจ้งเตือนว่าการเชื่อมต่อหมดเวลา
               showToast(
-                'การเชื่อมต่อหมดเวลา',
-                'การเชื่อมต่อกับเซิร์ฟเวอร์ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง',
+                'sync.timeout',
+                'sync.timeoutDesc',
+                {},
                 'destructive'
               );
             } else {
@@ -523,8 +597,9 @@ export const useNutritionStore = create<NutritionState>()(
           
           // แสดง Toast แจ้งเตือนว่าเกิดข้อผิดพลาดในการซิงค์
           showToast(
-            'ซิงค์ข้อมูลไม่สำเร็จ',
-            'เกิดข้อผิดพลาดระหว่างการซิงค์ข้อมูล กรุณาลองใหม่อีกครั้ง',
+            'sync.syncFailed',
+            'sync.syncFailedDesc',
+            {},
             'destructive'
           );
         }
@@ -874,13 +949,20 @@ export const useNutritionStore = create<NutritionState>()(
         
         // แสดง Toast เมื่อเพิ่มมื้ออาหารสำเร็จ
         showToast(
-          'บันทึกมื้ออาหารสำเร็จ',
-          `เพิ่ม ${meal.foodItem.name} (${Math.round(meal.foodItem.calories * meal.quantity)} แคลอรี่) แล้ว`
+          'meal.addSuccess',
+          'meal.addSuccessDesc',
+          {
+            name: meal.foodItem.name,
+            calories: Math.round(meal.foodItem.calories * meal.quantity)
+          }
         );
         
-        // เรียกใช้ syncData หลังจากเพิ่มมื้ออาหารเสร็จแล้ว (ทำงานในพื้นหลัง)
+        // ซิงค์ข้อมูลในพื้นหลัง
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after adding meal failed:', error));
+          }
         }, 500);
       },
       
@@ -942,14 +1024,21 @@ export const useNutritionStore = create<NutritionState>()(
         // แสดง Toast เมื่อลบมื้ออาหารสำเร็จ
         if (mealName) {
           showToast(
-            'ลบมื้ออาหารสำเร็จ',
-            `ลบ ${mealName} (${mealCalories} แคลอรี่) แล้ว`
+            'meal.removeSuccess',
+            'meal.removeSuccessDesc',
+            {
+              name: mealName,
+              calories: mealCalories
+            }
           );
         }
         
         // ซิงค์ข้อมูลอัตโนมัติหลังจากลบ
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync after removing meal failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after removing meal failed:', error));
+          }
         }, 500);
       },
       
@@ -1030,13 +1119,16 @@ export const useNutritionStore = create<NutritionState>()(
         
         // แสดง Toast เมื่ออัพเดทเป้าหมายสำเร็จ
         showToast(
-          'บันทึกเป้าหมายสำเร็จ',
-          'เป้าหมายโภชนาการของคุณได้รับการอัพเดทแล้ว'
+          'goals.updateSuccess',
+          'goals.updateSuccessDesc'
         );
         
         // ซิงค์ข้อมูลในพื้นหลัง
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync failed:', error));
+          }
         }, 500);
       },
       
@@ -1076,15 +1168,18 @@ export const useNutritionStore = create<NutritionState>()(
           };
         });
         
-        // แสดง toast เมื่อบันทึกเรียบร้อย
+        // แสดง Toast แจ้งเตือนเมื่อบันทึกอารมณ์สำเร็จ
         showToast(
-          'บันทึกอารมณ์สำเร็จ', 
-          'บันทึกอารมณ์และบันทึกของคุณเรียบร้อยแล้ว'
+          'mood.updateSuccess',
+          'mood.updateSuccessDesc'
         );
         
-        // ซิงค์ข้อมูลอัตโนมัติหลังจากบันทึก
+        // ซิงค์ข้อมูลหลังจากอัพเดทอารมณ์
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync after mood update failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after mood update failed:', error));
+          }
         }, 500);
       },
       
@@ -1154,19 +1249,30 @@ export const useNutritionStore = create<NutritionState>()(
         
         if (percentage >= 100) {
           showToast(
-            '🎉 เป้าหมายการดื่มน้ำสำเร็จ!', 
-            `คุณดื่มน้ำครบ ${waterGoal} มล. แล้ววันนี้`
+            'water.goalComplete', 
+            'water.goalCompleteDesc',
+            {
+              goal: waterGoal
+            }
           );
         } else {
           showToast(
-            'เพิ่มการดื่มน้ำสำเร็จ', 
-            `${currentWaterIntake} จาก ${waterGoal} มล. (${percentage}%)`
+            'water.addSuccess', 
+            'water.addSuccessDesc',
+            {
+              current: currentWaterIntake,
+              goal: waterGoal,
+              percentage: percentage
+            }
           );
         }
         
-        // ซิงค์ข้อมูลอัตโนมัติหลังจากบันทึก
+        // ซิงค์ข้อมูลอัตโนมัติหลังจากเพิ่มน้ำดื่ม
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync after water intake failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after water intake failed:', error));
+          }
         }, 500);
       },
       
@@ -1201,13 +1307,16 @@ export const useNutritionStore = create<NutritionState>()(
         
         // แสดง toast การรีเซ็ต
         showToast(
-          'รีเซ็ตการดื่มน้ำ', 
-          'รีเซ็ตการดื่มน้ำของวันนี้เรียบร้อยแล้ว'
+          'water.reset', 
+          'water.resetDesc'
         );
         
         // ซิงค์ข้อมูลอัตโนมัติหลังจากรีเซ็ต
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync after water reset failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after water reset failed:', error));
+          }
         }, 500);
       },
       
@@ -1273,15 +1382,21 @@ export const useNutritionStore = create<NutritionState>()(
         
         set({ weightHistory: updatedWeightHistory, dailyLogs: updatedDailyLogs });
         
-        // ซิงค์ข้อมูลอัตโนมัติหลังจากบันทึก
+        // ซิงค์ข้อมูลอัตโนมัติหลังจากบันทึกน้ำหนัก
         setTimeout(() => {
-          get().syncData().catch(error => console.error('Background sync after weight entry failed:', error));
+          // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่ก่อนที่จะทำการซิงค์
+          if (get().canSync()) {
+            get().syncData().catch(error => console.error('Background sync after weight entry failed:', error));
+          }
         }, 500);
         
         // แสดง toast เมื่อบันทึกเรียบร้อย
         showToast(
-          'บันทึกน้ำหนักสำเร็จ', 
-          `บันทึกน้ำหนัก ${entry.weight} กก. เรียบร้อยแล้ว`
+          'weight.addSuccess', 
+          'weight.addSuccessDesc',
+          {
+            weight: entry.weight
+          }
         );
       },
       
@@ -1294,8 +1409,9 @@ export const useNutritionStore = create<NutritionState>()(
         } catch (error) {
           console.error('Failed to update weight entry:', error);
           showToast(
-            'เกิดข้อผิดพลาด', 
-            'ไม่สามารถบันทึกน้ำหนักได้ โปรดลองอีกครั้ง',
+            'sync.syncFailed', 
+            'sync.syncFailedDesc',
+            {},
             'destructive'
           );
         }
@@ -1358,7 +1474,10 @@ export const useNutritionStore = create<NutritionState>()(
         }));
         
         // แสดง toast แจ้งเตือน
-        showToast('ล้างข้อมูลอาหารวันนี้เรียบร้อย', 'ข้อมูลน้ำและสุขภาพอื่นๆ ยังคงอยู่');
+        showToast(
+          'data.clearSuccess', 
+          'data.clearSuccessDesc'
+        );
       }
     }),
     {

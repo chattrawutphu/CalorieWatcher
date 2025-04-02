@@ -81,7 +81,16 @@ const FoodDetail = ({ food, onBack, onAddFood, onEdit }: FoodDetailProps) => {
     // แยกปริมาณและหน่วยจาก serving size
     try {
       const currentFood = matchingCustomFood || food;
-      const servingSizeParts = currentFood.servingSize.split(' ');
+      
+      // ถ้า servingSize เป็นตัวเลข ให้ใช้ค่านั้นโดยตรง
+      if (typeof currentFood.servingSize === 'number') {
+        setQuantity(currentFood.servingSize);
+        setQuantityUnit('serving');
+        return;
+      }
+      
+      // ถ้าเป็น string ให้พยายามแยกตัวเลขออกมา
+      const servingSizeParts = String(currentFood.servingSize).split(' ');
       if (servingSizeParts.length >= 2) {
         const amount = parseFloat(servingSizeParts[0]);
         if (!isNaN(amount)) {
@@ -97,6 +106,9 @@ const FoodDetail = ({ food, onBack, onAddFood, onEdit }: FoodDetailProps) => {
       }
     } catch (e) {
       console.error("Error parsing serving size:", e);
+      // Set default values if parsing fails
+      setQuantity(1);
+      setQuantityUnit('serving');
     }
   }, [food, matchingCustomFood]);
 
@@ -184,8 +196,13 @@ const FoodDetail = ({ food, onBack, onAddFood, onEdit }: FoodDetailProps) => {
   
   // คำนวณแคลอรี่ตามปริมาณที่เลือก
   const calculateCalories = () => {
-    // ดึงปริมาณจาก serving size เดิม
-    const servingSizeParts = food.servingSize.split(' ');
+    // ถ้า servingSize เป็นตัวเลข ให้ใช้ค่านั้นโดยตรง
+    if (typeof food.servingSize === 'number') {
+      return formatNumber((displayFood.calories / food.servingSize) * quantity);
+    }
+    
+    // ถ้าเป็น string ให้พยายามแยกตัวเลขออกมา
+    const servingSizeParts = String(food.servingSize).split(' ');
     if (servingSizeParts.length >= 2) {
       const originalAmount = parseFloat(servingSizeParts[0]);
       if (!isNaN(originalAmount) && originalAmount > 0) {

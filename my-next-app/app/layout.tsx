@@ -166,6 +166,10 @@ export default function RootLayout({
                 <div className="light-sparkle-2"></div>
                 <div className="light-sparkle-3"></div>
                 <div className="light-sparkle-4"></div>
+                <div className="light-cloud-1"></div>
+                <div className="light-cloud-2"></div>
+                <div className="light-cloud-3"></div>
+                <div className="light-cloud-4"></div>
                 <div className="blueberry-emoji-1"></div>
                 <div className="blueberry-emoji-2"></div>
                 <div className="blueberry-emoji-3"></div>

@@ -99,6 +99,40 @@ export const MobileNav = memo(function MobileNav() {
     }
   }, []);
 
+  // Handle mouse click events
+  const handleClick = useCallback((href: string) => {
+    if (href === "#") {
+      if (isAddOpen) {
+        // ปิด sheet ด้วย animation
+        const bottomSheet = document.querySelector(".bottom-sheet-container");
+        if (bottomSheet) {
+          // เพิ่ม class เพื่อให้เกิด animation slide down
+          bottomSheet.classList.add("exit-animation");
+          // รอให้ animation เล่นจบก่อนปิด sheet
+          setTimeout(() => {
+            setIsAddOpen(false);
+          }, 300);
+        } else {
+          setIsAddOpen(false);
+        }
+      } else {
+        setIsAddOpen(true);
+      }
+    } else if (href !== pathname) {
+      router.push(href);
+    }
+  }, [pathname, router, isAddOpen]);
+
+  // Handle mouse down for animation
+  const handleMouseDown = useCallback((href: string) => {
+    setAnimatingButton(href);
+  }, []);
+
+  // Handle mouse up to reset animation
+  const handleMouseUp = useCallback(() => {
+    setAnimatingButton(null);
+  }, []);
+
   const handleTouchEnd = useCallback((e: React.TouchEvent, href: string) => {
     e.preventDefault();
     setIsTouching(false);
@@ -117,12 +151,27 @@ export const MobileNav = memo(function MobileNav() {
 
     if (touchDuration < 300 && movement < 10) {
       if (href === "#") {
-        setIsAddOpen(prev => !prev);
+        if (isAddOpen) {
+          // ปิด sheet ด้วย animation
+          const bottomSheet = document.querySelector(".bottom-sheet-container");
+          if (bottomSheet) {
+            // เพิ่ม class เพื่อให้เกิด animation slide down
+            bottomSheet.classList.add("exit-animation");
+            // รอให้ animation เล่นจบก่อนปิด sheet
+            setTimeout(() => {
+              setIsAddOpen(false);
+            }, 300);
+          } else {
+            setIsAddOpen(false);
+          }
+        } else {
+          setIsAddOpen(true);
+        }
       } else if (href !== pathname) {
         router.push(href);
       }
     }
-  }, [touchStartTime, touchStartPos, pathname, router]);
+  }, [touchStartTime, touchStartPos, pathname, router, isAddOpen]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
@@ -160,6 +209,10 @@ export const MobileNav = memo(function MobileNav() {
               onTouchStart={(e) => handleTouchStart(e, item.href)}
               onTouchEnd={(e) => handleTouchEnd(e, item.href)}
               onTouchMove={handleTouchMove}
+              onClick={() => handleClick(item.href)}
+              onMouseDown={() => handleMouseDown(item.href)}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
               className="flex-1 flex flex-col items-center justify-center cursor-pointer py-1 -my-2 max-w-[80px] touch-manipulation"
             >
               <div className="sm:-mt-6 -mt-5">
@@ -184,6 +237,10 @@ export const MobileNav = memo(function MobileNav() {
                 onTouchStart={(e) => handleTouchStart(e, item.href)}
                 onTouchEnd={(e) => handleTouchEnd(e, item.href)}
                 onTouchMove={handleTouchMove}
+                onClick={() => handleClick(item.href)}
+                onMouseDown={() => handleMouseDown(item.href)}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
                 className="flex flex-col items-center w-full h-full px-1 py-3 -my-2 cursor-pointer max-w-[70px] touch-manipulation"
                 role="button"
                 aria-label={t.mobileNav.navigation[item.labelKey]}
@@ -222,7 +279,7 @@ export const MobileNav = memo(function MobileNav() {
         </motion.div>
       );
     });
-  }, [pathname, animatingButton, t, locale, isAddOpen, handleTouchStart, handleTouchEnd, handleTouchMove]);
+  }, [pathname, animatingButton, t, locale, isAddOpen, handleTouchStart, handleTouchEnd, handleTouchMove, handleClick, handleMouseDown, handleMouseUp]);
   
   // ปรับแต่งให้ component นี้มีประสิทธิภาพมากขึ้น
   return (

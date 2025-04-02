@@ -407,59 +407,47 @@
   .blueberry::before {
     content: "🍇";
     position: fixed;
-    top: -100px;
-    right: -50px;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(130, 80, 220, 0.15), rgba(130, 80, 220, 0) 70%);
+    top: 15vh;
+    left: 10vw;
+    font-size: 5rem;
+    opacity: 0.25;
     z-index: -1;
-    animation: float-purple 20s ease-in-out infinite;
-    pointer-events: none;
-    font-size: 6rem;
-    opacity: 0.2;
+    animation: float-blueberry 10s ease-in-out infinite;
+    transform-origin: center;
   }
   
   .blueberry::after {
     content: "🫐";
     position: fixed;
-    bottom: -100px;
-    left: -50px;
-    width: 250px;
-    height: 250px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(180, 120, 250, 0.1), rgba(180, 120, 250, 0) 70%);
-    z-index: -1;
-    animation: float-purple 18s ease-in-out 2s infinite;
-    pointer-events: none;
-    font-size: 5rem;
+    bottom: 20vh;
+    right: 10vw;
+    font-size: 4rem;
     opacity: 0.2;
+    z-index: -1;
+    animation: float-blueberry 7s ease-in-out 1s infinite;
+    transform-origin: center;
   }
   
-  /* Emoji decorations for Blueberry theme with grapes */
   .blueberry .blueberry-emoji-1 {
-    position: fixed;
-    top: 15%;
-    right: 10%;
-    font-size: 3rem;
-    opacity: 0.5;
-    z-index: -1;
-    animation: float-blueberry 6s ease-in-out infinite;
     content: "🍇";
-    pointer-events: none;
+    position: fixed;
+    top: 50vh;
+    right: 20vw;
+    font-size: 3rem;
+    opacity: 0.15;
+    z-index: -1;
+    animation: float-blueberry 8s ease-in-out 2s infinite;
   }
   
   .blueberry .blueberry-emoji-2 {
-    position: fixed;
-    bottom: 15%;
-    left: 10%;
-    font-size: 2.5rem;
-    opacity: 0.5;
-    z-index: -1;
-    animation: float-blueberry 7s ease-in-out infinite;
-    animation-delay: 0.5s;
     content: "🫐";
-    pointer-events: none;
+    position: fixed;
+    bottom: 40vh;
+    left: 25vw;
+    font-size: 2.5rem;
+    opacity: 0.15;
+    z-index: -1;
+    animation: float-blueberry 6s ease-in-out 3s infinite;
   }
   
   /* Add more decorative elements for Blueberry theme */
@@ -565,56 +553,47 @@
 .chocolate::before {
   content: "🍫";
   position: fixed;
-  top: 15%;
-  left: 10%;
-  font-size: 8rem;
-  opacity: 0.1;
-  filter: blur(8px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-chocolate 15s infinite;
+  top: 15vh;
+  left: 10vw;
+  font-size: 5rem;
+  opacity: 0.25;
+  z-index: -1;
+  animation: float-chocolate 10s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .chocolate::after {
   content: "🍪";
   position: fixed;
-  bottom: 20%;
-  right: 15%;
-  font-size: 6rem;
-  opacity: 0.1;
-  filter: blur(6px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-chocolate 15s infinite;
-  animation-delay: 2s;
+  bottom: 20vh;
+  right: 10vw;
+  font-size: 4rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-chocolate 7s ease-in-out 1s infinite;
+  transform-origin: center;
 }
 
 .chocolate .chocolate-emoji-1 {
-  content: "🍫";
+  content: "🍩";
   position: fixed;
-  top: 40%;
-  right: 30%;
-  font-size: 4rem;
-  opacity: 0.08;
-  filter: blur(4px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-chocolate 15s infinite;
-  animation-delay: 4s;
+  top: 50vh;
+  right: 20vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-chocolate 8s ease-in-out 2s infinite;
 }
 
 .chocolate .chocolate-emoji-2 {
-  content: "🍪";
+  content: "🎂";
   position: fixed;
-  bottom: 35%;
-  left: 25%;
-  font-size: 3rem;
-  opacity: 0.06;
-  filter: blur(3px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-chocolate 15s infinite;
-  animation-delay: 6s;
+  bottom: 40vh;
+  left: 25vw;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-chocolate 6s ease-in-out 3s infinite;
 }
 
 /* Small non-blurred chocolate emojis */
@@ -718,56 +697,47 @@
 .sweet::before {
   content: "🍰";
   position: fixed;
-  top: 15%;
-  left: 10%;
-  font-size: 8rem;
-  opacity: 0.1;
-  filter: blur(8px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-sweet 15s infinite;
+  top: 15vh;
+  left: 10vw;
+  font-size: 5rem;
+  opacity: 0.25;
+  z-index: -1;
+  animation: float-sweet 10s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .sweet::after {
   content: "🧁";
   position: fixed;
-  bottom: 20%;
-  right: 15%;
-  font-size: 6rem;
-  opacity: 0.1;
-  filter: blur(6px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-sweet 15s infinite;
-  animation-delay: 2s;
+  bottom: 20vh;
+  right: 10vw;
+  font-size: 4rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-sweet 7s ease-in-out 1s infinite;
+  transform-origin: center;
 }
 
 .sweet .sweet-emoji-1 {
   content: "🍦";
   position: fixed;
-  top: 40%;
-  right: 30%;
-  font-size: 4rem;
-  opacity: 0.08;
-  filter: blur(4px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-sweet 15s infinite;
-  animation-delay: 4s;
+  top: 50vh;
+  right: 20vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-sweet 8s ease-in-out 2s infinite;
 }
 
 .sweet .sweet-emoji-2 {
   content: "🍭";
   position: fixed;
-  bottom: 35%;
-  left: 25%;
-  font-size: 3rem;
-  opacity: 0.06;
-  filter: blur(3px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-sweet 15s infinite;
-  animation-delay: 6s;
+  bottom: 40vh;
+  left: 25vw;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-sweet 6s ease-in-out 3s infinite;
 }
 
 /* Small non-blurred sweet emojis */
@@ -924,56 +894,47 @@
 .broccoli::before {
   content: "🥦";
   position: fixed;
-  top: 15%;
-  left: 10%;
-  font-size: 8rem;
-  opacity: 0.1;
-  filter: blur(8px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-broccoli 15s infinite;
+  top: 15vh;
+  left: 10vw;
+  font-size: 5rem;
+  opacity: 0.25;
+  z-index: -1;
+  animation: float-broccoli 10s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .broccoli::after {
   content: "🥬";
   position: fixed;
-  bottom: 20%;
-  right: 15%;
-  font-size: 6rem;
-  opacity: 0.1;
-  filter: blur(6px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-broccoli 15s infinite;
-  animation-delay: 2s;
+  bottom: 20vh;
+  right: 10vw;
+  font-size: 4rem;
+  opacity: 0.2;
+  z-index: -1;
+  animation: float-broccoli 7s ease-in-out 1s infinite;
+  transform-origin: center;
 }
 
 .broccoli .broccoli-emoji-1 {
   content: "🥒";
   position: fixed;
-  top: 40%;
-  right: 30%;
-  font-size: 4rem;
-  opacity: 0.08;
-  filter: blur(4px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-broccoli 15s infinite;
-  animation-delay: 4s;
+  top: 50vh;
+  right: 20vw;
+  font-size: 3rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-broccoli 8s ease-in-out 2s infinite;
 }
 
 .broccoli .broccoli-emoji-2 {
   content: "🥕";
   position: fixed;
-  bottom: 35%;
-  left: 25%;
-  font-size: 3rem;
-  opacity: 0.06;
-  filter: blur(3px);
-  pointer-events: none;
-  z-index: 0;
-  animation: float-broccoli 15s infinite;
-  animation-delay: 6s;
+  bottom: 40vh;
+  left: 25vw;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-broccoli 6s ease-in-out 3s infinite;
 }
 
 /* Small non-blurred broccoli emojis */
@@ -1198,32 +1159,32 @@
 .watermelon::before {
   content: "🍉";
   position: fixed;
-  top: 20vh;
-  left: 5vw;
+  top: 15vh;
+  left: 10vw;
   font-size: 5rem;
-  opacity: 0.2;
+  opacity: 0.25;
   z-index: -1;
-  animation: float-watermelon 8s ease-in-out infinite;
+  animation: float-watermelon 10s ease-in-out infinite;
   transform-origin: center;
 }
 
 .watermelon::after {
-  content: "🍉";
+  content: "🍓";
   position: fixed;
-  bottom: 15vh;
-  right: 5vw;
-  font-size: 5rem;
+  bottom: 20vh;
+  right: 10vw;
+  font-size: 4rem;
   opacity: 0.2;
   z-index: -1;
-  animation: float-watermelon 8s ease-in-out 1s infinite;
+  animation: float-watermelon 7s ease-in-out 1s infinite;
   transform-origin: center;
 }
 
 .watermelon .watermelon-emoji-1 {
-  content: "🍉";
+  content: "🍈";
   position: fixed;
-  top: 40vh;
-  right: 15vw;
+  top: 50vh;
+  right: 20vw;
   font-size: 3rem;
   opacity: 0.15;
   z-index: -1;
@@ -1231,14 +1192,14 @@
 }
 
 .watermelon .watermelon-emoji-2 {
-  content: "🍉";
+  content: "🥝";
   position: fixed;
-  bottom: 30vh;
-  left: 15vw;
-  font-size: 3rem;
+  bottom: 40vh;
+  left: 25vw;
+  font-size: 2.5rem;
   opacity: 0.15;
   z-index: -1;
-  animation: float-watermelon 8s ease-in-out 3s infinite;
+  animation: float-watermelon 6s ease-in-out 3s infinite;
 }
 
 .watermelon .bg-gradient-to-br {
@@ -1964,4 +1925,135 @@ html.transition *:after {
 
 .dark .recharts-tooltip-wrapper .font-medium {
   color: hsl(217, 90%, 75%) !important;
+}
+
+/* Light theme background clouds */
+.light .light-cloud-1:before {
+  content: "☁️";
+  position: fixed;
+  top: 10vh;
+  left: 15vw;
+  font-size: 4rem;
+  opacity: 0.15;
+  z-index: -1;
+  animation: float-cloud 25s ease-in-out infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.light .light-cloud-2:before {
+  content: "☁️";
+  position: fixed;
+  top: 25vh;
+  right: 10vw;
+  font-size: 3.5rem;
+  opacity: 0.12;
+  z-index: -1;
+  animation: float-cloud 28s ease-in-out 2s infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.light .light-cloud-3:before {
+  content: "☁️";
+  position: fixed;
+  bottom: 30vh;
+  left: 25vw;
+  font-size: 5rem;
+  opacity: 0.1;
+  z-index: -1;
+  animation: float-cloud 30s ease-in-out 5s infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.light .light-cloud-4:before {
+  content: "☁️";
+  position: fixed;
+  bottom: 15vh;
+  right: 20vw;
+  font-size: 3rem;
+  opacity: 0.14;
+  z-index: -1;
+  animation: float-cloud 22s ease-in-out 3s infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+@keyframes float-cloud {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(20px) translateY(-5px);
+  }
+  50% {
+    transform: translateX(35px) translateY(10px);
+  }
+  75% {
+    transform: translateX(15px) translateY(5px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* ScrollLock utility classes */
+.scroll-lock {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  overscroll-behavior: none;
+  touch-action: none;
+  height: 100%;
+  inset: 0;
+}
+
+.scroll-lock-popup {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  max-height: 90vh;
+}
+
+/* ทำให้แน่ใจว่า popup ยังคง scroll ได้ */
+.scroll-lock-container {
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+}
+
+/* ทำให้ modal แสดงผลถูกต้องบน iOS */
+@supports (-webkit-touch-callout: none) {
+  .scroll-lock {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+
+
+/* สำหรับการจัดการ main container */
+main.no-scroll {
+  overflow: hidden !important;
+  position: relative;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* Add exit animation for bottom sheet */
+.bottom-sheet-container.exit-animation {
+  animation: slideDown 0.3s ease-in forwards;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }

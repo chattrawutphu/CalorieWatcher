@@ -130,23 +130,21 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
         cacheService.cacheFoodSearch(cacheKey, loadPage, result.foods);
         
         // แปลงเป็นรูปแบบที่แอพใช้
-        const formattedFoods = result.foods.map((food: SearchFoodResult) => {
-          // สร้าง FoodItem จาก SearchFoodResult
-          return {
-            id: food.fdcId.toString(),
-            name: food.description,
-            calories: Math.round(food.foodNutrients.find(n => n.nutrientId === 1008)?.value || 0),
-            protein: Math.round(food.foodNutrients.find(n => n.nutrientId === 1003)?.value || 0),
-            carbs: Math.round(food.foodNutrients.find(n => n.nutrientId === 1005)?.value || 0),
-            fat: Math.round(food.foodNutrients.find(n => n.nutrientId === 1004)?.value || 0),
-            servingSize: food.servingSize ? `${food.servingSize}${food.servingSizeUnit}` : "100g",
-            favorite: false,
-            createdAt: new Date(),
-            category: (food.foodCategory?.toLowerCase() || 'other') as any,
-            usdaId: food.fdcId,
-            isTemplate: false
-          };
-        });
+        const formattedFoods = result.foods.map((food: SearchFoodResult) => ({
+          id: food.fdcId.toString(),
+          name: food.description,
+          calories: getCalories(food),
+          protein: getNutrient(food, 'Protein'),
+          carbs: getNutrient(food, 'Carbohydrate, by difference'),
+          fat: getNutrient(food, 'Total lipid (fat)'),
+          servingSize: food.servingSize ? `${food.servingSize}${food.servingSizeUnit}` : "100g",
+          favorite: false,
+          createdAt: new Date().toISOString(),
+          category: food.foodCategory || 'Uncategorized',
+          usdaId: food.fdcId,
+          isTemplate: true,
+          dataType: food.dataType
+        }));
         
         setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
         setHasMore(result.foods.length === 20); // สมมติว่าเรียก 20 รายการต่อหน้า
@@ -288,12 +286,13 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
           protein: getNutrient(food, 'Protein'),
           carbs: getNutrient(food, 'Carbohydrate, by difference'),
           fat: getNutrient(food, 'Total lipid (fat)'),
-          servingSize: food.servingSize || 100,
+          servingSize: food.servingSize ? `${food.servingSize}${food.servingSizeUnit}` : "100g",
           favorite: false,
           createdAt: new Date().toISOString(),
           category: food.foodCategory || 'Uncategorized',
           usdaId: food.fdcId,
-          isTemplate: true
+          isTemplate: true,
+          dataType: food.dataType
         }));
         
         setFoods(prevFoods => loadPage === 1 ? formattedFoods : [...prevFoods, ...formattedFoods]);
@@ -401,17 +400,20 @@ const CommonFoods = ({ onSelectFood, onBack }: CommonFoodsProps) => {
   // ฟังก์ชันสำหรับดึงค่าแคลอรี่จาก SearchFoodResult
   const getCalories = (food: SearchFoodResult): number => {
     const energyNutrient = food.foodNutrients?.find(
-      (nutrient) => nutrient.nutrientName === 'Energy' || nutrient.nutrientId === 1008
+      (nutrient) => nutrient.nutrientId === 1008 || nutrient.nutrientName === 'Energy'
     );
-    return energyNutrient?.value || 0;
+    return Math.round(energyNutrient?.value || 0);
   };
 
   // ฟังก์ชันสำหรับดึงค่าสารอาหารจาก SearchFoodResult ตามชื่อ
   const getNutrient = (food: SearchFoodResult, nutrientName: string): number => {
     const nutrient = food.foodNutrients?.find(
-      (n) => n.nutrientName === nutrientName
+      (n) => n.nutrientName === nutrientName || 
+             (nutrientName === 'Protein' && n.nutrientId === 1003) ||
+             (nutrientName === 'Carbohydrate, by difference' && n.nutrientId === 1005) ||
+             (nutrientName === 'Total lipid (fat)' && n.nutrientId === 1004)
     );
-    return nutrient?.value || 0;
+    return Math.round(nutrient?.value || 0);
   };
   
   return (

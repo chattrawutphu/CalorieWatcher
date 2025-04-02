@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,7 +13,7 @@ import {
   ArrowRight, Plus, Utensils, BarChart3, Settings, Calendar as CalendarIcon, 
   ArrowLeft, ArrowRight as ArrowRightIcon, ChevronLeft, ChevronRight, Edit, Save, 
   Sun, Moon, Check, SmilePlus, Pencil, X, Trash2, Minus, UtensilsCrossed, 
-  LayoutGrid, Eye, EyeOff, Activity, Droplet, Scale
+  LayoutGrid, Eye, EyeOff, Activity, Droplet, Scale, GripVertical
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNutritionStore } from "@/lib/store/nutrition-store";
@@ -23,6 +23,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { WaterTracker } from "@/components/ui/water-tracker";
 import { WeightTracker } from "@/components/ui/weight-tracker";
 import { AnalyticsWidget } from "@/components/ui/analytics-widget";
+
+// Import dnd-kit
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from "@dnd-kit/core";
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  useSortable,
+  verticalListSortingStrategy 
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Animation variants
 const container = {
@@ -68,17 +87,53 @@ const popupVariants = {
 
 // Overlay animation variants
 const overlayVariants = {
-  hidden: { opacity: 0 },
+  hidden: { 
+    opacity: 0,
+    transition: {
+      duration: 0.25
+    }
+  },
   visible: { 
     opacity: 1,
-    transition: { duration: 0.25 }
+    transition: {
+      duration: 0.25
+    }
   },
   exit: { 
     opacity: 0,
     transition: { 
-      duration: 0.25,
-      ease: "easeInOut",
-      delay: 0.05
+      duration: 0.25
+    }
+  }
+};
+
+// Bottom sheet animation variants
+const bottomSheetVariants = {
+  hidden: { 
+    y: "100%", 
+    opacity: 0.8,
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 35
+    }
+  },
+  exit: { 
+    y: "100%",
+    opacity: 0.5,
+    transition: { 
+      type: "spring",
+      stiffness: 500,
+      damping: 40
     }
   }
 };
@@ -142,17 +197,13 @@ const CalendarPopup = ({
     // Set the current month to the month of the selected date when opening
     if (isOpen) {
       setCurrentMonthDate(parse(selectedDate, 'yyyy-MM-dd', new Date()));
-    }
-    
-    // Prevent body scroll when popup is open
-    if (isOpen) {
-      document.body.classList.add('overflow-hidden');
-    } else {
-      document.body.classList.remove('overflow-hidden');
+      // ใช้ scroll-lock class แทน overflow-hidden
+      document.body.classList.add('scroll-lock');
     }
     
     return () => {
-      document.body.classList.remove('overflow-hidden');
+      // ใช้ scroll-lock class แทน overflow-hidden
+      document.body.classList.remove('scroll-lock');
     };
   }, [isOpen, selectedDate]);
   
@@ -196,6 +247,7 @@ const CalendarPopup = ({
     // Add a slight delay before closing to allow tap/click feedback
     setTimeout(() => {
       onClose();
+      document.body.classList.remove('scroll-lock');
     }, 120);
   };
   
@@ -237,6 +289,7 @@ const CalendarPopup = ({
     // Add a slight delay before closing to allow tap/click feedback
     setTimeout(() => {
       onClose();
+      document.body.classList.remove('scroll-lock');
     }, 120);
   };
   
@@ -386,6 +439,7 @@ export default function DashboardPage() {
   const t = dashboardTranslations[locale as keyof typeof dashboardTranslations] || dashboardTranslations.en;
   const { getTodayStats, goals, recentMeals = [], updateDailyMood, getDailyMood } = useNutrition();
   const { dailyLogs, setCurrentDate, currentDate } = useNutritionStore();
+  const dragControls = useDragControls();
   
   // State for calendar
   const [selectedDate, setSelectedDate] = useState(currentDate);
@@ -419,6 +473,19 @@ export default function DashboardPage() {
     moodNotes: true
   });
   
+  // Add state for widget order
+  const [widgetOrder, setWidgetOrder] = useState([
+    'nutritionSummary',
+    'mealHistory',
+    'waterTracker',
+    'weightTracker',
+    'analyticsWidget',
+    'moodNotes'
+  ]);
+  
+  // Add state for temporary order during editing
+  const [tempWidgetOrder, setTempWidgetOrder] = useState<string[]>([]);
+  
   // State and ref for sticky date selector
   const [isDateSelectorSticky, setIsDateSelectorSticky] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
@@ -451,6 +518,25 @@ export default function DashboardPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
+  useEffect(() => {
+    // Load saved widget order from localStorage if available
+    const savedWidgetOrder = localStorage.getItem('dashboardWidgetOrder');
+    if (savedWidgetOrder) {
+      try {
+        const parsedOrder = JSON.parse(savedWidgetOrder);
+        // Validate that all widgets exist in the parsed order
+        const allWidgetsPresent = Object.keys(widgetVisibility).every(
+          widget => parsedOrder.includes(widget)
+        );
+        if (parsedOrder.length === Object.keys(widgetVisibility).length && allWidgetsPresent) {
+          setWidgetOrder(parsedOrder);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved widget order', e);
+      }
+    }
+  }, []);
+  
   // Create additional translations for meal editing feature
   const additionalTranslations = {
     edit: locale === 'th' ? 'แก้ไข' : locale === 'ja' ? '編集' : locale === 'zh' ? '编辑' : 'Edit',
@@ -465,7 +551,15 @@ export default function DashboardPage() {
     editMeal: locale === 'th' ? 'แก้ไขอาหาร' : locale === 'ja' ? '食事の編集' : locale === 'zh' ? '编辑餐食' : 'Edit Meal',
     quantity: locale === 'th' ? 'จำนวน' : locale === 'ja' ? '量' : locale === 'zh' ? '数量' : 'Quantity',
     per: locale === 'th' ? 'ต่อ' : locale === 'ja' ? 'あたり' : locale === 'zh' ? '每' : 'per',
-    save: locale === 'th' ? 'บันทึกการเปลี่ยนแปลง' : locale === 'ja' ? '変更を保存' : locale === 'zh' ? '保存更改' : 'Save Changes'
+    save: locale === 'th' ? 'บันทึกการเปลี่ยนแปลง' : locale === 'ja' ? '変更を保存' : locale === 'zh' ? '保存更改' : 'Save Changes',
+    editLayout: locale === 'th' ? 'แก้ไขเลย์เอาต์' : locale === 'ja' ? 'レイアウト編集' : locale === 'zh' ? '编辑布局' : 'Edit Layout',
+    saveLayout: locale === 'th' ? 'บันทึกเลย์เอาต์' : locale === 'ja' ? 'レイアウト保存' : locale === 'zh' ? '保存布局' : 'Save Layout',
+    nutritionSummary: locale === 'th' ? 'สรุปโภชนาการ' : locale === 'ja' ? '栄養サマリー' : locale === 'zh' ? '营养摘要' : 'Nutrition Summary',
+    mealHistory: locale === 'th' ? 'ประวัติมื้ออาหาร' : locale === 'ja' ? '食事履歴' : locale === 'zh' ? '用餐历史' : 'Meal History',
+    analytics: locale === 'th' ? 'การวิเคราะห์' : locale === 'ja' ? '分析' : locale === 'zh' ? '分析' : 'Analytics',
+    waterTracker: locale === 'th' ? 'ติดตามการดื่มน้ำ' : locale === 'ja' ? '水分トラッカー' : locale === 'zh' ? '水分追踪' : 'Water Tracker',
+    weightTracker: locale === 'th' ? 'ติดตามน้ำหนัก' : locale === 'ja' ? '体重トラッカー' : locale === 'zh' ? '体重追踪' : 'Weight Tracker',
+    moodNotes: locale === 'th' ? 'อารมณ์และบันทึก' : locale === 'ja' ? '気分とメモ' : locale === 'zh' ? '心情笔记' : 'Mood & Notes'
   };
   
   // Combine translations
@@ -624,24 +718,6 @@ export default function DashboardPage() {
   const calendarDays = generateCalendarDays();
   const daysInWeek = getDaysOfWeekLabels();
   const selectedDateObj = parse(selectedDate, 'yyyy-MM-dd', new Date());
-  
-  // Check if date has entries
-  const hasEntries = (date: Date) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    return dailyLogs[formattedDate] && dailyLogs[formattedDate].meals.length > 0;
-  };
-  
-  // Get entry count for a date
-  const getEntryCount = (date: Date) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    return dailyLogs[formattedDate]?.meals.length || 0;
-  };
-  
-  // Get total calories for a date
-  const getTotalCalories = (date: Date) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    return dailyLogs[formattedDate]?.totalCalories || 0;
-  };
 
   // Update mood and notes when selected date changes
   useEffect(() => {
@@ -666,13 +742,20 @@ export default function DashboardPage() {
 
   // Function to handle meal deletion
   const handleDeleteMeal = (mealId: string) => {
-    // For confirmation dialog
+    const mealToDeleteData = dailyLogs[selectedDate]?.meals.find(m => m.id === mealId);
+    if (mealToDeleteData) {
     setMealToDelete(mealId);
+      
+      // ใช้ scroll-lock class แทน overflow-hidden
+      document.body.classList.add('scroll-lock');
+    }
   };
-  
-  // Function to confirm meal deletion
-  const confirmDeleteMeal = () => {
-    if (mealToDelete && dailyLogs[selectedDate]) {
+
+  // Function to confirm delete
+  const confirmDeleteMeal = async () => {
+    if (mealToDelete) {
+      // ใช้ฟังก์ชันลบข้อมูลที่มีอยู่แล้วแทน deleteMeal ที่ไม่ได้ถูกนิยาม
+      if (dailyLogs[selectedDate]) {
       const updatedMeals = dailyLogs[selectedDate].meals.filter(meal => meal.id !== mealToDelete);
       
       // Update nutrition calculations
@@ -700,10 +783,26 @@ export default function DashboardPage() {
             [selectedDate]: updatedDailyLog
           }
         });
+        }
       }
       
-      // Close confirmation dialog
+      // After deleting, close the modal
       setMealToDelete(null);
+      
+      // ใช้ scroll-lock class แทน overflow-hidden
+      if (!layoutEditMode && !isCalendarOpen && !mealToEdit) {
+        document.body.classList.remove('scroll-lock');
+      }
+    }
+  };
+
+  // Function to cancel delete
+  const cancelDeleteMeal = () => {
+    setMealToDelete(null);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    if (!layoutEditMode && !isCalendarOpen && !mealToEdit) {
+      document.body.classList.remove('scroll-lock');
     }
   };
   
@@ -711,6 +810,9 @@ export default function DashboardPage() {
   const handleEditMeal = (meal: any) => {
     setMealToEdit(meal);
     setEditedQuantity(meal.quantity);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    document.body.classList.add('scroll-lock');
   };
   
   // Function to save edited meal
@@ -754,6 +856,21 @@ export default function DashboardPage() {
       
       // Close edit dialog
       setMealToEdit(null);
+      
+      // ใช้ scroll-lock class แทน overflow-hidden
+      if (!layoutEditMode && !isCalendarOpen && !mealToDelete) {
+        document.body.classList.remove('scroll-lock');
+      }
+    }
+  };
+
+  // Function to cancel edit
+  const cancelEditMeal = () => {
+    setMealToEdit(null);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    if (!layoutEditMode && !isCalendarOpen && !mealToDelete) {
+      document.body.classList.remove('scroll-lock');
     }
   };
 
@@ -765,8 +882,76 @@ export default function DashboardPage() {
     }));
   };
 
+  // Enter layout edit mode
+  const enterLayoutEditMode = () => {
+    // Save current order before editing
+    setTempWidgetOrder([...widgetOrder]);
+    setWidgetVisibility({...widgetVisibility});
+    setLayoutEditMode(true);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    document.body.classList.add('scroll-lock');
+  };
+
+  // Save layout settings
+  const saveLayout = () => {
+    // Save widget order to localStorage
+    localStorage.setItem('dashboardWidgetOrder', JSON.stringify(tempWidgetOrder));
+    
+    // Apply the temporary order
+    setWidgetOrder(tempWidgetOrder);
+    
+    // Close edit mode
+    setLayoutEditMode(false);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    document.body.classList.remove('scroll-lock');
+  };
+
+  // Close layout edit mode without saving
+  const closeLayoutEditMode = () => {
+    setLayoutEditMode(false);
+    
+    // ใช้ scroll-lock class แทน overflow-hidden
+    document.body.classList.remove('scroll-lock');
+  };
+
+  // Handle drag end for widget reordering
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setTempWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id.toString());
+        const newIndex = items.indexOf(over.id.toString());
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Setup sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Also add clean up of overflow-hidden class when component unmounts
+  useEffect(() => {
+    return () => {
+      // ใช้ scroll-lock class แทน overflow-hidden
+      document.body.classList.remove('scroll-lock');
+    };
+  }, []);
+
   return (
-    <div className="max-w-md mx-auto min-h-screen pb-24">
+    <div className="max-w-md mx-auto min-h-screen pb-32">
       <motion.div
         variants={container}
         initial="hidden"
@@ -783,7 +968,7 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setLayoutEditMode(!layoutEditMode)}
+              onClick={enterLayoutEditMode}
               className="h-9 w-9 rounded-full"
             >
               <LayoutGrid className="h-5 w-5 text-[hsl(var(--foreground))]" />
@@ -795,139 +980,97 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Layout Edit Mode Panel */}
+        <AnimatePresence>
         {layoutEditMode && (
+            <>
+              {/* Overlay */}
           <motion.div 
-            variants={item}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[hsl(var(--card))] shadow-md rounded-2xl p-4"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-medium">Edit Layout</h3>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 rounded-full"
-                onClick={() => setLayoutEditMode(false)}
+                className="fixed inset-0 bg-black/70 z-50 touch-none"
+                variants={overlayVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={closeLayoutEditMode}
+              />
+              
+              {/* Bottom Sheet */}
+              <motion.div
+                className="fixed mt-0 pt-safe max-w-md mx-auto inset-0 z-50 bg-[hsl(var(--background))] flex flex-col"
+                variants={bottomSheetVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                drag="y"
+                dragControls={dragControls}
+                dragListener={false}
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.4}
+                dragMomentum={false}
+                onDragEnd={(event, info) => {
+                  const shouldClose = info.velocity.y > 300 || info.offset.y > 200;
+                  if (shouldClose) {
+                    closeLayoutEditMode();
+                  }
+                }}
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Nutrition Summary</span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('nutritionSummary')}
+                {/* Header Section - Draggable */}
+                <motion.div 
+                  className="bg-[hsl(var(--background))]"
+                  onPointerDown={(e) => dragControls.start(e)}
                 >
-                  {widgetVisibility.nutritionSummary ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Analytics</span>
+                  <div className="flex justify-center py-2">
+                    <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--muted))]" />
+                  </div>
+                  <div className="px-5 py-4 flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">{translations.editLayout}</h3>
+                    <Button 
+                      onClick={saveLayout}
+                      className="h-8 px-4"
+                    >
+                      {translations.saveLayout}
+                    </Button>
+                  </div>
+                </motion.div>
+
+                {/* Content Section - Non-draggable */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="max-w-md mx-auto p-5">
+                    <DndContext 
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext 
+                        items={tempWidgetOrder}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2 pb-4">
+                          {tempWidgetOrder.map((widgetKey) => (
+                            <SortableWidgetItem 
+                              key={widgetKey} 
+                              id={widgetKey}
+                              widgetKey={widgetKey}
+                              isVisible={widgetVisibility[widgetKey as keyof typeof widgetVisibility]}
+                              toggleVisibility={() => toggleWidgetVisibility(widgetKey as keyof typeof widgetVisibility)}
+                              widgetLabels={{
+                                nutritionSummary: { label: translations.nutritionSummary, icon: <BarChart3 className="h-4 w-4" /> },
+                                mealHistory: { label: translations.mealHistory, icon: <UtensilsCrossed className="h-4 w-4" /> },
+                                analyticsWidget: { label: translations.analytics, icon: <Activity className="h-4 w-4" /> },
+                                waterTracker: { label: translations.waterTracker, icon: <Droplet className="h-4 w-4" /> },
+                                weightTracker: { label: translations.weightTracker, icon: <Scale className="h-4 w-4" /> },
+                                moodNotes: { label: translations.moodNotes, icon: <SmilePlus className="h-4 w-4" /> }
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('analyticsWidget')}
-                >
-                  {widgetVisibility.analyticsWidget ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Droplet className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Water Tracker</span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('waterTracker')}
-                >
-                  {widgetVisibility.waterTracker ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Weight Tracker</span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('weightTracker')}
-                >
-                  {widgetVisibility.weightTracker ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Meal History</span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('mealHistory')}
-                >
-                  {widgetVisibility.mealHistory ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <SmilePlus className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  <span className="text-sm">Mood & Notes</span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => toggleWidgetVisibility('moodNotes')}
-                >
-                  {widgetVisibility.moodNotes ? 
-                    <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
-                    <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                  }
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button 
-                size="sm"
-                onClick={() => setLayoutEditMode(false)}
-                className="text-xs"
-              >
-                Save Layout
-              </Button>
-            </div>
-          </motion.div>
+              </motion.div>
+            </>
         )}
+        </AnimatePresence>
 
         {/* Sticky Date Selector - Shows when scrolled past the original date selector */}
         {isDateSelectorSticky && (
@@ -1032,8 +1175,12 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Selected Day Stats - Enhanced with Macros Distribution Charts */}
-        {widgetVisibility.nutritionSummary && (
-          <motion.div variants={item}>
+        {widgetOrder.map((widgetKey) => {
+          // Render each widget according to its visibility and position in order
+          switch(widgetKey) {
+            case 'nutritionSummary':
+              return widgetVisibility.nutritionSummary && (
+                <motion.div key="nutritionSummary" variants={item}>
             <Card className="p-5 shadow-md rounded-2xl overflow-hidden mt-1">
             <div className="space-y-1">
               {/* Calories */}
@@ -1202,7 +1349,7 @@ export default function DashboardPage() {
                     />
                     
                     <motion.div
-                      className="text-xl mb-1" 
+                      className="text-2xl mb-1" 
                       animate={{ y: [0, -2, 0] }}
                       transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
                     >
@@ -1235,11 +1382,10 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
-        )}
-
-        {/* Meals for selected day */}
-        {widgetVisibility.mealHistory && (
-        <motion.div variants={item}>
+              );
+            case 'mealHistory':
+              return widgetVisibility.mealHistory && (
+                <motion.div key="mealHistory" variants={item}>
           <Card className="p-5 shadow-md rounded-2xl mt-1">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
@@ -1319,25 +1465,22 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
-        )}
-
-        {/* Water Tracker */}
-        {widgetVisibility.waterTracker && (
-        <motion.div variants={item} className="mt-1">
+              );
+            case 'waterTracker':
+              return widgetVisibility.waterTracker && (
+                <motion.div key="waterTracker" variants={item} className="mt-1">
           <WaterTracker date={selectedDate} />
         </motion.div>
-        )}
-        
-        {/* Weight Tracker */}
-        {widgetVisibility.weightTracker && (
-        <motion.div variants={item} className="mt-1">
+              );
+            case 'weightTracker':
+              return widgetVisibility.weightTracker && (
+                <motion.div key="weightTracker" variants={item} className="mt-1">
           <WeightTracker date={selectedDate} />
         </motion.div>
-        )}
-        
-        {/* Analytics Section with Graph Type Tabs */}
-        {widgetVisibility.analyticsWidget && (
-          <motion.div variants={item} className="mt-1">
+              );
+            case 'analyticsWidget':
+              return widgetVisibility.analyticsWidget && (
+                <motion.div key="analyticsWidget" variants={item} className="mt-1">
             <AnalyticsWidget 
               dailyLogs={dailyLogs} 
               goals={goals} 
@@ -1345,11 +1488,10 @@ export default function DashboardPage() {
               onGraphTypeChange={setSelectedGraphType}
             />
           </motion.div>
-        )}
-
-        {/* Mood & Notes Section */}
-        {widgetVisibility.moodNotes && (
-        <motion.div variants={item} className="mt-1">
+              );
+            case 'moodNotes':
+              return widgetVisibility.moodNotes && (
+                <motion.div key="moodNotes" variants={item} className="mt-1">
           <Card className="p-5 shadow-md rounded-2xl">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
@@ -1402,7 +1544,11 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
-        )}
+              );
+            default:
+              return null;
+          }
+        })}
 
         {/* Delete Confirmation Dialog */}
         <AnimatePresence>
@@ -1410,16 +1556,18 @@ export default function DashboardPage() {
             <>
               <motion.div
                 className="fixed inset-0 bg-black/70 z-50 touch-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMealToDelete(null)}
+                variants={overlayVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={cancelDeleteMeal}
               />
               <motion.div
                 className="fixed inset-x-0 bottom-0 z-50 bg-[hsl(var(--background))] rounded-t-xl p-5 max-h-[90vh] overflow-y-auto touch-auto shadow-md border-t border-[hsl(var(--border))]"
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
+                variants={bottomSheetVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
               >
                 <div className="max-w-md mx-auto">
                   <div className="text-center mb-4">
@@ -1432,7 +1580,7 @@ export default function DashboardPage() {
                   <div className="flex justify-center space-x-3 mt-6 pb-20">
                     <Button
                       variant="outline"
-                      onClick={() => setMealToDelete(null)}
+                      onClick={cancelDeleteMeal}
                       className="w-1/3"
                     >
                       {translations.cancel}
@@ -1457,22 +1605,24 @@ export default function DashboardPage() {
             <>
               <motion.div
                 className="fixed inset-0 bg-black/70 z-50 touch-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMealToEdit(null)}
+                variants={overlayVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={cancelEditMeal}
               />
               <motion.div
                 className="fixed inset-x-0 bottom-0 z-50 bg-[hsl(var(--background))] rounded-t-xl p-5 max-h-[90vh] overflow-y-auto touch-auto shadow-md border-t border-[hsl(var(--border))]"
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
+                variants={bottomSheetVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
               >
                 <div className="max-w-md mx-auto">
                   <div className="relative mb-4">
                     <h3 className="text-lg font-semibold text-center">{translations.editMeal}</h3>
                     <button
-                      onClick={() => setMealToEdit(null)}
+                      onClick={cancelEditMeal}
                       className="absolute right-0 top-0 p-2 rounded-full hover:bg-[hsl(var(--muted))]"
                     >
                       <X className="h-5 w-5" />
@@ -1536,7 +1686,13 @@ export default function DashboardPage() {
         {/* Calendar Popup */}
         <CalendarPopup 
           isOpen={isCalendarOpen}
-          onClose={() => setIsCalendarOpen(false)}
+          onClose={() => {
+            setIsCalendarOpen(false);
+            // ใช้ scroll-lock class แทน overflow-hidden
+            if (!layoutEditMode && !mealToEdit && !mealToDelete) {
+              document.body.classList.remove('scroll-lock');
+            }
+          }}
           selectedDate={selectedDate}
           onSelectDate={(date) => {
             setSelectedDate(date);
@@ -1547,3 +1703,71 @@ export default function DashboardPage() {
     </div>
   );
 } 
+
+// Sortable widget item component
+const SortableWidgetItem = ({ 
+  id, 
+  widgetKey, 
+  isVisible, 
+  toggleVisibility, 
+  widgetLabels 
+}: { 
+  id: string;
+  widgetKey: string;
+  isVisible: boolean;
+  toggleVisibility: () => void;
+  widgetLabels: {
+    [key: string]: { 
+      label: string;
+      icon: React.ReactNode;
+    }
+  }
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="flex justify-between items-center p-2 bg-[hsl(var(--accent))]/10 rounded-lg"
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className="h-7 w-7 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-[hsl(var(--muted-foreground))]">
+            {widgetLabels[widgetKey].icon}
+          </div>
+          <span className="text-sm font-medium">{widgetLabels[widgetKey].label}</span>
+        </div>
+      </div>
+      <Button 
+        size="sm" 
+        variant="ghost" 
+        className="h-7 w-7 p-0 rounded-full"
+        onClick={toggleVisibility}
+      >
+        {isVisible ? 
+          <Eye className="h-4 w-4 text-[hsl(var(--primary))]" /> : 
+          <EyeOff className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        }
+      </Button>
+    </div>
+  );
+}; 
