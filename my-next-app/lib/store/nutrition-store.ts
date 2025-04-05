@@ -297,6 +297,24 @@ export const useNutritionStore = create<NutritionState>()(
         // ถ้ากำลังโหลดข้อมูลอยู่ ไม่อนุญาตให้ซิงค์อีก
         if (isLoading) return false;
         
+        // ตรวจสอบประวัติการซิงค์ใน localStorage
+        try {
+          // ดึงประวัติการซิงค์
+          const syncHistoryJSON = localStorage.getItem('sync-history');
+          const syncHistory = syncHistoryJSON ? JSON.parse(syncHistoryJSON) : [];
+          
+          // กรองรายการซิงค์ในช่วง 3 นาทีที่ผ่านมา
+          const threeMinutesAgo = Date.now() - (3 * 60 * 1000);
+          const recentSyncs = syncHistory.filter((timestamp: number) => timestamp > threeMinutesAgo);
+          
+          // ถ้ามีการซิงค์มากกว่า 5 ครั้งใน 3 นาที ไม่อนุญาตให้ซิงค์
+          if (recentSyncs.length >= 5) {
+            return false;
+          }
+        } catch (error) {
+          console.error('Error checking sync history:', error);
+        }
+        
         // ถ้าไม่เคยซิงค์มาก่อน หรือไม่มี lastSyncTime อนุญาตให้ซิงค์ได้ทันที
         if (!lastSyncTime) return true;
         
@@ -311,6 +329,35 @@ export const useNutritionStore = create<NutritionState>()(
       // เพิ่มฟังก์ชันตรวจสอบว่าอยู่ในช่วง cooldown หรือไม่
       isSyncOnCooldown: () => {
         const { lastSyncTime } = get();
+        
+        // ตรวจสอบประวัติการซิงค์ใน localStorage
+        try {
+          // ดึงประวัติการซิงค์
+          const syncHistoryJSON = localStorage.getItem('sync-history');
+          const syncHistory = syncHistoryJSON ? JSON.parse(syncHistoryJSON) : [];
+          
+          // กรองรายการซิงค์ในช่วง 3 นาทีที่ผ่านมา
+          const threeMinutesAgo = Date.now() - (3 * 60 * 1000);
+          const recentSyncs = syncHistory.filter((timestamp: number) => timestamp > threeMinutesAgo);
+          
+          // ถ้ามีการซิงค์มากกว่า 5 ครั้งใน 3 นาที ถือว่าอยู่ในช่วง cooldown
+          if (recentSyncs.length >= 5) {
+            // คำนวณเวลาที่ต้องรอ - หาเวลาซิงค์แรกสุดในช่วง 3 นาทีล่าสุด
+            if (recentSyncs.length > 0) {
+              const oldestSync = Math.min(...recentSyncs);
+              const timeToWait = (oldestSync + (3 * 60 * 1000)) - Date.now();
+              
+              // บันทึกเวลารอไว้ใน localStorage เพื่อแสดงให้ผู้ใช้
+              localStorage.setItem('sync-cooldown-until', String(Date.now() + timeToWait));
+              return true;
+            }
+          } else {
+            // ลบเวลารอถ้าไม่ได้อยู่ในช่วง cooldown
+            localStorage.removeItem('sync-cooldown-until');
+          }
+        } catch (error) {
+          console.error('Error checking sync history:', error);
+        }
         
         // ถ้าไม่เคยซิงค์มาก่อน หรือไม่มี lastSyncTime แสดงว่าไม่อยู่ใน cooldown
         if (!lastSyncTime) return false;
@@ -337,6 +384,22 @@ export const useNutritionStore = create<NutritionState>()(
           // บันทึกเวลาเริ่มต้นซิงค์
           const syncStartTime = new Date().toISOString();
           set({ lastSyncTime: syncStartTime });
+          
+          // บันทึกประวัติการซิงค์
+          try {
+            const syncHistoryJSON = localStorage.getItem('sync-history');
+            const syncHistory = syncHistoryJSON ? JSON.parse(syncHistoryJSON) : [];
+            syncHistory.push(Date.now());
+            
+            // เก็บประวัติแค่ 30 รายการล่าสุด
+            if (syncHistory.length > 30) {
+              syncHistory.splice(0, syncHistory.length - 30);
+            }
+            
+            localStorage.setItem('sync-history', JSON.stringify(syncHistory));
+          } catch (error) {
+            console.error('Error updating sync history:', error);
+          }
           
           // เช็คการเชื่อมต่ออินเตอร์เน็ตและแสดงข้อความเตือนที่ชัดเจน
           if (!navigator.onLine) {

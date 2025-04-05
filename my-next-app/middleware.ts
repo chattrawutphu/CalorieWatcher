@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Simple middleware that skips authentication for now
+// Updated middleware that allows the root page to handle session checking
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
@@ -10,10 +10,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle homepage route
+  // Handle homepage route - direct to dashboard
   if (pathname === '/') {
-    // Just redirect to login
-    return NextResponse.redirect(new URL('/auth/signin', request.url));
+    // Redirect to dashboard directly where session will be checked
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
   // Public routes that don't require authentication

@@ -10,6 +10,7 @@ import { useLanguage } from "@/components/providers/language-provider";
 import { format, isToday } from "date-fns";
 import SessionRefresher from "@/components/providers/session-provider";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { toast } from "@/components/ui/use-toast";
 
 // ใช้ memo เพื่อป้องกันการ re-render ที่ไม่จำเป็น
 export default memo(function MainLayout({
@@ -128,7 +129,55 @@ export default memo(function MainLayout({
 
   // เพิ่มฟังก์ชัน handleRefresh
   const handleRefresh = useCallback(async () => {
-    if (status === "authenticated" && canSync()) {
+    if (status === "authenticated") {
+      if (!canSync()) {
+        // ตรวจสอบว่ามีการซิงค์บ่อยเกินไปหรือไม่
+        try {
+          const cooldownUntil = localStorage.getItem('sync-cooldown-until');
+          if (cooldownUntil) {
+            const endTime = parseInt(cooldownUntil, 10);
+            const now = Date.now();
+            if (endTime > now) {
+              // ยังอยู่ในช่วง cooldown
+              const remainingMs = endTime - now;
+              const remainingMinutes = Math.ceil(remainingMs / 60000);
+              
+              // เตรียมข้อความตามภาษาที่ใช้
+              const syncMessages: Record<string, { title: string, message: string }> = {
+                en: { 
+                  title: "Syncing too frequently", 
+                  message: `You're syncing too frequently. Please wait about ${remainingMinutes} minutes.`
+                },
+                th: { 
+                  title: "รีเฟรชข้อมูลบ่อยเกินไป", 
+                  message: `คุณรีเฟรชข้อมูลบ่อยเกินไป โปรดรอประมาณ ${remainingMinutes} นาที`
+                },
+                ja: { 
+                  title: "同期が頻繁すぎます", 
+                  message: `同期が頻繁すぎます。約${remainingMinutes}分お待ちください。`
+                },
+                zh: { 
+                  title: "同步频率过高", 
+                  message: `同步频率过高，请等待约${remainingMinutes}分钟。`
+                }
+              };
+              
+              const currentMessage = syncMessages[locale as keyof typeof syncMessages] || syncMessages.en;
+              
+              // แสดงข้อความเตือน
+              toast({
+                title: currentMessage.title,
+                description: currentMessage.message,
+                variant: "destructive"
+              });
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking sync cooldown during pull-to-refresh:', error);
+        }
+      }
+      
       try {
         await syncData();
         localStorage.setItem('last-sync-time', new Date().toISOString());
@@ -137,13 +186,17 @@ export default memo(function MainLayout({
         console.error('Failed to sync data on pull-to-refresh:', error);
       }
     }
-  }, [status, syncData, canSync]);
+  }, [status, syncData, canSync, locale]);
 
   // Show loading state while checking authentication - real-time loading indicator
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4">
+            <div className="w-full h-full rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }

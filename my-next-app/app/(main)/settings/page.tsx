@@ -94,7 +94,9 @@ const translations = {
     clearTodayDataConfirm: "This will remove all food entries for today. Water intake and other health data will be preserved. Continue?",
     clearTodayDataSuccess: "Today's food data has been cleared",
     cancel: "Cancel",
-    confirm: "Confirm"
+    confirm: "Confirm",
+    syncTooFrequent: "You're syncing too frequently",
+    syncWaitMessage: "Please wait about {minutes} minutes"
   },
   th: {
     settings: "ตั้งค่า",
@@ -153,7 +155,9 @@ const translations = {
     clearTodayDataConfirm: "การดำเนินการนี้จะลบข้อมูลอาหารทั้งหมดของวันนี้ ข้อมูลการดื่มน้ำและข้อมูลสุขภาพอื่นๆ จะยังคงอยู่ ต้องการดำเนินการต่อหรือไม่?",
     clearTodayDataSuccess: "ล้างข้อมูลอาหารของวันนี้เรียบร้อยแล้ว",
     cancel: "ยกเลิก",
-    confirm: "ยืนยัน"
+    confirm: "ยืนยัน",
+    syncTooFrequent: "คุณรีเฟรชข้อมูลบ่อยเกินไป",
+    syncWaitMessage: "โปรดรอประมาณ {minutes} นาที"
   },
   ja: {
     settings: "設定",
@@ -212,7 +216,9 @@ const translations = {
     clearTodayDataConfirm: "これにより、今日の食事エントリーがすべて削除されます。水分摂取量やその他の健康データは保持されます。続行しますか？",
     clearTodayDataSuccess: "今日の食事データが消去されました",
     cancel: "キャンセル",
-    confirm: "確認"
+    confirm: "確認",
+    syncTooFrequent: "同期が頻繁すぎます",
+    syncWaitMessage: "約{minutes}分お待ちください"
   },
   zh: {
     settings: "设置",
@@ -271,7 +277,9 @@ const translations = {
     clearTodayDataConfirm: "这将删除今天的所有食物条目。饮水量和其他健康数据将保留。继续吗？",
     clearTodayDataSuccess: "今天的食物数据已清除",
     cancel: "取消",
-    confirm: "确认"
+    confirm: "确认",
+    syncTooFrequent: "同步频率过高",
+    syncWaitMessage: "请等待约{minutes}分钟"
   },
 };
 
@@ -294,6 +302,8 @@ export default function SettingsPage() {
   const [syncAnimating, setSyncAnimating] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [tooManySyncs, setTooManySyncs] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
   
   // State for confirmation dialog
   const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
@@ -330,6 +340,57 @@ export default function SettingsPage() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [isSyncOnCooldown, isSyncing]);
+
+  // ตรวจสอบการซิงค์ที่บ่อยเกินไป
+  useEffect(() => {
+    try {
+      // ตรวจสอบว่ามี cooldown-until หรือไม่
+      const cooldownUntil = localStorage.getItem('sync-cooldown-until');
+      
+      if (cooldownUntil) {
+        const endTime = parseInt(cooldownUntil, 10);
+        const now = Date.now();
+        
+        if (endTime > now) {
+          // ยังอยู่ในช่วง cooldown
+          setTooManySyncs(true);
+          
+          // คำนวณเวลาที่เหลือเป็นนาที
+          const remainingMs = endTime - now;
+          setCooldownMinutes(Math.ceil(remainingMs / 60000));
+          
+          // ตั้งเวลาเพื่ออัพเดทเวลาที่เหลือทุกนาที
+          const minuteInterval = setInterval(() => {
+            const currentTime = Date.now();
+            const cooldownEndTime = parseInt(localStorage.getItem('sync-cooldown-until') || '0', 10);
+            
+            if (cooldownEndTime <= currentTime) {
+              // หมดเวลา cooldown แล้ว
+              setTooManySyncs(false);
+              setCooldownMinutes(0);
+              clearInterval(minuteInterval);
+            } else {
+              // อัพเดทเวลาที่เหลือ
+              const timeLeft = Math.ceil((cooldownEndTime - currentTime) / 60000);
+              setCooldownMinutes(timeLeft);
+            }
+          }, 30000); // อัพเดททุก 30 วินาที
+          
+          return () => {
+            clearInterval(minuteInterval);
+          };
+        } else {
+          // หมดเวลา cooldown แล้ว
+          setTooManySyncs(false);
+          localStorage.removeItem('sync-cooldown-until');
+        }
+      } else {
+        setTooManySyncs(false);
+      }
+    } catch (error) {
+      console.error('Error checking sync cooldown:', error);
+    }
+  }, [isSyncing]);
 
   // ฟังก์ชันสำหรับฟอร์แมตเวลา
   const formatLastSyncTime = () => {
@@ -532,27 +593,18 @@ export default function SettingsPage() {
               {/* แสดงปุ่มซิงค์ข้อมูล */}
               <Button 
                 onClick={handleSyncData}
-                disabled={isSyncing || syncAnimating || !navigator.onLine || isSyncOnCooldown() || !canSync()}
+                disabled={isSyncing || syncAnimating || !navigator.onLine || isSyncOnCooldown() || !canSync() || tooManySyncs}
                 className="w-full"
               >
-                {isSyncing || syncAnimating ? (
+                {syncAnimating ? (
                   <div className="flex items-center gap-2">
-                    {syncAnimating ? (
-                      <>
-                        <Check className="h-4 w-4 animate-pulse" />
-                        <span>{t.syncComplete}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{t.syncing}</span>
-                      </>
-                    )}
+                    <Check className="h-4 w-4 animate-pulse" />
+                    <span>{t.syncComplete}</span>
                   </div>
-                ) : cooldownSeconds > 0 ? (
+                ) : tooManySyncs ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{t.syncing} ({cooldownSeconds}s)</span>
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{t.syncTooFrequent}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -562,17 +614,12 @@ export default function SettingsPage() {
                 )}
               </Button>
               
-              {/* เพิ่มปุ่มรีเซ็ตการซิงค์ */}
-              <Button 
-                onClick={handleResetSync}
-                variant="outline"
-                className="w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>{t.resetSync}</span>
+              {/* แสดงข้อความเตือนเมื่อซิงค์บ่อยเกินไป */}
+              {tooManySyncs && (
+                <div className="text-sm text-red-500 mt-1">
+                  {t.syncWaitMessage.replace('{minutes}', cooldownMinutes.toString())}
                 </div>
-              </Button>
+              )}
               
               {/* คำแนะนำเพิ่มเติม */}
               <div className="text-sm text-[hsl(var(--muted-foreground))] mt-2">

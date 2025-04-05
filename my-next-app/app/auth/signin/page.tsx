@@ -82,6 +82,7 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     try {
       setLoadingGoogle(true);
+      // Redirect through root loading page after sign-in
       await signIn("google", { callbackUrl: "/" });
     } catch (error) {
       console.error("Google sign in error:", error);
@@ -105,6 +106,7 @@ export default function SignInPage() {
     e.preventDefault();
     setLoadingApple(true);
     try {
+      // Redirect through root loading page after sign-in
       await signIn("apple", {
         callbackUrl: "/",
         ...appleFormData
@@ -119,24 +121,8 @@ export default function SignInPage() {
 
   // Show loading state while checking authentication
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 mx-auto mb-4">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-full h-full rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent"
-            />
-          </div>
-          <p className="text-[hsl(var(--muted-foreground))]">{t.description}</p>
-        </motion.div>
-      </div>
-    );
+    // ไม่ต้องแสดง loading screen ที่นี่ เพราะ loading จะถูกจัดการที่ layout หลักของ main แล้ว
+    return null;
   }
 
   return (
