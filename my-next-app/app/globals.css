@@ -10,6 +10,34 @@
   --sal: env(safe-area-inset-left);
 }
 
+/* Custom Toast Swipe Animations */
+@keyframes slideRight {
+  from {
+    transform: translateX(var(--radix-toast-swipe-end-x));
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(var(--radix-toast-swipe-end-x));
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
 /* Animation classes for floating background elements */
 .animation-delay-2000 {
   animation-delay: 2000ms;
@@ -2056,4 +2084,22 @@ main.no-scroll {
   to {
     transform: translateY(100%);
   }
+}
+
+/* ปรับแต่ง overscroll behavior */
+html, body {
+  /* ป้องกันไม่ให้เกิด overscroll effect เฉพาะแนวนอน */
+  overscroll-behavior-x: none;
+  
+  /* แต่ยังคงใช้ overscroll ปกติสำหรับแนวตั้ง */
+  overscroll-behavior-y: auto;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* คลาส UI สำหรับพื้นที่ปลอดภัยด้านบน */
+.top-safe {
+  top: env(safe-area-inset-top);
 }

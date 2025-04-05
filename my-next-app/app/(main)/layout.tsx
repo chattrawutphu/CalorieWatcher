@@ -9,7 +9,7 @@ import { useNutritionStore } from "@/lib/store/nutrition-store";
 import { useLanguage } from "@/components/providers/language-provider";
 import { format, isToday } from "date-fns";
 import SessionRefresher from "@/components/providers/session-provider";
-import { Toaster } from "@/components/ui/toaster";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 
 // ใช้ memo เพื่อป้องกันการ re-render ที่ไม่จำเป็น
 export default memo(function MainLayout({
@@ -126,6 +126,19 @@ export default memo(function MainLayout({
     });
   }, [prefetchRoutes]);
 
+  // เพิ่มฟังก์ชัน handleRefresh
+  const handleRefresh = useCallback(async () => {
+    if (status === "authenticated" && canSync()) {
+      try {
+        await syncData();
+        localStorage.setItem('last-sync-time', new Date().toISOString());
+        console.log(`[Synced] Manual pull-to-refresh sync: ${new Date().toISOString()}`);
+      } catch (error) {
+        console.error('Failed to sync data on pull-to-refresh:', error);
+      }
+    }
+  }, [status, syncData, canSync]);
+
   // Show loading state while checking authentication - real-time loading indicator
   if (status === "loading") {
     return (
@@ -168,16 +181,15 @@ export default memo(function MainLayout({
         </div>
 
         <main className="flex-1 container px-2 pt-safe relative z-10">
+          <PullToRefresh onRefresh={handleRefresh}>
             <PageTransition>
               {children}
             </PageTransition>
+          </PullToRefresh>
         </main>
         
         {/* รอให้เนื้อหาหลักพร้อมก่อนแสดง MobileNav */}
         {mainContentReady && <MobileNav />}
-        
-        {/* Toaster for notifications */}
-        <Toaster />
       </div>
     </SessionRefresher>
   );
