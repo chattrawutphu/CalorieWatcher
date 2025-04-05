@@ -88,6 +88,25 @@ export default memo(function MainLayout({
     };
   }, [status, syncData, canSync]);
 
+  // ตรวจสอบ session และบันทึกสถานะการล็อกอินลง localStorage
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      // เก็บข้อมูลล็อกอินที่สำเร็จลงใน localStorage
+      localStorage.setItem('user-logged-in', 'true');
+      localStorage.setItem('last-login-time', new Date().toISOString());
+      // เก็บข้อมูลพื้นฐานของผู้ใช้ (ไม่เก็บข้อมูลที่ละเอียดอ่อน)
+      if (session.user?.email) {
+        localStorage.setItem('user-email', session.user.email);
+      }
+      // ไม่ต้องกังวลเรื่อง redirect เพราะ middleware จะทำให้
+    } else if (status === "unauthenticated") {
+      // ล้างข้อมูลใน localStorage เมื่อไม่มี session
+      localStorage.removeItem('user-logged-in');
+      localStorage.removeItem('user-email');
+      // ยังคงเก็บ last-login-time ไว้เพื่อใช้ในการตรวจสอบ
+    }
+  }, [status, session]);
+
   // แสดงสถานะการโหลดตามเวลาจริง (ทำให้เร็วขึ้น)
   useEffect(() => {
     if (status !== 'loading') {

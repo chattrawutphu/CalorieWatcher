@@ -76,6 +76,39 @@ export default function SignInPage() {
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/dashboard");
+    } else if (status === "unauthenticated") {
+      // ตรวจสอบว่าเคยล็อกอินไว้หรือไม่
+      try {
+        const isLoggedIn = localStorage.getItem('user-logged-in') === 'true';
+        const lastLoginTime = localStorage.getItem('last-login-time');
+        
+        if (isLoggedIn && lastLoginTime) {
+          const lastLogin = new Date(lastLoginTime);
+          const now = new Date();
+          const daysDiff = (now.getTime() - lastLogin.getTime()) / (1000 * 3600 * 24);
+          
+          // ถ้าเคยล็อกอินและยังไม่เกิน 7 วัน ให้พยายามใช้ session เดิม
+          if (daysDiff < 7) {
+            // ลองใช้ข้อมูลเดิมในการพยายามล็อกอินอีกครั้ง (auto sign-in)
+            const userEmail = localStorage.getItem('user-email');
+            if (userEmail) {
+              console.log(`[Auth] Found recent login within ${Math.round(daysDiff * 24)} hours, attempting to restore session...`);
+              // แสดง loading เพื่อรอตรวจสอบ session
+              setLoadingGoogle(true);
+              
+              // หน่วงเวลาเล็กน้อยเพื่อให้ระบบพยายามกู้คืน session
+              setTimeout(() => {
+                // ถ้าตรวจสอบแล้วว่าไม่มี session จริงๆ ให้หยุด loading
+                if (status === "unauthenticated") {
+                  setLoadingGoogle(false);
+                }
+              }, 2000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking local storage for previous login:', error);
+      }
     }
   }, [status, router]);
 
