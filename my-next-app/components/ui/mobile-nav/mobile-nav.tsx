@@ -225,7 +225,7 @@ export const MobileNav = memo(function MobileNav() {
                         : { scale: 1 }
                   }
                   transition={{ duration: 0.1 }}
-                  className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
+                  className="flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg ring-4 ring-[hsl(var(--background))]"
                 >
                   <Plus className="h-8 w-8" />
                 </motion.div>
@@ -298,7 +298,7 @@ export const MobileNav = memo(function MobileNav() {
             variants={navContainer}
             initial={shouldAnimate ? "hidden" : "show"}
             animate="show"
-            className="flex pb-8 pt-3 items-center justify-around bg-[hsl(var(--background))] bg-opacity-90 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
+            className="flex pb-6 pt-0 items-center justify-around bg-[hsl(var(--background))] bg-opacity-90 backdrop-blur-md sm:rounded-t-xl rounded-t-lg sm:border border-b-0 border-x-0 sm:border-x sm:border-t border-[hsl(var(--border))] shadow-lg max-w-md mx-auto"
           >
             {navElements}
           </motion.div>

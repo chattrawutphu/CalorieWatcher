@@ -682,7 +682,7 @@ export default function DashboardPage() {
     { 
       name: t.protein, 
       value: protein, 
-      goal: Math.round(((goals.protein || 30) / 100) * goals.calories / 4),
+      goal: goals.protein || 0,
       color: proteinColor,
       gradient: COLORS.protein.gradient,
       icon: "🍗"
@@ -690,7 +690,7 @@ export default function DashboardPage() {
     { 
       name: t.fat, 
       value: fat, 
-      goal: Math.round(((goals.fat || 30) / 100) * goals.calories / 9),
+      goal: goals.fat || 0,
       color: fatColor,
       gradient: COLORS.fat.gradient,
       icon: "🥑"
@@ -698,7 +698,7 @@ export default function DashboardPage() {
     { 
       name: t.carbs, 
       value: carbs, 
-      goal: Math.round(((goals.carbs || 40) / 100) * goals.calories / 4),
+      goal: goals.carbs || 0,
       color: carbsColor,
       gradient: COLORS.carbs.gradient,
       icon: "🍚"

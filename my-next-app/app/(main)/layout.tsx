@@ -289,7 +289,7 @@ export default memo(function MainLayout({
           </div>
         </div>
 
-        <main className="flex-1 container px-2 pt-safe relative z-10">
+        <main className="flex-1 container px-3 pt-safe relative z-10">
           <PullToRefresh onRefresh={handleRefresh}>
             <PageTransition>
               {children}
