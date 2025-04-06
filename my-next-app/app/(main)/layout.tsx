@@ -74,8 +74,30 @@ export default memo(function MainLayout({
         try {
           await syncData();
           localStorage.setItem('last-sync-time', new Date().toISOString());
+          
+          // Show success toast when auto-sync completes
+          toast.success({
+            title: locale === 'en' ? 'Sync Completed' : 
+                   locale === 'th' ? 'ซิงค์ข้อมูลเสร็จสิ้น' : 
+                   locale === 'ja' ? '同期が完了しました' : '同步完成',
+            description: locale === 'en' ? 'Your data has been synchronized' : 
+                         locale === 'th' ? 'ข้อมูลของคุณถูกซิงค์แล้ว' : 
+                         locale === 'ja' ? 'データが同期されました' : '您的数据已同步',
+            duration: 3000
+          });
         } catch (error) {
           console.error('[AutoSync] Error syncing after reconnect:', error);
+          
+          // Show error toast when auto-sync fails
+          toast.error({
+            title: locale === 'en' ? 'Sync Failed' : 
+                   locale === 'th' ? 'ซิงค์ข้อมูลล้มเหลว' : 
+                   locale === 'ja' ? '同期に失敗しました' : '同步失败',
+            description: locale === 'en' ? 'Please try again later' : 
+                         locale === 'th' ? 'กรุณาลองใหม่ภายหลัง' : 
+                         locale === 'ja' ? '後でもう一度お試しください' : '请稍后再试',
+            duration: 4000
+          });
         }
       }
     };
@@ -86,7 +108,7 @@ export default memo(function MainLayout({
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [status, syncData, canSync]);
+  }, [status, syncData, canSync, locale]);
 
   // ตรวจสอบ session และบันทึกสถานะการล็อกอินลง localStorage
   useEffect(() => {
@@ -184,10 +206,10 @@ export default memo(function MainLayout({
               const currentMessage = syncMessages[locale as keyof typeof syncMessages] || syncMessages.en;
               
               // แสดงข้อความเตือน
-              toast({
+              toast.warning({
                 title: currentMessage.title,
                 description: currentMessage.message,
-                variant: "destructive"
+                duration: 5000
               });
               return;
             }
@@ -203,6 +225,17 @@ export default memo(function MainLayout({
         console.log(`[Synced] Manual pull-to-refresh sync: ${new Date().toISOString()}`);
       } catch (error) {
         console.error('Failed to sync data on pull-to-refresh:', error);
+        
+        // Show error toast when manual sync fails
+        toast.error({
+          title: locale === 'en' ? 'Refresh Failed' : 
+                 locale === 'th' ? 'รีเฟรชข้อมูลล้มเหลว' : 
+                 locale === 'ja' ? '更新に失敗しました' : '刷新失败',
+          description: locale === 'en' ? 'Please try again later' : 
+                       locale === 'th' ? 'กรุณาลองใหม่ภายหลัง' : 
+                       locale === 'ja' ? '後でもう一度お試しください' : '请稍后再试',
+          duration: 4000
+        });
       }
     }
   }, [status, syncData, canSync, locale]);

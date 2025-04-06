@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { useRef, useState } from "react"
+import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from "lucide-react"
 
 export function Toaster() {
   const { toasts, dismiss } = useToast()
@@ -115,20 +116,47 @@ export function Toaster() {
     return {}
   }
 
+  // Get the icon based on the toast variant
+  const getToastIcon = (variant?: string) => {
+    switch (variant) {
+      case 'success':
+        return <CheckCircle className="h-5 w-5 text-green-100" />
+      case 'destructive':
+        return <AlertCircle className="h-5 w-5 text-red-100" />
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5 text-yellow-100" />
+      case 'info':
+        return <Info className="h-5 w-5 text-blue-100" />
+      default:
+        return null
+    }
+  }
+
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        const icon = getToastIcon(variant as string)
+        
         return (
           <Toast 
             key={id} 
             {...props} 
+            variant={variant}
             onPointerDown={(e) => handleSwipeStart(e, id)}
             onPointerMove={handleSwipeMove}
             onPointerUp={(e) => handleSwipeEnd(e, id)}
             style={getSwipeStyle(id)}
-            className={`${props.className || ""}`}
+            className={`${props.className || ""} ${variant ? 'with-icon' : ''} glassmorphism-toast`}
           >
-            <div className="grid gap-1">
+            {/* Glassmorphism background effect */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/20 to-white/5 dark:from-white/10 dark:to-white/5 rounded-xl"></div>
+            
+            {icon && (
+              <div className="shrink-0 mr-2">
+                {icon}
+              </div>
+            )}
+            <div className="grid gap-1 flex-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>
