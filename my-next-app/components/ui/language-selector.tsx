@@ -11,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 
+type Locale = "en" | "th" | "ja" | "zh";
+
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "th", name: "ไทย", flag: "🇹🇭" },
@@ -19,9 +21,13 @@ const languages = [
 ];
 
 export function LanguageSelector() {
-  const { locale, setLocale } = useLanguage();
+  const { locale, changeLanguage } = useLanguage();
 
   const currentLanguage = languages.find(lang => lang.code === locale) || languages[0];
+
+  const handleLanguageSelect = (selectedLanguage: Locale) => {
+    changeLanguage(selectedLanguage);
+  };
 
   return (
     <DropdownMenu>
@@ -35,7 +41,7 @@ export function LanguageSelector() {
         {languages.map((language) => (
           <DropdownMenuItem 
             key={language.code} 
-            onClick={() => setLocale(language.code as any)}
+            onClick={() => handleLanguageSelect(language.code as Locale)}
             className={locale === language.code ? "bg-accent text-accent-foreground" : ""}
           >
             <span className="mr-2">{language.flag}</span>

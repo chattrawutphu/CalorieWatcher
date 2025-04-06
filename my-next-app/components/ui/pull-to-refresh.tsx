@@ -152,7 +152,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       
       // Animate to a specific position for the refresh state
       await progressControl.start({ 
-        y: initialOffset + 40, // แสดงตัว indicator ในตำแหน่งที่เห็นได้ชัดเจน
+        y: initialOffset + 45, // แสดงตัว indicator ในตำแหน่งที่เห็นได้ชัดเจนและต่ำพอที่จะไม่ซ้อนทับกับ dynamic island
         transition: { 
           type: "spring", 
           stiffness: 300,
@@ -203,8 +203,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       <motion.div 
         className="fixed left-0 w-full flex justify-center z-50 pointer-events-none"
         style={{ 
-          y: isRefreshing ? (initialOffset + 40) : pullDistance, 
-          top: -100 // ให้อยู่เหนือ layout มากขึ้น
+          y: isRefreshing ? (initialOffset + 45) : pullDistance, 
+          top: -82 // ให้อยู่ต่ำลงเพื่อไม่ซ้อนทับกับ dynamic island
         }}
         animate={progressControl}
         initial={{ y: 0 }}

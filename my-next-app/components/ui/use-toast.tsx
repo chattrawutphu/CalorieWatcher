@@ -16,9 +16,9 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 3
+const TOAST_LIMIT = 1
 // Make toasts auto-dismiss after 5 seconds by default
-const TOAST_REMOVE_DELAY = 5000
+const TOAST_REMOVE_DELAY = 4000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -89,9 +89,19 @@ const addToRemoveQueue = (toastId: string, duration: number = TOAST_REMOVE_DELAY
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // ปิด toast อันเก่าทั้งหมด
+      if (state.toasts.length > 0) {
+        state.toasts.forEach((toast) => {
+          dispatch({
+            type: "DISMISS_TOAST",
+            toastId: toast.id,
+          });
+        });
+      }
+      
       return {
         ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+        toasts: [action.toast],
       }
 
     case "UPDATE_TOAST":
@@ -163,22 +173,7 @@ type ToastFunction = {
     dismiss: () => void;
     update: (props: ToasterToast) => void;
   };
-  success: (props: Omit<Toast, "variant">) => {
-    id: string;
-    dismiss: () => void;
-    update: (props: ToasterToast) => void;
-  };
   error: (props: Omit<Toast, "variant">) => {
-    id: string;
-    dismiss: () => void;
-    update: (props: ToasterToast) => void;
-  };
-  warning: (props: Omit<Toast, "variant">) => {
-    id: string;
-    dismiss: () => void;
-    update: (props: ToasterToast) => void;
-  };
-  info: (props: Omit<Toast, "variant">) => {
     id: string;
     dismiss: () => void;
     update: (props: ToasterToast) => void;
@@ -224,18 +219,6 @@ const toast = function toastFunction(props: Toast) {
 } as ToastFunction
 
 // Add convenience methods to the toast function
-toast.success = (props: Omit<Toast, "variant">) => {
-  return toast({ ...props, variant: "success" })
-}
-
-toast.info = (props: Omit<Toast, "variant">) => {
-  return toast({ ...props, variant: "info" })
-}
-
-toast.warning = (props: Omit<Toast, "variant">) => {
-  return toast({ ...props, variant: "warning" })
-}
-
 toast.error = (props: Omit<Toast, "variant">) => {
   return toast({ ...props, variant: "destructive" })
 }

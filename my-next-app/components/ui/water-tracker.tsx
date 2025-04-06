@@ -90,7 +90,7 @@ export function WaterTracker({ date }: { date: string }) {
   };
 
   return (
-    <Card className="p-5 shadow-md rounded-2xl overflow-hidden bg-[hsl(var(--card))]">
+    <Card className='p-5 shadow-md rounded-2xl overflow-hidden'>
       <div className="space-y-4">
         {/* Header - Elegant design */}
         <div className="flex items-center justify-between">

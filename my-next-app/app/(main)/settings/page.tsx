@@ -18,6 +18,7 @@ import { th, ja, zhCN } from 'date-fns/locale';
 import type { Locale } from 'date-fns';
 import { ThemeButton } from "@/components/ui/theme-button";
 import { ComputerIcon, SunIcon, MoonIcon, Cookie, Candy, Leaf, Heart, Disc } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 // Animation variants
 const container = {
@@ -343,54 +344,65 @@ export default function SettingsPage() {
 
   // ตรวจสอบการซิงค์ที่บ่อยเกินไป
   useEffect(() => {
-    try {
-      // ตรวจสอบว่ามี cooldown-until หรือไม่
-      const cooldownUntil = localStorage.getItem('sync-cooldown-until');
-      
-      if (cooldownUntil) {
-        const endTime = parseInt(cooldownUntil, 10);
-        const now = Date.now();
+    const checkSyncCooldown = () => {
+      try {
+        // ตรวจสอบว่ามี cooldown-until หรือไม่
+        const cooldownUntil = localStorage.getItem('sync-cooldown-until');
         
-        if (endTime > now) {
-          // ยังอยู่ในช่วง cooldown
-          setTooManySyncs(true);
+        if (cooldownUntil) {
+          const endTime = parseInt(cooldownUntil, 10);
+          const now = Date.now();
           
-          // คำนวณเวลาที่เหลือเป็นนาที
-          const remainingMs = endTime - now;
-          setCooldownMinutes(Math.ceil(remainingMs / 60000));
-          
-          // ตั้งเวลาเพื่ออัพเดทเวลาที่เหลือทุกนาที
-          const minuteInterval = setInterval(() => {
-            const currentTime = Date.now();
-            const cooldownEndTime = parseInt(localStorage.getItem('sync-cooldown-until') || '0', 10);
+          if (endTime > now) {
+            // ยังอยู่ในช่วง cooldown
+            setTooManySyncs(true);
             
-            if (cooldownEndTime <= currentTime) {
-              // หมดเวลา cooldown แล้ว
-              setTooManySyncs(false);
-              setCooldownMinutes(0);
-              clearInterval(minuteInterval);
-            } else {
-              // อัพเดทเวลาที่เหลือ
-              const timeLeft = Math.ceil((cooldownEndTime - currentTime) / 60000);
-              setCooldownMinutes(timeLeft);
-            }
-          }, 30000); // อัพเดททุก 30 วินาที
-          
-          return () => {
-            clearInterval(minuteInterval);
-          };
+            // คำนวณเวลาที่เหลือเป็นนาที
+            const remainingMs = endTime - now;
+            setCooldownMinutes(Math.ceil(remainingMs / 60000));
+            
+            return true;
+          } else {
+            // หมดเวลา cooldown แล้ว
+            setTooManySyncs(false);
+            localStorage.removeItem('sync-cooldown-until');
+          }
         } else {
+          setTooManySyncs(false);
+        }
+      } catch (error) {
+        console.error('Error checking sync cooldown:', error);
+      }
+      return false;
+    };
+
+    // ตรวจสอบทันทีเมื่อโหลดหรือเรนเดอร์ใหม่
+    checkSyncCooldown();
+    
+    // ตั้งเวลาเพื่ออัพเดทเวลาที่เหลือทุก 5 วินาที
+    const intervalId = setInterval(() => {
+      if (checkSyncCooldown()) {
+        // อัพเดทเวลาที่เหลือ
+        const currentTime = Date.now();
+        const cooldownEndTime = parseInt(localStorage.getItem('sync-cooldown-until') || '0', 10);
+        
+        if (cooldownEndTime <= currentTime) {
           // หมดเวลา cooldown แล้ว
           setTooManySyncs(false);
-          localStorage.removeItem('sync-cooldown-until');
+          setCooldownMinutes(0);
+          clearInterval(intervalId);
+        } else {
+          // อัพเดทเวลาที่เหลือ
+          const timeLeft = Math.ceil((cooldownEndTime - currentTime) / 60000);
+          setCooldownMinutes(timeLeft);
         }
-      } else {
-        setTooManySyncs(false);
       }
-    } catch (error) {
-      console.error('Error checking sync cooldown:', error);
-    }
-  }, [isSyncing]);
+    }, 5000); // อัพเดททุก 5 วินาที
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [lastSyncTime, isSyncing]);
 
   // ฟังก์ชันสำหรับฟอร์แมตเวลา
   const formatLastSyncTime = () => {
@@ -430,6 +442,17 @@ export default function SettingsPage() {
       localStorage.setItem('last-sync-time', syncTime);
       setLastSyncTime(syncTime);
       
+      // แสดง toast เมื่อซิงค์ข้อมูลสำเร็จ
+      toast({
+        title: locale === 'en' ? 'Data Updated' : 
+              locale === 'th' ? 'อัปเดตข้อมูลแล้ว' : 
+              locale === 'ja' ? 'データが更新されました' : '数据已更新',
+        description: locale === 'en' ? 'Your data has been refreshed' : 
+                    locale === 'th' ? 'ข้อมูลของคุณได้รับการรีเฟรชแล้ว' : 
+                    locale === 'ja' ? 'データが更新されました' : '您的数据已刷新',
+        duration: 2000
+      });
+      
       // คงสถานะ "Complete" ไว้สักครู่
       setTimeout(() => {
         setSyncAnimating(false);
@@ -439,6 +462,17 @@ export default function SettingsPage() {
       console.error('Sync failed:', error);
       setSyncAnimating(false);
       setIsSyncing(false);
+      
+      // แสดง toast แจ้งเตือนเมื่อซิงค์ข้อมูลล้มเหลว
+      toast({
+        title: locale === 'en' ? 'Refresh Failed' : 
+               locale === 'th' ? 'รีเฟรชข้อมูลล้มเหลว' : 
+               locale === 'ja' ? '更新に失敗しました' : '刷新失败',
+        description: locale === 'en' ? 'Please try again later' : 
+                     locale === 'th' ? 'กรุณาลองใหม่ภายหลัง' : 
+                     locale === 'ja' ? '後でもう一度お試しください' : '请稍后再试',
+        duration: 4000
+      });
     }
   };
   

@@ -20,46 +20,35 @@ export default function ToastTestPage() {
   };
 
   const showSuccessToast = () => {
-    toast.success({
-      title: locale === 'en' ? 'Success' :
-             locale === 'th' ? 'สำเร็จ' :
-             locale === 'ja' ? '成功' : '成功',
-      description: locale === 'en' ? 'Operation completed successfully' :
-                   locale === 'th' ? 'ดำเนินการเสร็จสิ้นเรียบร้อยแล้ว' :
-                   locale === 'ja' ? '操作が正常に完了しました' : '操作已成功完成',
+    toast({
+      title: "Successfully completed!",
+      description: "Your operation has been completed successfully.",
+      duration: 3000
     });
   };
 
   const showErrorToast = () => {
-    toast.error({
-      title: locale === 'en' ? 'Error' :
-             locale === 'th' ? 'ข้อผิดพลาด' :
-             locale === 'ja' ? 'エラー' : '错误',
-      description: locale === 'en' ? 'Something went wrong' :
-                   locale === 'th' ? 'เกิดข้อผิดพลาดบางอย่าง' :
-                   locale === 'ja' ? '何か問題が発生しました' : '出现了问题',
+    toast({
+      variant: "destructive",
+      title: "Error occurred",
+      description: "There was a problem with your request.",
+      duration: 3000
     });
   };
 
   const showWarningToast = () => {
-    toast.warning({
-      title: locale === 'en' ? 'Warning' :
-             locale === 'th' ? 'คำเตือน' :
-             locale === 'ja' ? '警告' : '警告',
-      description: locale === 'en' ? 'This action cannot be undone' :
-                   locale === 'th' ? 'การกระทำนี้ไม่สามารถยกเลิกได้' :
-                   locale === 'ja' ? 'このアクションは元に戻せません' : '此操作无法撤销',
+    toast({
+      title: "Warning",
+      description: "This action might have consequences.",
+      duration: 3000
     });
   };
 
   const showInfoToast = () => {
-    toast.info({
-      title: locale === 'en' ? 'Information' :
-             locale === 'th' ? 'ข้อมูล' :
-             locale === 'ja' ? '情報' : '信息',
-      description: locale === 'en' ? 'You have a new notification' :
-                   locale === 'th' ? 'คุณมีการแจ้งเตือนใหม่' :
-                   locale === 'ja' ? '新しい通知があります' : '您有一个新通知',
+    toast({
+      title: "Information",
+      description: "Here's some information you might want to know.",
+      duration: 3000
     });
   };
 

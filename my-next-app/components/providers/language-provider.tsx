@@ -1,13 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { updateStoreLocale } from "@/lib/store/nutrition-store";
 
 type Locale = "en" | "th" | "ja" | "zh";
 
 interface LanguageContextType {
   locale: Locale;
-  setLocale: (locale: Locale) => void;
+  changeLanguage: (locale: Locale) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -25,30 +25,33 @@ interface LanguageProviderProps {
   defaultLocale?: Locale;
 }
 
-export const LanguageProvider = ({ 
-  children, 
-  defaultLocale = "en" 
-}: LanguageProviderProps) => {
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window !== "undefined") {
-      const savedLocale = localStorage.getItem("language") as Locale;
-      return savedLocale || defaultLocale;
+    // Default to browser language or English
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('language') as Locale;
+      if (savedLanguage && ['en', 'th', 'ja', 'zh'].includes(savedLanguage)) {
+        return savedLanguage as Locale;
+      }
+      
+      const browserLang = navigator.language.substring(0, 2);
+      if (['en', 'th', 'ja', 'zh'].includes(browserLang)) {
+        return browserLang as Locale;
+      }
     }
-    return defaultLocale;
+    return 'en';
   });
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    
-    localStorage.setItem("language", locale);
-    
-    // Update nutrition-store locale
-    updateStoreLocale(locale);
-  }, [locale]);
-
+  
+  const changeLanguage = useCallback((newLocale: Locale) => {
+    setLocale(newLocale);
+    localStorage.setItem('language', newLocale);
+    // อัพเดท locale ใน nutrition store ด้วย
+    updateStoreLocale(newLocale);
+  }, []);
+  
   return (
-    <LanguageContext.Provider value={{ locale, setLocale }}>
+    <LanguageContext.Provider value={{ locale, changeLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
-}; 
+} 

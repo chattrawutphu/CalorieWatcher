@@ -28,6 +28,14 @@ try {
 // Helper function to update locale whenever it changes
 export const updateStoreLocale = (locale: string) => {
   currentLocale = locale;
+  // บันทึกค่า locale ลงใน localStorage ด้วย
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app-locale', locale);
+    }
+  } catch (error) {
+    console.error('Failed to update locale in localStorage:', error);
+  }
 };
 
 // Get translations based on current locale
@@ -309,6 +317,14 @@ export const useNutritionStore = create<NutritionState>()(
           
           // ถ้ามีการซิงค์มากกว่า 5 ครั้งใน 3 นาที ไม่อนุญาตให้ซิงค์
           if (recentSyncs.length >= 5) {
+            // คำนวณเวลาที่ต้องรอ - หาเวลาซิงค์แรกสุดในช่วง 3 นาทีล่าสุด
+            if (recentSyncs.length > 0) {
+              const oldestSync = Math.min(...recentSyncs);
+              const timeToWait = (oldestSync + (3 * 60 * 1000)) - Date.now();
+              
+              // บันทึกเวลารอไว้ใน localStorage เพื่อใช้แสดงให้ผู้ใช้
+              localStorage.setItem('sync-cooldown-until', String(Date.now() + timeToWait));
+            }
             return false;
           }
         } catch (error) {
@@ -375,6 +391,44 @@ export const useNutritionStore = create<NutritionState>()(
         // ตรวจสอบว่าสามารถซิงค์ได้หรือไม่
         if (!get().canSync()) {
           console.log('[Sync] Sync operation is currently on cooldown or in progress');
+          
+          // ตรวจสอบถ้าอยู่ในช่วง cooldown จากการซิงค์มากเกินไป
+          try {
+            const cooldownUntil = localStorage.getItem('sync-cooldown-until');
+            if (cooldownUntil) {
+              const endTime = parseInt(cooldownUntil, 10);
+              const now = Date.now();
+              if (endTime > now) {
+                // ยังอยู่ในช่วง cooldown
+                const remainingMs = endTime - now;
+                const remainingMinutes = Math.ceil(remainingMs / 60000);
+                
+                // ใช้โค้ด showToast เพื่อแสดงข้อความเตือน โดยใช้ locale จาก TranslationContext
+                const locale = localStorage.getItem('app-locale') || 'en';
+                
+                // เตรียมข้อความตามภาษาที่ใช้
+                const title = locale === 'en' ? 'Syncing too frequently' : 
+                       locale === 'th' ? 'รีเฟรชข้อมูลบ่อยเกินไป' : 
+                       locale === 'ja' ? '同期が頻繁すぎます' : '同步频率过高';
+                       
+                const description = locale === 'en' ? `You're syncing too frequently. Please wait about ${remainingMinutes} minutes.` : 
+                            locale === 'th' ? `คุณรีเฟรชข้อมูลบ่อยเกินไป โปรดรอประมาณ ${remainingMinutes} นาที` : 
+                            locale === 'ja' ? `同期が頻繁すぎます。約${remainingMinutes}分お待ちください。` : 
+                            `同步频率过高，请等待约${remainingMinutes}分钟。`;
+                
+                // แสดง Toast แจ้งเตือน
+                showToast(
+                  'sync.tooFrequent',
+                  'sync.tooFrequentDesc',
+                  { minutes: String(remainingMinutes) },
+                  'destructive'
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Error checking sync cooldown:', error);
+          }
+          
           return;
         }
         
@@ -536,13 +590,14 @@ export const useNutritionStore = create<NutritionState>()(
               // อัพเดท timestamp เป็นเวลาล่าสุดที่ได้จาก server
               localStorage.setItem('last-server-sync-time', new Date().toISOString());
               
-              // แสดง Toast แจ้งเตือนว่าได้รับข้อมูลใหม่จากเซิร์ฟเวอร์
-              showToast(
-                'sync.syncSuccess',
-                'sync.syncSuccessDesc',
-                {},
-                'default'
-              );
+              // แสดง Toast แจ้งเตือนว่าอัพเดทเซิร์ฟเวอร์สำเร็จ
+              // โค้ดส่วนนี้ถูกลบเพื่อไม่แสดง toast เมื่ออัปเดทสำเร็จ
+              // showToast(
+              //   'sync.uploadSuccess',
+              //   'sync.uploadSuccessDesc',
+              //   {},
+              //   'default'
+              // );
             }
             
             // ถ้าข้อมูลท้องถิ่นมีการอัพเดทล่าสุด ให้อัพเดทข้อมูลไปที่ server
@@ -606,14 +661,6 @@ export const useNutritionStore = create<NutritionState>()(
               localStorage.setItem('last-local-update-time', now);
               
               console.log(`[Sync] Server update successful: ${now}`);
-              
-              // แสดง Toast แจ้งเตือนว่าอัพเดทเซิร์ฟเวอร์สำเร็จ
-              showToast(
-                'sync.uploadSuccess',
-                'sync.uploadSuccessDesc',
-                {},
-                'default'
-              );
             }
             
             const endTime = performance.now();
@@ -625,12 +672,13 @@ export const useNutritionStore = create<NutritionState>()(
             // ถ้ามีการซิงค์ข้อมูล แสดง Toast เพียงครั้งเดียว
             if (!needsLocalUpdate && !needsServerUpdate) {
               // แสดง Toast แจ้งเตือนว่าข้อมูลเป็นปัจจุบันแล้ว
-              showToast(
-                'sync.upToDate',
-                'sync.upToDateDesc',
-                {},
-                'default'
-              );
+              // โค้ดส่วนนี้ถูกลบเพื่อไม่แสดง toast เมื่อข้อมูลเป็นปัจจุบันแล้ว
+              // showToast(
+              //   'sync.upToDate',
+              //   'sync.upToDateDesc',
+              //   {},
+              //   'default'
+              // );
             }
           } catch (fetchError) {
             clearTimeout(timeoutId);

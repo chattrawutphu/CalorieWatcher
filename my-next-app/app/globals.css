@@ -13,7 +13,7 @@
 /* Glassmorphism Effect for Toasts */
 .glassmorphism-toast {
   position: relative;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.18);
   transform-style: preserve-3d;
   perspective: 500px;
@@ -27,43 +27,17 @@
   z-index: -20;
   background: linear-gradient(
     135deg, 
-    rgba(255, 255, 255, 0.25) 0%, 
-    rgba(255, 255, 255, 0.08) 100%
+    rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.02) 100%
   );
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
   border-radius: inherit;
-}
-
-.glassmorphism-toast.success::before {
-  background: linear-gradient(
-    135deg, 
-    rgba(74, 222, 128, 0.25) 0%, 
-    rgba(74, 222, 128, 0.05) 100%
-  );
 }
 
 .glassmorphism-toast.destructive::before {
   background: linear-gradient(
     135deg, 
-    rgba(239, 68, 68, 0.25) 0%, 
+    rgba(239, 68, 68, 0.15) 0%, 
     rgba(239, 68, 68, 0.05) 100%
-  );
-}
-
-.glassmorphism-toast.warning::before {
-  background: linear-gradient(
-    135deg, 
-    rgba(234, 179, 8, 0.25) 0%, 
-    rgba(234, 179, 8, 0.05) 100%
-  );
-}
-
-.glassmorphism-toast.info::before {
-  background: linear-gradient(
-    135deg, 
-    rgba(59, 130, 246, 0.25) 0%, 
-    rgba(59, 130, 246, 0.05) 100%
   );
 }
 
@@ -2159,4 +2133,15 @@ html, body {
 /* คลาส UI สำหรับพื้นที่ปลอดภัยด้านบน */
 .top-safe {
   top: env(safe-area-inset-top);
+}
+
+/* Custom toast styles */
+.compact-toast {
+  max-width: 300px;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
