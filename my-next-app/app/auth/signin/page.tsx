@@ -75,7 +75,11 @@ export default function SignInPage() {
   // Check if user is already authenticated
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/dashboard");
+      // ใช้ setTimeout เพื่อให้แน่ใจว่า session ได้ถูกโหลดมาแล้ว
+      const timer = setTimeout(() => {
+        router.push("/dashboard");
+      }, 100);
+      return () => clearTimeout(timer);
     } else if (status === "unauthenticated") {
       // ตรวจสอบว่าเคยล็อกอินไว้หรือไม่
       try {
@@ -97,12 +101,13 @@ export default function SignInPage() {
               setLoadingGoogle(true);
               
               // หน่วงเวลาเล็กน้อยเพื่อให้ระบบพยายามกู้คืน session
-              setTimeout(() => {
+              const timer = setTimeout(() => {
                 // ถ้าตรวจสอบแล้วว่าไม่มี session จริงๆ ให้หยุด loading
                 if (status === "unauthenticated") {
                   setLoadingGoogle(false);
                 }
               }, 2000);
+              return () => clearTimeout(timer);
             }
           }
         }

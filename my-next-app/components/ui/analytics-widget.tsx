@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/providers/language-provider";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from "recharts";
-import { Activity, ChevronLeft, ChevronRight, Calendar, ChevronDown, PieChart, Droplets, Weight } from "lucide-react";
+import { Activity, Calendar, ChevronDown, PieChart, Droplets, Weight } from "lucide-react";
 import { format, parse } from "date-fns";
 import { th, ja, zhCN } from "date-fns/locale";
 import {
@@ -239,36 +239,10 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   // For weight data, add specific period state
   const [weightPeriod, setWeightPeriod] = useState<string>("30d");
   
-  // For swipe gestures
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  // First time view indicator for swipe instructions
-  const [showSwipeInstruction, setShowSwipeInstruction] = useState<boolean>(true);
-  
   // Update local graph type when prop changes
   useEffect(() => {
     setCurrentGraphType(graphType);
   }, [graphType]);
-  
-  // Clear swipe instruction after 5 seconds
-  useEffect(() => {
-    if (showSwipeInstruction) {
-      const timer = setTimeout(() => {
-        setShowSwipeInstruction(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSwipeInstruction]);
-  
-  // Reset metric when graph type changes
-  useEffect(() => {
-    if (currentGraphType === "nutrients") {
-      setCurrentMetric("calories");
-    } else if (currentGraphType === "water") {
-      setCurrentMetric("water");
-    } else if (currentGraphType === "weight") {
-      setCurrentMetric("weight");
-    }
-  }, [currentGraphType]);
   
   const getDateLocale = () => {
     switch (locale) {
@@ -446,92 +420,96 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
   const getMetricTranslation = (key: string) => {
     const translations: Record<string, Record<string, string>> = {
       en: {
+        analytics: "Analytics",
+        nutrition: "Nutrition",
         calories: "Calories",
         protein: "Protein",
         fat: "Fat",
         carbs: "Carbs",
         water: "Water",
         weight: "Weight",
-        kcal: "kcal",
-        g: "g",
-        kg: "kg",
         goal: "Goal",
         average: "Average",
+        week: "Week",
+        month: "Month",
+        year: "Year",
+        today: "Today",
         "7d": "7 Days",
         "4w": "4 Weeks",
         "12m": "12 Months",
-        analytics: "Analytics",
-        swipeInstruction: "Swipe to change metrics",
-        swipe: "Swipe",
-        nutrients: "Nutrients",
-        selectGraph: "Select Graph",
-        progress: "Progress"
+        "30d": "30 Days",
+        "180d": "6 Months", 
+        "365d": "1 Year",
+        "all": "All Time"
       },
       th: {
+        analytics: "การวิเคราะห์",
+        nutrition: "โภชนาการ",
         calories: "แคลอรี่",
         protein: "โปรตีน",
         fat: "ไขมัน",
         carbs: "คาร์บ",
         water: "น้ำ",
         weight: "น้ำหนัก",
-        kcal: "แคล",
-        g: "ก.",
-        kg: "กก.",
         goal: "เป้าหมาย",
         average: "เฉลี่ย",
+        week: "สัปดาห์",
+        month: "เดือน",
+        year: "ปี",
+        today: "วันนี้",
         "7d": "7 วัน",
         "4w": "4 สัปดาห์",
         "12m": "12 เดือน",
-        analytics: "สถิติและวิเคราะห์",
-        swipeInstruction: "สับพิมพ์เพื่อเปลี่ยนหน่วยวิเคราะห์",
-        swipe: "สับพิมพ์",
-        nutrients: "สารอาหาร",
-        selectGraph: "เลือกกราฟ",
-        progress: "ความคืบหน้า"
+        "30d": "30 วัน",
+        "180d": "6 เดือน",
+        "365d": "1 ปี",
+        "all": "ทั้งหมด"
       },
       ja: {
+        analytics: "分析",
+        nutrition: "栄養",
         calories: "カロリー",
         protein: "タンパク質",
         fat: "脂肪",
         carbs: "炭水化物",
         water: "水分",
         weight: "体重",
-        kcal: "kcal",
-        g: "g",
-        kg: "kg",
         goal: "目標",
         average: "平均",
-        "7d": "7日",
+        week: "週間",
+        month: "月間",
+        year: "年間",
+        today: "今日",
+        "7d": "7日間",
         "4w": "4週間",
         "12m": "12ヶ月",
-        analytics: "分析と統計",
-        swipeInstruction: "スワイプして分析を変更",
-        swipe: "スワイプ",
-        nutrients: "栄養素",
-        selectGraph: "グラフを選択",
-        progress: "進捗"
+        "30d": "30日間",
+        "180d": "6ヶ月",
+        "365d": "1年間",
+        "all": "全期間"
       },
       zh: {
+        analytics: "分析",
+        nutrition: "营养",
         calories: "卡路里",
         protein: "蛋白质",
         fat: "脂肪",
-        carbs: "碳水",
+        carbs: "碳水化合物",
         water: "水分",
         weight: "体重",
-        kcal: "卡",
-        g: "克",
-        kg: "公斤",
         goal: "目标",
         average: "平均",
+        week: "周",
+        month: "月",
+        year: "年",
+        today: "今天",
         "7d": "7天",
         "4w": "4周",
         "12m": "12个月",
-        analytics: "分析和统计",
-        swipeInstruction: "滑动以更改分析",
-        swipe: "滑动",
-        nutrients: "营养素",
-        selectGraph: "选择图表",
-        progress: "进度"
+        "30d": "30天",
+        "180d": "6个月",
+        "365d": "1年",
+        "all": "全部时间"
       }
     };
     
@@ -559,65 +537,24 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
     }
   };
   
-  // Handle metric change with animation direction
   const handleMetricChange = (metric: string) => {
-    if (metric === currentMetric) return;
-    
-    // Determine direction for animation
+    // Update chart direction for animation
     const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
     const currentIndex = metrics.indexOf(currentMetric);
     const newIndex = metrics.indexOf(metric);
-    const direction = newIndex > currentIndex ? 1 : -1;
+    setChartDirection(newIndex > currentIndex ? 1 : -1);
     
-    setChartDirection(direction);
+    // Update current metric
     setCurrentMetric(metric);
   };
   
-  // Handle period change
   const handlePeriodChange = (period: string) => {
-    if (period === currentPeriod) return;
     setCurrentPeriod(period);
   };
   
-  // Handle swipe gesture start
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-  
-  // Handle swipe gesture end
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null) return;
-    
-    const touchEndX = e.changedTouches[0].clientX;
-    const diffX = touchEndX - touchStartX;
-    
-    // Determine if it was a significant swipe (more than 50px)
-    if (Math.abs(diffX) > 50) {
-      const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
-      const currentIndex = metrics.indexOf(currentMetric);
-      
-      // Swipe right (go to previous)
-      if (diffX > 0 && currentIndex > 0) {
-        const newMetric = metrics[currentIndex - 1];
-        setChartDirection(-1);
-        setCurrentMetric(newMetric);
-      } 
-      // Swipe left (go to next)
-      else if (diffX < 0 && currentIndex < metrics.length - 1) {
-        const newMetric = metrics[currentIndex + 1];
-        setChartDirection(1);
-        setCurrentMetric(newMetric);
-      }
-    }
-    
-    setTouchStartX(null);
-  };
-  
-  // Get visual indicators for swiping - which metrics are available left/right
+  // Get visual indicators for metrics
   const metrics = ['calories', 'protein', 'fat', 'carbs', 'water', 'weight'];
   const currentIndex = metrics.indexOf(currentMetric);
-  const hasNext = currentIndex < metrics.length - 1;
-  const hasPrev = currentIndex > 0;
 
   // Get translations for graph types
   const getGraphTypeTranslation = (type: string) => {
@@ -775,43 +712,10 @@ export const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({ dailyLogs, goa
           </div>
         </motion.div>
         
-
-        
-        {/* Chart Area with Swipe Handler */}
+        {/* Chart Area */}
         <div 
           className="h-60 w-full relative overflow-hidden rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-2"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         >
-          {/* Swipe Instruction - Shows only on first view */}
-          {showSwipeInstruction && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 1 }}
-              className="absolute inset-0 z-40 bg-[hsl(var(--background))/70] backdrop-blur-sm flex items-center justify-center rounded-xl"
-            >
-              <motion.div 
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 1.2, duration: 0.3 }}
-                className="text-center px-6 py-4 rounded-xl bg-[hsl(var(--background))] shadow-lg border border-[hsl(var(--border))]"
-              >
-                <div className="text-sm font-medium mb-2">{getMetricTranslation("swipeInstruction") || "Swipe to change metrics"}</div>
-                <motion.div 
-                  animate={{ x: [-20, 20, -20] }}
-                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                  className="flex items-center justify-center text-[hsl(var(--muted-foreground))]"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="mx-2 text-xs">{getMetricTranslation("swipe") || "Swipe"}</span>
-                  <ChevronRight className="h-4 w-4" />
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          )}
-          
           <AnimatePresence custom={chartDirection} mode="popLayout">
             <motion.div
               key={currentMetric + currentPeriod}

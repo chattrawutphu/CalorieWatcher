@@ -1074,8 +1074,8 @@ export default function DashboardPage() {
 
         {/* Sticky Date Selector - Shows when scrolled past the original date selector */}
         {isDateSelectorSticky && (
-          <div className="fixed -top-2 left-0 pt-6 right-0 z-50 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] shadow-sm">
-            <div className="max-w-md mx-auto flex items-center px-4 py-3">
+          <div className="fixed -top-6 left-0 pt-6 right-0 z-50 bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] shadow-sm">
+            <div className="max-w-md mx-auto flex items-center px-4 pt-3 pb-1">
               <Button 
                 variant="ghost"
                 size="icon"
